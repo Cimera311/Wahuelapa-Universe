@@ -30,3 +30,15 @@ Nach der Pages-Veröffentlichung erscheint unter dem Zahnrad und auf dem Startbi
 `npm test`: 22 Tests, darunter drei Controllerprüfungen für lokale Wiederherstellung, Konfliktauflösung und Abmeldung sowie sechs Cloud-Adaptertests mit simuliertem Backend für Kontentrennung, Revisionen, konkurrierende Geräte, Netzfehler, verlorene Speicherbestätigungen und beschädigte Spielstände. `npm run build` erfolgreich. SQL und echte E-Mail-Anmeldung müssen nach Anlegen des Projekts zusätzlich geprüft werden; ein echtes Supabase-Projekt und ein ausführbarer Browser standen für diesen Schritt nicht zur Verfügung.
 
 Offizielle Referenzen: [Auth](https://supabase.com/docs/guides/auth), [API Keys](https://supabase.com/docs/guides/getting-started/api-keys), [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security), [Free-Tarif und Limits](https://supabase.com/docs/guides/platform/billing-on-supabase).
+
+## Gemeinsame Rangliste
+
+Nach `setup.sql` einmal den vollständigen Inhalt von [`supabase/leaderboard.sql`](supabase/leaderboard.sql) im Supabase SQL Editor als neue Abfrage ausführen. Danach Spielseite neu laden und unter **Rangliste → Aktualisieren** öffnen. Bereits vorhandene Cloud-Spielstände erscheinen automatisch; kein neuer Account und keine Datenmigration nötig.
+
+Die Rangliste ist nur für angemeldete Spieler lesbar. Sie zeigt Top 100 plus den eigenen Rang, Commander-Namen, Punkte, Kolonien und Punkteaufteilung. E-Mails, Konto-IDs und vollständige Spielstände werden nicht zurückgegeben. Die privaten Zugriffsregeln von `game_saves` bleiben bestehen. Gleiche Punkte teilen denselben Rang.
+
+Punkte: je 100 Ressourcen in fertigen Gebäudestufen, Forschungen bzw. vorhandenen Schiffen, pro Bereich abgerundet, dann addiert. Startgebäude zählen mit. Fliegende Schiffe zählen weiter; nach einer Kolonisierung zählt das verbrauchte Kolonieschiff nicht mehr. Lagerbestände und unfertige Aufträge zählen nicht. Beim Öffnen bzw. über Aktualisieren wird der letzte Cloud-Stand verglichen; keine permanente Simulation anderer Spieler.
+
+Die Punkte werden serverseitig aus gespeicherten Zuständen berechnet, aber diese Zustände stammen weiterhin aus dem Browser. Diese Freundesrangliste ist **nicht manipulationssicher**. Für einen fairen öffentlichen Wettbewerb sind weiterhin serverseitig geprüfte Aktionen nötig.
+
+Prüfung: `npm test` (26 Tests), `npm run build`. Zusätzlich wurde das SQL unter PostgreSQL/PGlite auf Kostenberechnung, fliegende Schiffe, unfertige Gebäude, Gleichstände, Top-100 plus eigenen Rang, private Spielstände und Zugriffsrechte geprüft. Reproduzierbar mit temporärem `npm install --no-save --package-lock=false @electric-sql/pglite` und `node scripts/check-leaderboard.mjs`. Die echte Supabase-Funktion muss nach der einmaligen Einrichtung noch geprüft werden.
