@@ -7,6 +7,7 @@ function check(ok){if(!ok)throw Error('Ungültiger oder inkompatibler Spielstand
 export function validateSave(input){
  check(input&&typeof input==='object'&&input.version===1);
  const s=structuredClone(input);
+ if(s.systemName!==undefined)check(text(s.systemName,30)&&s.systemName.trim().length>0);
  check(text(s.name,30)&&s.name.trim().length>0&&isNum(s.time,8.64e15)&&isNum(s.created,8.64e15)&&s.created<=s.time&&integer(s.seq,1e9));
  check(Array.isArray(s.planets)&&s.planets.length>=1&&s.planets.length<=7);
  if(s.galaxy)check(isNum(s.galaxy.x,1200)&&isNum(s.galaxy.y,1200));

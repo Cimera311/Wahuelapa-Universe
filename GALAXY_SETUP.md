@@ -32,3 +32,7 @@ Die Wirtschaft des bisherigen Prototyps wird weiterhin teilweise im Browser simu
 `npm ci`, `npm test`, `npm run build`. Die Tests verwenden PGlite (echtes PostgreSQL in WASM) für das SQL einschließlich Zugriffsrechte, private Erkundung, Reservierungen, Kosten, einmalige Ankünfte, Ranglistenflotten, alte Imports und Revisionskonflikte. Die Tests ersetzen nicht den abschließenden Test am echten Supabase-Projekt nach Installation des SQL.
 
 Grafikquellen: Drive-Paket galaxy-concepts-v1, Nebelhintergrund und Zentralstern als WebP komprimiert; vorhandene Planetenbilder bleiben bestehen. Die Karten sind HTML/CSS/SVG mit Zoom, Verschieben, Systemauswahl und einer zugänglichen Planetenliste.
+
+## Spieler-Sonnensysteme
+Nach `galaxy.sql` zusätzlich `supabase/player-systems.sql` ausführen. Diese Datei ist wiederholbar. Wird `galaxy.sql` erneut ausgeführt, anschließend auch `player-systems.sql` erneut ausführen.
+Unter **Galaxie → Mein Sonnensystem** den Namen (1–30 Zeichen) speichern. Er wird mit dem Spielstand synchronisiert. Für angemeldete Spieler sind Systemname, Commander-Name und feste Startposition öffentlich. Planeten, Ressourcen, Forschungen, E-Mail-Adressen und Spielstände bleiben privat. Bestehende Cloud-Konten erhalten bei der Migration ihre Startposition; neue Konten erscheinen nach dem ersten Galaxie-Abgleich. Die Anzeige bezeichnet registrierte Welten und zeigt keinen Online-Status.
