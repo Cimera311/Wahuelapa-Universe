@@ -91,3 +91,7 @@ Laderegeln akzeptieren ganze Mengen oder `max`. Die Priorität bei begrenztem La
 Handelsrouten haben 2–12 Stopps, beginnen auf der aktiven Welt und kehren automatisch dorthin zurück. An jedem Zwischenstopp wird erst abgeladen und dann eingeladen. Bei Rückkehr wird die komplette Restladung eingelagert. Eine Route kann einmalig oder wiederholt laufen. „Route nach dieser Runde beenden“ bringt Schiffe und Material sicher zum Start zurück. Treibstoff wird für jede vollständige Runde dort vorab bezahlt; fehlt er, endet die Route dort. Flugkosten berücksichtigen Strecke, Transporterzahl und Antriebstechnik. Ob eine Route Treibstoff spart, hängt von ihrer Reihenfolge ab.
 
 Routen werden während Abwesenheit chronologisch simuliert. Nach außergewöhnlich langer Abwesenheit mit mehr als 100.000 Ereignissen enden automatische Routen nach ihrer aktuellen Runde mit einem Bericht; die Wirtschaft läuft bis zur aktuellen Zeit weiter. Spielstandformat und bestehende Cloud-/Ranglisten-SQL bleiben kompatibel. Für diese Erweiterung ist kein zusätzliches SQL erforderlich.
+
+## Gemeinsame Galaxie
+
+Die erste Galaxie-Erweiterung enthält zehn gemeinsame Systeme, private Tutorial-Startplätze, Fernsonden und interstellare Kolonieschiffe. Einmal `supabase/galaxy.sql` nach den bisherigen SQL-Dateien ausführen; Einrichtung und Grenzen stehen in [GALAXY_SETUP.md](GALAXY_SETUP.md). Für Entwicklung und Tests zuerst `npm ci` ausführen. Datenbanktests verwenden PGlite; die Spielseite selbst benötigt diese Testabhängigkeit nicht.

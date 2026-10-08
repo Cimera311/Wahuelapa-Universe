@@ -27,6 +27,8 @@ export const TECHS = {
 export const SHIPS = {
  probe:{name:'Erkundungssonde',icon:'⌁',category:'civil',role:'Erkundet unbekannte Welten.',cost:[90,60,20],time:5,tech:'scout',cargo:0,speed:1,fuel:1.5},
  transport:{name:'Kleiner Transporter',icon:'➤',category:'freighter',role:'Bewährter Allrounder für deine ersten Kolonien.',cost:[180,100,40],time:8,tech:'logistics',cargo:1000,speed:1,fuel:4},
+ longProbe:{name:'Fernsonde',icon:'⌁',category:'civil',image:'probe',role:'Untersucht Planeten in der gemeinsamen Galaxie.',cost:[280,200,80],time:10,tech:'scout',techLevel:2,shipyard:2,engine:'ramjet',engineLevel:1,cargo:0,speed:1,fuel:3},
+ starColony:{name:'Interstellares Kolonieschiff',icon:'✦',category:'civil',image:'colony',role:'Besiedelt eine erkundete Galaxiewelt und wird dabei verbraucht.',cost:[1200,850,400],time:30,tech:'colonization',techLevel:4,shipyard:3,engine:'ramjet',engineLevel:1,cargo:0,speed:1,fuel:18},
  colony:{name:'Kolonieschiff',icon:'✦',category:'civil',role:'Gründet eine Kolonie und wird dabei verbraucht.',cost:[500,300,100],time:12,tech:'colonization',cargo:0,speed:1,fuel:4},
  kurier:{name:'Kurier',icon:'➤',category:'freighter',tier:1,role:'Leichter Frachter für schnelle kleine Lieferungen.',cost:[140,80,30],time:6,tech:'logistics',techLevel:1,shipyard:1,cargo:750,speed:1.35,fuel:3},
  karawane:{name:'Karawane',icon:'➤',category:'freighter',tier:2,role:'Modulfrachter für regelmäßige Handelsrouten.',cost:[800,450,180],time:20,tech:'logistics',techLevel:2,shipyard:2,engine:'ramjet',engineLevel:2,cargo:5000,speed:.9,fuel:12},

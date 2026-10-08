@@ -34,10 +34,12 @@ Jeder Antrieb hat 5 Stufen. Forschungsstart: Staustrahl benötigt Verbrennung 3 
 
 Antriebsfaktor = `1 + 0.12 × Stufe des passenden Triebwerks`. Flugzeit und Treibstoffbedarf werden durch diesen Faktor geteilt; Sensortechnik verbessert weiterhin zusätzlich Sondenzeiten. Die Boni anderer Triebwerksarten werden nicht addiert.
 
-Kolonisierung 1–3 erlaubt Ferrum, Nereus und Thalassa neben Aurelia (4 Welten gesamt). Kolonisierung 4/5/6 benötigt zusätzlich Staustrahl/Impuls/Hyperraum 1. Diese Plätze sind Vorbereitung für die künftige gemeinsame Galaxie; neue Galaxieziele, Fernsonden und ein interstellares Kolonieschiff sind noch nicht implementiert.
+Kolonisierung 1–3 erlaubt Ferrum, Nereus und Thalassa neben Aurelia (4 Welten gesamt). Kolonisierung 4/5/6 benötigt zusätzlich Staustrahl/Impuls/Hyperraum 1. Diese Plätze sind für die gemeinsame Galaxie vorgesehen. Die Galaxie-Erweiterung und ihre serverseitigen Regeln stehen in GALAXY_SETUP.md.
 
 ## Sparflug auf Handelsrouten
 
 Jede Routenstrecke dauert 25 % länger und benötigt 25 % weniger Treibstoff als dieselbe Strecke mit demselben Schiff als Direktflug. Dauer und Treibstoff werden je Strecke aufgerundet; bei sehr kleinen Mengen kann die Ersparnis durch Rundung kleiner ausfallen. Routenplanung, Bezahlung und alle tatsächlichen Flugabschnitte verwenden denselben Sparflugmodus. Bereits laufende Flugabschnitte behalten ihre Ankunftszeit und bezahlten Kosten; die nächsten Abschnitte und Runden nutzen die neuen Werte. Keine rückwirkende Erstattung.
 
 Das SQL-Update zählt nun auch alle vier Tutorial-Welten, Kolonisierung bis 6 und alle neuen Triebwerksforschungen.
+
+Fernsonde: 280/200/80 Ressourcen, 10 s, Werft 2, Sensortechnik 2, Staustrahl 1. Interstellares Kolonieschiff: 1200/850/400, 30 s, Werft 3, Kolonisierung 4, Staustrahl 1. Beide nutzen vorhandene Sonden-/Kolonieschiffbilder.

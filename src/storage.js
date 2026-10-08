@@ -8,13 +8,14 @@ export function validateSave(input){
  check(input&&typeof input==='object'&&input.version===1);
  const s=structuredClone(input);
  check(text(s.name,30)&&s.name.trim().length>0&&isNum(s.time,8.64e15)&&isNum(s.created,8.64e15)&&s.created<=s.time&&integer(s.seq,1e9));
- check(Array.isArray(s.planets)&&s.planets.length>=1&&s.planets.length<=TARGETS.length+1);
+ check(Array.isArray(s.planets)&&s.planets.length>=1&&s.planets.length<=7);
+ if(s.galaxy)check(isNum(s.galaxy.x,1200)&&isNum(s.galaxy.y,1200));
  if(s.tech)for(const k of ['military','ramjet','impulse','hyperspace'])if(!Object.hasOwn(s.tech,k))s.tech[k]=0;
  check(s.tech&&Object.entries(TECHS).every(([k,t])=>integer(s.tech[k],t.max)));
- const ids=s.planets.map(p=>p.id);check(ids[0]==='home'&&new Set(ids).size===ids.length&&ids.every(id=>id==='home'||TARGETS.some(t=>t.id===id))&&ids.includes(s.active));
+ const ids=s.planets.map(p=>p.id);check(ids[0]==='home'&&new Set(ids).size===ids.length&&ids.every(id=>id==='home'||TARGETS.some(t=>t.id===id)||/^g-[a-z]+-p(?:[1-9]|10)$/.test(id))&&ids.includes(s.active));
  const cargo=c=>c&&RES.every(k=>isNum(c[k]));
  const job=(j,defs)=>j===null||(j&&Object.hasOwn(defs,j.key)&&isNum(j.start,8.64e15)&&isNum(j.end,8.64e15)&&j.start<=s.time&&j.end>=s.time&&j.end>j.start);
- for(const p of s.planets){check(text(p.name,40)&&text(p.coord,30)&&text(p.kind,40)&&/^#[0-9a-f]{6}$/i.test(p.color)&&typeof p.ocean==='boolean'&&isNum(p.energy,10)&&p.energy>0&&isNum(p.distance,100));check(Array.isArray(p.mult)&&p.mult.length===3&&p.mult.every(x=>isNum(x,10)));p.reserves??={metal:0,crystal:0,fuel:0};check(cargo(p.reserves)&&cargo(p.resources)&&cargo(p.depot));check(p.buildings&&Object.keys(BUILDINGS).every(k=>integer(p.buildings[k],30)));if(p.ships)for(const k of Object.keys(SHIPS))if(!['probe','transport','colony'].includes(k)&&!Object.hasOwn(p.ships,k))p.ships[k]=0;check(p.ships&&Object.keys(SHIPS).every(k=>integer(p.ships[k],1e6)));check(job(p.build,BUILDINGS)&&(!p.build||p.build.level===p.buildings[p.build.key]+1));check(job(p.shipjob,SHIPS)&&(!p.shipjob||integer(p.shipjob.count,50)&&p.shipjob.count>0));}
+ for(const p of s.planets){if(p.id.startsWith('g-'))check(typeof p.system==='string'&&/^g-[a-z]+-p(?:[1-9]|10)$/.test(p.id)&&isNum(p.x,1200)&&isNum(p.y,1200)&&integer(p.slot,10)&&p.slot>0);check(text(p.name,40)&&text(p.coord,30)&&text(p.kind,40)&&/^#[0-9a-f]{6}$/i.test(p.color)&&typeof p.ocean==='boolean'&&isNum(p.energy,10)&&p.energy>0&&isNum(p.distance,100));check(Array.isArray(p.mult)&&p.mult.length===3&&p.mult.every(x=>isNum(x,10)));p.reserves??={metal:0,crystal:0,fuel:0};check(cargo(p.reserves)&&cargo(p.resources)&&cargo(p.depot));check(p.buildings&&Object.keys(BUILDINGS).every(k=>integer(p.buildings[k],30)));if(p.ships)for(const k of Object.keys(SHIPS))if(!['probe','transport','colony'].includes(k)&&!Object.hasOwn(p.ships,k))p.ships[k]=0;check(p.ships&&Object.keys(SHIPS).every(k=>integer(p.ships[k],1e6)));check(job(p.build,BUILDINGS)&&(!p.build||p.build.level===p.buildings[p.build.key]+1));check(job(p.shipjob,SHIPS)&&(!p.shipjob||integer(p.shipjob.count,50)&&p.shipjob.count>0));}
  check(job(s.research,TECHS)&&(!s.research||s.research.level===s.tech[s.research.key]+1&&ids.includes(s.research.planet)));
  check(Array.isArray(s.discovered)&&s.discovered.length<=3&&new Set(s.discovered).size===s.discovered.length&&s.discovered.every(id=>TARGETS.some(t=>t.id===id)));
  check(Array.isArray(s.missions)&&s.missions.length<=100);
