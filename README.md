@@ -1,6 +1,6 @@
 # Wahuelapa Universe · Imperium-Prototyp 0.1
 
-Ein tatsächlich spielbarer deutscher Weltraum-Aufbauprototyp. Hauptplanet ausbauen, Forschung freischalten, mit Sonden drei unterschiedliche Welten erkunden, maximal zwei Kolonien gründen und Materialien mit Transportern liefern. Keine externen Dienste und keine Laufzeitbibliotheken.
+Ein tatsächlich spielbarer deutscher Weltraum-Aufbauprototyp. Hauptplanet ausbauen, Forschung freischalten, mit Sonden drei unterschiedliche Welten erkunden, maximal zwei Kolonien gründen und Materialien mit Transportern liefern. Gastmodus ohne externe Dienste und Laufzeitbibliotheken. Kleine optionale Anmeldung und private Cloud-Spielstände sind vorbereitet; Einrichtung in [CLOUD_SETUP.md](CLOUD_SETUP.md).
 
 ## Direkt ausprobieren
 
@@ -76,4 +76,8 @@ Dateien:
 
 ## Bewusst für später
 
-Cloud-Spielstände, Zugangscodes, gemeinsames Leaderboard, NPC-Raids, automatische Transportrouten und der große Endgame-Entwicklungsbaum. Keine dieser Funktionen wird vorgetäuscht. GitHub Pages allein kann keine gemeinsamen Cloud-Spielstände speichern. Für diese spätere Version kommt ein kleiner externer Speicherdienst mit serverseitiger Aktionsprüfung hinzu.
+Gemeinsames Leaderboard, NPC-Raids, automatische Transportrouten und der große Endgame-Entwicklungsbaum. Keine dieser Funktionen wird vorgetäuscht. GitHub Pages allein kann keine gemeinsamen Cloud-Spielstände speichern. Die optionale Supabase-Anbindung für private Cloud-Spielstände ist vorbereitet, aber erst nach der Einrichtung aktiviert. Für faire gemeinsame Ranglisten fehlen noch serverseitig geprüfte Spielaktionen.
+
+## Optionale Anmeldung
+
+Siehe [CLOUD_SETUP.md](CLOUD_SETUP.md) für E-Mail/Passwort und private Cloud-Spielstände. Der Live-Gastmodus bleibt aktiv, bis ein Supabase-Projekt eingerichtet ist. 22 Tests bestehen; die Cloud-Tests verwenden ein simuliertes Backend, keine echte Anmeldung.

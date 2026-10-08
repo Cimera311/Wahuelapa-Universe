@@ -24,5 +24,5 @@ export function validateSave(input){
  return s;
 }
 export function parseSave(raw){if(typeof raw!=='string'||raw.length>2000000)throw Error('Die Spielstanddatei ist zu groß.');try{return validateSave(JSON.parse(raw));}catch(e){throw Error(e.message==='Die Spielstanddatei ist zu groß.'?e.message:'Die Datei enthält keinen gültigen Imperium-Spielstand (Version 1).');}}
-export function saveGame(s,store=globalThis.localStorage){const raw=JSON.stringify(s);const old=store.getItem(SAVE_KEY);if(old)store.setItem(SAVE_KEY+'-backup',old);store.setItem(SAVE_KEY,raw);}
-export function loadGame(store=globalThis.localStorage){let damaged=false;for(const key of [SAVE_KEY,SAVE_KEY+'-backup']){const raw=store.getItem(key);if(raw){try{return {state:parseSave(raw),recovered:damaged};}catch{damaged=true;}}}if(damaged)throw Error('Spielstand und Sicherung sind beschädigt. Exportiere vorhandene Dateien oder starte bewusst neu.');return {state:null,recovered:false};}
+export function saveGame(s,store=globalThis.localStorage,key=SAVE_KEY){const raw=JSON.stringify(s);const old=store.getItem(key);if(old)store.setItem(key+'-backup',old);store.setItem(key,raw);}
+export function loadGame(store=globalThis.localStorage,saveKey=SAVE_KEY){let damaged=false;for(const key of [saveKey,saveKey+'-backup']){const raw=store.getItem(key);if(raw){try{return {state:parseSave(raw),recovered:damaged};}catch{damaged=true;}}}if(damaged)throw Error('Spielstand und Sicherung sind beschädigt. Exportiere vorhandene Dateien oder starte bewusst neu.');return {state:null,recovered:false};}
