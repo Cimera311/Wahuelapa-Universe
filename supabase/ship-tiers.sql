@@ -1,13 +1,5 @@
--- Run once in Supabase SQL Editor AFTER setup.sql. Safe to rerun.
--- No save data or e-mail addresses are exposed. Only signed-in players can read ranks.
--- This friends-only prototype still accepts client-simulated saves; not cheat-proof.
-create or replace function public.imperium_rank_int(value jsonb, maximum integer)
-returns integer language sql immutable set search_path = '' as $$
- select case when jsonb_typeof(value) = 'number' and (value #>> '{}') ~ '^[0-9]{1,7}$'
- then least(maximum, (value #>> '{}')::integer) else 0 end;
-$$;
-revoke all on function public.imperium_rank_int(jsonb,integer) from public,anon,authenticated;
-
+-- Einmal nach setup.sql und leaderboard.sql ausführen. Kann erneut ausgeführt werden.
+-- Erweitert nur die Ranglistenwertung; vorhandene Spielstände bleiben unverändert.
 create or replace function public.imperium_rank_points(s jsonb)
 returns table(building_points bigint,research_points bigint,fleet_points bigint,colonies integer)
 language plpgsql immutable set search_path = '' as $$
@@ -51,25 +43,3 @@ begin
 end $$;
 revoke all on function public.imperium_rank_points(jsonb) from public,anon,authenticated;
 
-create or replace function public.imperium_leaderboard()
-returns table(rank bigint,commander text,points bigint,building_points bigint,research_points bigint,fleet_points bigint,colonies integer,is_me boolean)
-language plpgsql stable security definer set search_path = '' as $$
-begin
- if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
- return query
- with scores as (
-  select g.user_id,left(coalesce(nullif(btrim(g.state->>'name'),''),'Commander'),30) as commander,
-   p.building_points+p.research_points+p.fleet_points as points,
-   p.building_points,p.research_points,p.fleet_points,p.colonies
-  from public.game_saves g cross join lateral public.imperium_rank_points(g.state) p
-  where g.state->>'version'='1'
- ), ranked as (
-  select rank() over(order by s.points desc) as rank,
-   row_number() over(order by s.points desc,s.commander,s.user_id) as position,s.* from scores s
- )
- select r.rank,r.commander,r.points,r.building_points,r.research_points,r.fleet_points,r.colonies,r.user_id=auth.uid()
- from ranked r where r.position<=100 or r.user_id=auth.uid()
- order by r.position;
-end $$;
-revoke all on function public.imperium_leaderboard() from public,anon;
-grant execute on function public.imperium_leaderboard() to authenticated;

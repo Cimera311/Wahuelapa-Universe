@@ -13,3 +13,9 @@ Originale: https://drive.google.com/drive/folders/1CQfSpUk9pvmHezrltLzAPI4llj6G1
 - colony.webp: Kolonieschiff
 
 Die Website lädt diese Dateien direkt aus ihrem eigenen assets-Verzeichnis. `npm run build` kopiert sie nach dist/assets. Alle vier Welten behalten dieselbe Zuordnung in der Übersicht, in Planetenkarten und in der Erkundung.
+
+## Neue Schiffskonzepte
+
+kurier.webp, karawane.webp, atlas.webp, arche.webp, falke.webp, waechter.webp, donner.webp und titan.webp stammen aus dem Konzeptpaket ship-concepts-v1 des Nutzers. Quelle: https://drive.google.com/drive/folders/1qW7__lZUPHem81Ev8JOWLuo9vgaiI43i
+
+PNG-Originale wurden ausschließlich auf 768 × 768 skaliert und als WebP (Qualität 88) optimiert. Transparenz und Entwürfe bleiben erhalten. Namen, Baukosten und Rollen stehen als lesbarer UI-Text außerhalb der Bilder.

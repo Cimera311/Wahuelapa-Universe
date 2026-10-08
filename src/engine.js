@@ -1,7 +1,7 @@
-import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,vector,costAt} from './config.js';
+import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,vector,costAt,isFreighter} from './config.js';
 
 function planet(id,name,meta={}){
- return {id,name,coord:meta.coord||'1:1:4',kind:meta.kind||'Heimatwelt',mult:meta.mult||[1,1,1],color:meta.color||'#53add3',ocean:meta.ocean??true,energy:meta.energy||1,distance:meta.distance||0,reserves:vector([0,0,0]),resources:vector([0,0,0]),depot:vector([0,0,0]),buildings:Object.fromEntries(Object.keys(BUILDINGS).map(k=>[k,0])),ships:{probe:0,transport:0,colony:0},build:null,shipjob:null};
+ return {id,name,coord:meta.coord||'1:1:4',kind:meta.kind||'Heimatwelt',mult:meta.mult||[1,1,1],color:meta.color||'#53add3',ocean:meta.ocean??true,energy:meta.energy||1,distance:meta.distance||0,reserves:vector([0,0,0]),resources:vector([0,0,0]),depot:vector([0,0,0]),buildings:Object.fromEntries(Object.keys(BUILDINGS).map(k=>[k,0])),ships:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,0])),build:null,shipjob:null};
 }
 export function newGame(name='Commander',now=Date.now()){
  const home=planet('home','Aurelia');
@@ -25,20 +25,21 @@ export function need(s,p,req){if(!req)return '';if(req.tech&&s.tech[req.tech]<re
 export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key];return {cost:costAt(b,l),ms:Math.ceil(b.time*Math.pow(1.35,l)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000),reason:need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=30?'Maximale Prototyp-Stufe 30 erreicht.':'')};}
 export function researchInfo(s,p,key){const t=TECHS[key];if(!t)throw Error('Unbekannte Forschung.');const l=s.tech[key];return {cost:costAt(t,l),ms:Math.ceil(t.time*Math.pow(1.5,l)/Math.max(1,1+(p.buildings.lab-1)*.15)*1000),reason:p.buildings.lab<t.lab?`Benötigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.`:need(s,p,t.requires)||(l>=t.max?'Maximale Forschungsstufe erreicht.':'')};}
 function pay(p,c){settle(p);for(const k of RES)if(!Number.isFinite(c[k])||c[k]<0||p.resources[k]+1e-8<c[k])throw Error('Nicht genügend lokale Ressourcen.');for(const k of RES)p.resources[k]=Math.max(0,p.resources[k]-c[k]);settle(p);}
-export function cargoCapacity(s,n=1){return Math.floor(1000*(1+s.tech.logistics*.15))*n;}
-export function flightInfo(s,from,to,n=1,probe=false){const dist=Math.max(1,Math.abs((from.distance||0)-(to.distance||0)));return {ms:Math.ceil((10+dist*8)*1000/(1+s.tech.drive*.12+(probe?s.tech.scout*.1:0))),fuel:Math.ceil((probe?3:8)*dist*n/(1+s.tech.drive*.12))};}
+export function shipInfo(s,p,key,count=1){const sh=SHIPS[key];if(!sh)throw Error('Unbekanntes Schiff.');return {cost:vector(sh.cost.map(v=>v*count)),ms:sh.time*count*1000,reason:p.buildings.shipyard<(sh.shipyard||1)?`Benötigt Schiffswerft Stufe ${sh.shipyard||1}.`:s.tech[sh.tech]<(sh.techLevel||1)?`Benötigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel||1}.`:s.tech.drive<(sh.driveLevel||0)?`Benötigt Antriebstechnik Stufe ${sh.driveLevel}.`:''};}
+export function cargoCapacity(s,n=1,ship='transport'){return Math.floor((SHIPS[ship]?.cargo||0)*(1+s.tech.logistics*.15))*n;}
+export function flightInfo(s,from,to,n=1,probe=false,ship='transport'){const def=SHIPS[probe?'probe':ship];if(!def)throw Error('Unbekanntes Schiff.');const dist=Math.max(1,Math.abs((from.distance||0)-(to.distance||0)));return {ms:Math.ceil((10+dist*8)*1000/((1+s.tech.drive*.12+(probe?s.tech.scout*.1:0))*def.speed)),fuel:Math.ceil(def.fuel*2*dist*n/(1+s.tech.drive*.12))};}
 // Fleet fuel is prepaid for a complete itinerary; cargo never includes engine fuel.
-export function legInfo(s,from,to,n=1){const f=flightInfo(s,from,to,n);return {...f,fuel:Math.ceil(f.fuel/2)};}
-export function routeInfo(s,stops,count){let fuel=0,ms=0;for(let i=0;i<stops.length;i++){const f=legInfo(s,getPlanet(s,stops[i].planet),getPlanet(s,stops[(i+1)%stops.length].planet),count);fuel+=f.fuel;ms+=f.ms;}return {fuel,ms};}
+export function legInfo(s,from,to,n=1,ship='transport'){const f=flightInfo(s,from,to,n,ship==='probe',ship);return {...f,fuel:Math.ceil(f.fuel/2)};}
+export function routeInfo(s,stops,count,ship='transport'){let fuel=0,ms=0;for(let i=0;i<stops.length;i++){const f=legInfo(s,getPlanet(s,stops[i].planet),getPlanet(s,stops[(i+1)%stops.length].planet),count,ship);fuel+=f.fuel;ms+=f.ms;}return {fuel,ms};}
 function validOrder(order){return order&&RES.every(k=>order[k]==='max'||Number.isSafeInteger(order[k])&&order[k]>=0&&order[k]<=1e12);}
-function loadCargo(s,p,cargo,order,count){settle(p);let room=cargoCapacity(s,count)-RES.reduce((a,k)=>a+cargo[k],0);for(const k of RES){const want=order[k]==='max'?Infinity:order[k];const amount=Math.min(room,want,Math.floor(Math.max(0,p.resources[k]+p.depot[k]-(p.reserves?.[k]||0))));cargo[k]+=amount;const local=Math.min(amount,p.resources[k]);p.resources[k]-=local;p.depot[k]-=amount-local;room-=amount;}settle(p);}
-function stopCargo(s,m,stop){const p=getPlanet(s,stop.planet),out=vector(RES.map(k=>stop.unload[k]==='max'?m.cargo[k]:Math.min(m.cargo[k],stop.unload[k])));for(const k of RES)m.cargo[k]-=out[k];deliver(p,out);loadCargo(s,p,m.cargo,stop.load,m.count);}
-function leaveRoute(s,m,index){const from=m.stops[m.index].planet,to=m.stops[index].planet,f=legInfo(s,getPlanet(s,from),getPlanet(s,to),m.count);m.from=from;m.to=to;m.index=index;m.start=s.time;m.duration=f.ms;m.due=s.time+f.ms;}
+function loadCargo(s,p,cargo,order,count,ship='transport'){settle(p);let room=cargoCapacity(s,count,ship)-RES.reduce((a,k)=>a+cargo[k],0);for(const k of RES){const want=order[k]==='max'?Infinity:order[k];const amount=Math.min(room,want,Math.floor(Math.max(0,p.resources[k]+p.depot[k]-(p.reserves?.[k]||0))));cargo[k]+=amount;const local=Math.min(amount,p.resources[k]);p.resources[k]-=local;p.depot[k]-=amount-local;room-=amount;}settle(p);}
+function stopCargo(s,m,stop){const p=getPlanet(s,stop.planet),out=vector(RES.map(k=>stop.unload[k]==='max'?m.cargo[k]:Math.min(m.cargo[k],stop.unload[k])));for(const k of RES)m.cargo[k]-=out[k];deliver(p,out);loadCargo(s,p,m.cargo,stop.load,m.count,m.ship);}
+function leaveRoute(s,m,index){const from=m.stops[m.index].planet,to=m.stops[index].planet,f=legInfo(s,getPlanet(s,from),getPlanet(s,to),m.count,m.ship);m.from=from;m.to=to;m.index=index;m.start=s.time;m.duration=f.ms;m.due=s.time+f.ms;}
 function parkFleet(s,m,id,title){const p=getPlanet(s,id);deliver(p,m.cargo);p.ships[m.ship]+=m.count;s.missions=s.missions.filter(x=>x.id!==m.id);report(s,title,`${m.count} × ${SHIPS[m.ship].name} im Orbit von ${p.name}. Ladung wurde eingelagert.`);}
 function routeArrival(s,m){
  if(m.index===0){deliver(getPlanet(s,m.home),m.cargo);m.cargo=vector([0,0,0]);m.rounds++;report(s,'Handelsrunde abgeschlossen',`${m.name}: Runde ${m.rounds} beendet.`);
   if(!m.repeat||m.stopping){parkFleet(s,m,m.home,'Handelsroute beendet');return;}
-  const p=getPlanet(s,m.home),f=routeInfo(s,m.stops,m.count);
+  const p=getPlanet(s,m.home),f=routeInfo(s,m.stops,m.count,m.ship);
   if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel){parkFleet(s,m,m.home,'Handelsroute pausiert: Treibstoff fehlt');return;}
   pay(p,vector([0,0,f.fuel]));stopCargo(s,m,m.stops[0]);leaveRoute(s,m,1);
  }else{stopCargo(s,m,m.stops[m.index]);report(s,'Handelsstopp',`${m.name}: ${getPlanet(s,m.to).name} · Runde ${m.rounds+1}.`);leaveRoute(s,m,(m.index+1)%m.stops.length);}
@@ -56,7 +57,7 @@ export function advance(s,now){
   for(const m of [...s.missions].sort((a,b)=>a.id-b.id))if(m.due<=s.time){
    if(m.type==='route'){routeArrival(s,m);}
    else if(m.type==='station'){parkFleet(s,m,m.to,'Flotte stationiert');}
-   else if(m.type==='collect'&&m.phase==='outbound'){loadCargo(s,getPlanet(s,m.to),m.cargo,m.order,m.count);m.phase='return';m.due=s.time+m.duration;report(s,'Material abgeholt',`${getPlanet(s,m.to).name}: Ladung auf dem Rückweg.`);}
+   else if(m.type==='collect'&&m.phase==='outbound'){loadCargo(s,getPlanet(s,m.to),m.cargo,m.order,m.count,m.ship);m.phase='return';m.due=s.time+m.duration;report(s,'Material abgeholt',`${getPlanet(s,m.to).name}: Ladung auf dem Rückweg.`);}
    else if(m.phase==='return'){if(m.type==='collect')deliver(getPlanet(s,m.from),m.cargo);getPlanet(s,m.from).ships[m.ship]+=m.count;s.missions=s.missions.filter(x=>x.id!==m.id);report(s,'Flotte zurückgekehrt',`${SHIPS[m.ship].name}: ${m.count} zurück auf ${getPlanet(s,m.from).name}.`);}
    else if(m.type==='probe'){if(!s.discovered.includes(m.to))s.discovered.push(m.to);const t=TARGETS.find(t=>t.id===m.to);report(s,'Sondenbericht',`${t.name} [${t.coord}] · ${t.kind}. Metall ×${t.mult[0]}, Kristall ×${t.mult[1]}, Treibstoff ×${t.mult[2]}. Energiebedarf ×${t.energy}.`);m.phase='return';m.due=s.time+m.duration;}
    else if(m.type==='colony'){const t=TARGETS.find(t=>t.id===m.to);if(!s.planets.some(p=>p.id===t.id)){const p=planet(t.id,t.name,t);p.buildings.solar=2;deliver(p,m.cargo);s.planets.push(p);report(s,'Kolonie gegründet',`${t.name} ist besiedelt. Mitgebrachte Startmaterialien stehen dort bereit. Baue zuerst lokale Minen.`);}s.missions=s.missions.filter(x=>x.id!==m.id);}
@@ -70,7 +71,7 @@ export function act(s,action,now=Date.now()){
  const n=structuredClone(s);advance(n,now);const p=getPlanet(n,action.planet||n.active);
  if(action.type==='build'){const info=buildInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(p.build)throw Error('Auf diesem Planeten läuft bereits ein Bauauftrag.');pay(p,info.cost);p.build={key:action.key,level:p.buildings[action.key]+1,start:n.time,end:n.time+info.ms};}
  else if(action.type==='research'){const info=researchInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(n.research)throw Error('Es läuft bereits eine imperiumsweite Forschung.');pay(p,info.cost);n.research={key:action.key,level:n.tech[action.key]+1,start:n.time,end:n.time+info.ms,planet:p.id};}
- else if(action.type==='ship'){const sh=SHIPS[action.key];if(!sh)throw Error('Unbekanntes Schiff.');if(!p.buildings.shipyard)throw Error('Benötigt Schiffswerft Stufe 1.');if(!n.tech[sh.tech])throw Error(`Benötigt ${TECHS[sh.tech].name} Stufe 1.`);if(p.shipjob)throw Error('Die Schiffswerft ist beschäftigt.');const count=action.count;if(!Number.isInteger(count)||count<1||count>50)throw Error('Baue zwischen 1 und 50 Schiffe.');pay(p,vector(sh.cost.map(v=>v*count)));p.shipjob={key:action.key,count,start:n.time,end:n.time+sh.time*count*1000};}
+ else if(action.type==='ship'){const info=shipInfo(n,p,action.key,action.count);if(info.reason)throw Error(info.reason);if(p.shipjob)throw Error('Die Schiffswerft ist beschäftigt.');const count=action.count;if(!Number.isInteger(count)||count<1||count>50)throw Error('Baue zwischen 1 und 50 Schiffe.');pay(p,info.cost);p.shipjob={key:action.key,count,start:n.time,end:n.time+info.ms};}
  else if(action.type==='probe'||action.type==='colony'||action.type==='transport'){
   const ship=action.type==='probe'?'probe':action.type==='colony'?'colony':'transport';const count=ship==='transport'?action.count:1;if(!Number.isInteger(count)||count<1||count>100)throw Error('Ungültige Flottengröße.');if(p.ships[ship]<count)throw Error('Nicht genügend verfügbare Schiffe.');
   let dest,cargo=vector([0,0,0]);
@@ -82,21 +83,21 @@ export function act(s,action,now=Date.now()){
  else if(action.type==='stop-route'){const m=n.missions.find(m=>m.id===action.id&&m.type==='route');if(!m)throw Error('Route nicht gefunden.');m.stopping=true;report(n,'Route endet nach dieser Runde',m.name);}
  else if(['station','collect','route','deliver'].includes(action.type)){
   if(n.missions.length>=100)throw Error('Zu viele Flotten unterwegs.');
-  if(action.type!=='station'&&action.ship&&action.ship!=='transport')throw Error('Liefern, Abholen und Handelsrouten benötigen Transporter.');
-  const ship=action.type==='station'?(action.ship||'transport'):'transport',count=action.count;
+  if(action.type!=='station'&&!isFreighter(action.ship||'transport'))throw Error('Liefern, Abholen und Handelsrouten benötigen Transporter.');
+  const ship=action.ship||'transport',count=action.count;
   if(!Object.hasOwn(SHIPS,ship)||!Number.isInteger(count)||count<1||count>100||p.ships[ship]<count)throw Error('Nicht genügend verfügbare Schiffe (1–100 pro Flotte).');
   const cargo=vector([0,0,0]);let m={id:++n.seq,type:action.type,ship,count,from:p.id,cargo,phase:'outbound',start:n.time};
   if(action.type==='route'){
    const stops=action.stops;if(!Array.isArray(stops)||stops.length<2||stops.length>12||stops[0].planet!==p.id)throw Error('Eine Route benötigt 2–12 Stopps und beginnt hier.');
    for(let i=0;i<stops.length;i++){getPlanet(n,stops[i].planet);if(stops[i].planet===stops[(i+1)%stops.length].planet||!validOrder(stops[i].load)||!validOrder(stops[i].unload))throw Error('Ungültiger Stopp oder Laderegel.');}
-   const f=routeInfo(n,stops,count);if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel)throw Error('Treibstoff reicht nicht für die Runde einschließlich Reserve.');pay(p,vector([0,0,f.fuel]));
+   const f=routeInfo(n,stops,count,ship);if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel)throw Error('Treibstoff reicht nicht für die Runde einschließlich Reserve.');pay(p,vector([0,0,f.fuel]));
    Object.assign(m,{name:String(action.name||'Handelsroute').trim().slice(0,40)||'Handelsroute',stops:structuredClone(stops),home:p.id,index:0,repeat:!!action.repeat,stopping:false,rounds:0});stopCargo(n,m,stops[0]);leaveRoute(n,m,1);
   }else{
-   const dest=getPlanet(n,action.to);if(dest.id===p.id)throw Error('Wähle einen anderen Zielplaneten.');const f=legInfo(n,p,dest,count);
+   const dest=getPlanet(n,action.to);if(dest.id===p.id)throw Error('Wähle einen anderen Zielplaneten.');const f=legInfo(n,p,dest,count,ship);
    const order=action.order||action.cargo||vector([0,0,0]);if(!validOrder(order))throw Error('Ladung: ganze Mengen oder Maximum wählen.');
-   if(ship!=='transport'&&RES.some(k=>order[k]!==0))throw Error('Material benötigt Transporter.');
+   if(!isFreighter(ship)&&RES.some(k=>order[k]!==0))throw Error('Material benötigt Transporter.');
    const fuel=f.fuel*(action.type==='station'?1:2);if(p.resources.fuel-(p.reserves?.fuel||0)<fuel)throw Error('Nicht genügend Treibstoff einschließlich Reserve.');pay(p,vector([0,0,fuel]));
-   if(action.type!=='collect'){const exact=RES.reduce((a,k)=>a+(order[k]==='max'?0:order[k]),0);if(exact>cargoCapacity(n,count)||RES.some(k=>order[k]!=='max'&&order[k]>Math.floor(Math.max(0,p.resources[k]+p.depot[k]-(p.reserves?.[k]||0)))))throw Error('Die gewählte Ladung passt nicht oder lokale Ressourcen fehlen.');loadCargo(n,p,cargo,order,count);if(action.type==='deliver'&&!RES.some(k=>cargo[k]>0))throw Error('Wähle verfügbare Ladung.');}else {if(!RES.some(k=>order[k]==='max'||order[k]>0))throw Error('Wähle Material zum Abholen.');m.order={...order};}
+   if(action.type!=='collect'){const exact=RES.reduce((a,k)=>a+(order[k]==='max'?0:order[k]),0);if(exact>cargoCapacity(n,count,ship)||RES.some(k=>order[k]!=='max'&&order[k]>Math.floor(Math.max(0,p.resources[k]+p.depot[k]-(p.reserves?.[k]||0)))))throw Error('Die gewählte Ladung passt nicht oder lokale Ressourcen fehlen.');loadCargo(n,p,cargo,order,count,ship);if(action.type==='deliver'&&!RES.some(k=>cargo[k]>0))throw Error('Wähle verfügbare Ladung.');}else {if(!RES.some(k=>order[k]==='max'||order[k]>0))throw Error('Wähle Material zum Abholen.');m.order={...order};}
    Object.assign(m,{to:dest.id,duration:f.ms,due:n.time+f.ms});
   }
   p.ships[ship]-=count;n.missions.push(m);
