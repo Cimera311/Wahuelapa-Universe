@@ -8,8 +8,8 @@ export function validateSave(input){
  check(input&&typeof input==='object'&&input.version===1);
  const s=structuredClone(input);
  check(text(s.name,30)&&s.name.trim().length>0&&isNum(s.time,8.64e15)&&isNum(s.created,8.64e15)&&s.created<=s.time&&integer(s.seq,1e9));
- check(Array.isArray(s.planets)&&s.planets.length>=1&&s.planets.length<=3);
- if(s.tech&&!Object.hasOwn(s.tech,'military'))s.tech.military=0;
+ check(Array.isArray(s.planets)&&s.planets.length>=1&&s.planets.length<=TARGETS.length+1);
+ if(s.tech)for(const k of ['military','ramjet','impulse','hyperspace'])if(!Object.hasOwn(s.tech,k))s.tech[k]=0;
  check(s.tech&&Object.entries(TECHS).every(([k,t])=>integer(s.tech[k],t.max)));
  const ids=s.planets.map(p=>p.id);check(ids[0]==='home'&&new Set(ids).size===ids.length&&ids.every(id=>id==='home'||TARGETS.some(t=>t.id===id))&&ids.includes(s.active));
  const cargo=c=>c&&RES.every(k=>isNum(c[k]));
