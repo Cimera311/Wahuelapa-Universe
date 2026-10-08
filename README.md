@@ -1,10 +1,10 @@
-# Wahuelapa Universe · Imperium-Prototyp 0.1
+# WaHueLaPa Universe · Prototyp 0.1
 
 Ein tatsächlich spielbarer deutscher Weltraum-Aufbauprototyp. Hauptplanet ausbauen, Forschung freischalten, mit Sonden drei unterschiedliche Welten erkunden, maximal zwei Kolonien gründen und Materialien mit Transportern liefern. Gastmodus ohne externe Dienste und Laufzeitbibliotheken. Kleine optionale Anmeldung und private Cloud-Spielstände sind vorbereitet; Einrichtung in [CLOUD_SETUP.md](CLOUD_SETUP.md).
 
 ## Direkt ausprobieren
 
-`START_HERE.html` enthält die gesamte Anwendung und kann auf einem Desktop im Browser geöffnet werden. Manche Browser oder Dateivorschauen schränken JavaScript bzw. lokale Speicherung bei lokalen Dateien ein. Dann das Projekt mit einem lokalen HTTP-Server öffnen:
+`START_HERE.html` enthält Oberfläche und Spiellogik; die neuen Grafiken liegen daneben im Ordner `assets`. Beide zusammen auf einem Desktop im Browser öffnen. Manche Browser oder Dateivorschauen schränken JavaScript bzw. lokale Speicherung bei lokalen Dateien ein. Dann das Projekt mit einem lokalen HTTP-Server öffnen:
 
 ```sh
 python3 -m http.server 8080

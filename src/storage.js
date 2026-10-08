@@ -23,6 +23,6 @@ export function validateSave(input){
  check(Array.isArray(s.reports)&&s.reports.length<=60&&s.reports.every(r=>integer(r.id,s.seq)&&isNum(r.time,8.64e15)&&r.time<=s.time&&text(r.title,100)&&text(r.body,1000)));
  return s;
 }
-export function parseSave(raw){if(typeof raw!=='string'||raw.length>2000000)throw Error('Die Spielstanddatei ist zu groß.');try{return validateSave(JSON.parse(raw));}catch(e){throw Error(e.message==='Die Spielstanddatei ist zu groß.'?e.message:'Die Datei enthält keinen gültigen Imperium-Spielstand (Version 1).');}}
+export function parseSave(raw){if(typeof raw!=='string'||raw.length>2000000)throw Error('Die Spielstanddatei ist zu groß.');try{return validateSave(JSON.parse(raw));}catch(e){throw Error(e.message==='Die Spielstanddatei ist zu groß.'?e.message:'Die Datei enthält keinen gültigen WaHueLaPa-Universe-Spielstand (Version 1).');}}
 export function saveGame(s,store=globalThis.localStorage,key=SAVE_KEY){const raw=JSON.stringify(s);const old=store.getItem(key);if(old)store.setItem(key+'-backup',old);store.setItem(key,raw);}
 export function loadGame(store=globalThis.localStorage,saveKey=SAVE_KEY){let damaged=false;for(const key of [saveKey,saveKey+'-backup']){const raw=store.getItem(key);if(raw){try{return {state:parseSave(raw),recovered:damaged};}catch{damaged=true;}}}if(damaged)throw Error('Spielstand und Sicherung sind beschädigt. Exportiere vorhandene Dateien oder starte bewusst neu.');return {state:null,recovered:false};}

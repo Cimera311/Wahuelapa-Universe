@@ -1,4 +1,4 @@
-name: Deploy Imperium to Pages
+name: Deploy WaHueLaPa Universe to Pages
 on:
   push:
     branches: [main]
