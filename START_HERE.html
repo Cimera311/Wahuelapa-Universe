@@ -1,8 +1,232 @@
-import {RES,LABEL,ICON,BUILDINGS,TECHS,SHIPS,TARGETS,vector} from './config.js';
-import {newGame,getPlanet,stats,buildInfo,researchInfo,need,cargoCapacity,flightInfo,legInfo,routeInfo,advance,act} from './engine.js';
-import {SAVE_KEY,loadGame,saveGame,parseSave} from './storage.js';
-import {CLOUD_CONFIG} from './cloud-config.js';
-import {connectCloud,CloudConflict} from './cloud.js';
+<!doctype html>
+<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#071421"><meta name="description" content="WaHueLaPa Universe – dein Solo-Weltraumaufbauspiel. Erkunde, kolonisiere und verbinde deine Welten."><title>WaHueLaPa Universe</title><style>:root{color-scheme:dark;--bg:#06111e;--panel:#0c1c2be8;--line:#244257;--text:#ebf3fa;--muted:#98afc3;--cyan:#30ccf3;--amber:#f6c66c;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#10345188,transparent 45%),radial-gradient(1px 1px at 12% 18%,#b8d8f0 90%,transparent),radial-gradient(1px 1px at 74% 38%,#b8d8f0 90%,transparent),radial-gradient(1px 1px at 32% 71%,#86bfeb 90%,transparent),#06111e;background-size:auto,213px 197px,307px 277px,397px 311px,auto;min-height:100vh}button,input,select{font:inherit}button{background:linear-gradient(135deg,#3cd5f5,#159bc8);color:#041621;border:1px solid #52ddfa;border-radius:9px;padding:11px 17px;font-weight:700;cursor:pointer;min-height:44px;transition:filter .2s,transform .2s}button:hover:not(:disabled){filter:brightness(1.12);transform:translateY(-1px)}button:disabled{background:#203343;color:#8299ad;border-color:#344c5e;cursor:not-allowed;opacity:.65}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}button.plain{background:transparent;color:var(--text);border:0;padding:6px}.brand{font-size:25px;letter-spacing:7px;font-weight:750}.brand span{display:block;font-size:9px;letter-spacing:3px;color:var(--muted);margin-top:5px}.topbar{display:flex;justify-content:space-between;align-items:center;padding:24px 0}.commander{display:flex;align-items:center;gap:14px;font-size:14px;color:var(--muted)}.gear{font-size:25px}header,main{max-width:1120px;margin:auto;padding:0 26px}header{position:relative}.resources{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:12px;background:#091b2be3;overflow:hidden}.resources>div{display:flex;align-items:center;gap:14px;padding:17px 18px;border-right:1px solid var(--line)}.resources>div:last-child{border:0}.resource-icon{font-size:31px;color:#9bdcf1;text-shadow:0 0 20px #24aee155}.resources small{display:block;font-size:11px;color:var(--muted)}.resources strong{font-size:23px;display:block;margin:3px 0;font-variant-numeric:tabular-nums}.planet-bar{display:flex;justify-content:space-between;align-items:center;margin:18px 0;font-size:12px;color:var(--muted)}.planet-bar label{display:flex;align-items:center;gap:12px}.planet-bar select{font-size:13px;min-height:38px;padding:6px 12px}.local-badge{font-size:11px;color:#80b8b7}.hero{position:relative;min-height:340px;display:flex;align-items:center;overflow:hidden}.hero-copy{z-index:1;width:50%}.hero h1{font-size:clamp(40px,6vw,72px);letter-spacing:-2px;margin:14px 0}.hero p{font-size:17px}.eyebrow{font-size:11px;letter-spacing:2px;color:#9cc5df;font-weight:650}.chips{display:flex;gap:12px;margin-top:26px}.chips span{border:1px solid #33566a;background:#0b213399;border-radius:7px;padding:10px 14px;font-size:13px}.planet-art{position:relative;width:360px;height:360px;flex:none}.hero>.planet-art{position:absolute;right:6px;top:-8px;width:400px;height:400px}.planet-globe{position:absolute;inset:11%;border-radius:50%;background:radial-gradient(circle at 27% 23%,#b6edfa99,transparent 40%),radial-gradient(circle at 38% 38%,var(--planet),#092640 73%);box-shadow:inset 4px 2px 12px #b1efff,inset -24px -18px 55px #000,0 0 24px #47b1df50,0 0 90px #1e8bd82a;overflow:hidden}.continents{position:absolute;inset:0;border-radius:50%;background:radial-gradient(ellipse at 36% 25%,#74a697 0 12%,transparent 13%),radial-gradient(ellipse at 44% 35%,#557b68 0 17%,transparent 18%),radial-gradient(ellipse at 38% 63%,#627e75 0 9%,transparent 10%),radial-gradient(ellipse at 77% 59%,#517e7366 0 15%,transparent 16%);filter:contrast(1.5);transform:rotate(-24deg)}.night{position:absolute;inset:-1%;border-radius:50%;background:linear-gradient(112deg,transparent 25%,#01142144 52%,#02080fec 83%)}.lights{position:absolute;inset:0;background:radial-gradient(2px 2px at 64% 38%,#ffd395,transparent),radial-gradient(2px 2px at 61% 49%,#ffd395,transparent),radial-gradient(1px 1px at 66% 53%,#ffd395,transparent),radial-gradient(2px 2px at 71% 61%,#ffd395,transparent),radial-gradient(1px 1px at 58% 61%,#ffd395,transparent);background-size:41px 37px;mask-image:linear-gradient(90deg,transparent 35%,#000 62%)}.orbit-ring{position:absolute;inset:3%;border:1px solid #65c8f01f;border-radius:50%;transform:rotate(-30deg) scaleY(.65)}.planet-art.small{width:100px;height:100px}.planet-art.medium{width:200px;height:200px}.panel{border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,#102535ec,#0a1826ee);padding:23px;margin-bottom:18px;box-shadow:0 8px 28px #00000014}.panel.accent{border-color:#28758e;background:linear-gradient(145deg,#103348e8,#0a1d2de8)}.two-columns{display:grid;grid-template-columns:1.2fr 1fr;gap:18px}h1,h2,h3,p{margin-top:0}h1{font-size:35px;margin-bottom:12px;letter-spacing:-1px}h2{font-size:20px;margin-bottom:12px;letter-spacing:-.3px}h3{font-size:17px}p{color:var(--muted);font-size:14px;line-height:1.65;margin-bottom:15px}.muted{color:var(--muted);font-weight:400}.cyan{color:var(--cyan)}.amber{color:var(--amber)}.stat-row{display:flex;justify-content:space-between;margin:12px 0;font-size:14px}.fine{font-size:12px;color:var(--muted);line-height:1.6;margin:12px 0 0}.split{display:flex;justify-content:space-between;gap:14px;align-items:center}.job{padding:17px;border:1px solid var(--line);background:#10293b80;border-radius:10px;margin:10px 0 17px}.job strong{font-size:14px}.job span{font-size:12px}.track{height:6px;background:#233e53;border-radius:20px;overflow:hidden;margin-top:12px}.track i{display:block;height:100%;background:linear-gradient(90deg,#148ebd,#35d3f3);border-radius:20px}.section-title{display:flex;justify-content:space-between;align-items:center;margin:18px 0}.section-title span{font-size:12px}.world-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.world-card{color:var(--text);background:#0b1d2be6;border:1px solid var(--line);display:grid;grid-template-columns:100px 1fr;align-items:center;justify-items:start;text-align:left;padding:15px;border-radius:12px}.world-card .planet-art{grid-row:1/3}.world-card strong{font-size:16px}.world-card .muted{font-size:11px}.world-card.selected{border-color:var(--cyan)}.page-heading{padding:24px 0 14px}.page-heading h1{margin-top:9px}.list{display:flex;flex-direction:column;gap:12px}.list .panel{margin:0}.build-row{display:flex;gap:20px;align-items:center;padding:22px}.item-icon{width:63px;height:63px;flex:none;border:1px solid #31556c;border-radius:12px;display:grid;place-items:center;font-size:30px;color:#8cceea;background:radial-gradient(at top left,#295570,#0b1c2b)}.item-copy{flex:1;min-width:0}.item-copy h2{font-size:18px;margin-bottom:8px}.item-copy h2 span{font-size:14px}.item-copy p{margin-bottom:10px;font-size:13px}.cost{display:flex;flex-wrap:wrap;gap:10px 17px;font-size:11px;color:#bdd1df}.cost span{white-space:nowrap}.requirement{font-size:12px;color:var(--amber);margin-top:10px}.locked .item-icon{filter:saturate(.2);opacity:.6}.build-row>button{font-size:12px;flex:none;min-width:130px}.system-map{height:160px;position:relative;border:1px solid #2b4d64;border-radius:12px;background:radial-gradient(ellipse at 9% 52%,#8e653340,transparent 35%);overflow:hidden;margin-bottom:20px}.system-map:before,.system-map:after{content:'';position:absolute;width:65%;height:80%;border:1px solid #335d7066;border-radius:50%;left:9%;top:10%}.system-map:after{width:85%;height:130%;top:-15%}.sun{position:absolute;width:42px;height:42px;top:38%;left:8%;background:radial-gradient(circle,#ffefaf,#e8a14a);border-radius:50%;box-shadow:0 0 35px #f2b76077}.map-planet{position:absolute;z-index:1;font-size:11px;color:#b3d2e5;padding-top:32px}.map-planet:before{content:'';position:absolute;top:0;left:0;width:24px;height:24px;border-radius:50%;background:radial-gradient(at 30% 30%,var(--planet),#06111e);box-shadow:0 0 13px #67cff066}.target{padding:20px}.target-visual{display:flex;justify-content:center;height:180px;overflow:hidden;margin-top:-10px}.target h2{margin-top:12px}.target>button{width:100%;margin-top:10px}.target>button+button{background:#102f43;color:#b3edff;border-color:#327d97}.yields{display:flex;flex-direction:column;gap:14px}.yields>div{font-size:12px}.yields strong{float:right;color:#c7e7f1}.yields .track{margin-top:6px;height:4px}.unknown{height:150px;display:grid;place-items:center;border:1px dashed #345064;border-radius:10px;color:var(--muted);font-size:12px;margin:14px 0}.ship-icon{font-size:43px;color:#8ecbe1;padding:6px 0 16px}.ships .panel button{width:100%;margin-top:17px}.ships .panel h2{font-size:17px}.ships{margin-bottom:18px}.form-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}label{display:flex;flex-direction:column;gap:8px;color:var(--muted);font-size:12px}input,select{border:1px solid #345467;border-radius:8px;padding:12px;background:#061626;color:var(--text);width:100%;min-height:44px}input:invalid:not(:placeholder-shown){border-color:#345467}form button{margin-top:18px}.mission,.report{padding:17px 0;border-top:1px solid #243e51}.mission:first-of-type,.report:first-of-type{border-top:0}.mission strong,.report strong{font-size:14px}.mission span,.report time{color:var(--muted);font-size:12px}.mission p,.report p{margin:8px 0 0;font-size:13px}footer{text-align:center;font-size:11px;color:#7993a8;padding:32px 12px 110px;line-height:1.6}nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(1120px,100%);background:#071725f5;backdrop-filter:blur(16px);border:1px solid #264254;border-bottom:0;border-radius:14px 14px 0 0;display:grid;grid-template-columns:repeat(6,1fr);padding:8px 12px;z-index:10}nav button{background:transparent;border:0;color:var(--muted);display:flex;align-items:center;flex-direction:column;gap:7px;font-size:12px;padding:9px 2px;border-radius:0;min-height:67px;font-weight:500}nav button span{font-size:23px}nav button.active{color:var(--cyan);box-shadow:inset 0 -2px var(--cyan)}#toast{position:fixed;top:18px;left:50%;transform:translate(-50%,-30px);opacity:0;pointer-events:none;background:#14374e;border:1px solid #4ca1bf;padding:15px 22px;border-radius:10px;max-width:90vw;width:max-content;z-index:40;font-size:13px;transition:.2s}#toast.show{opacity:1;transform:translate(-50%,0)}.welcome{max-width:520px;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:35px 22px 70px}.welcome>.planet-art{width:290px;height:290px;margin:-10px 0}.welcome .panel{width:100%;margin-top:-30px;z-index:1}.welcome h1{font-size:34px}.welcome button{width:100%}dialog{color:var(--text);background:#0b1d2b;border:1px solid #416a82;border-radius:14px;width:min(560px,90vw);max-height:85vh;padding:28px;box-shadow:0 20px 90px #000a}dialog::backdrop{background:#010a13bb;backdrop-filter:blur(4px)}dialog .close{position:absolute;right:14px;top:8px;font-size:28px}dialog h2{margin-top:18px}dialog li{font-size:13px;color:var(--muted);line-height:1.7;margin:7px 0}.settings-actions{display:grid;gap:10px;margin:22px 0}button.danger{background:#392631;border-color:#78505a;color:#ffb2b2}.notice{padding:13px 18px;border:1px solid #8c733a;border-radius:9px;color:var(--amber);font-size:12px;margin:18px 0}.notice span{margin-left:8px}
+@media(max-width:760px){header,main{padding:0 16px}.topbar{padding:19px 0}.brand{font-size:21px;letter-spacing:5px}.commander{font-size:12px;gap:5px}.resources{grid-template-columns:repeat(2,1fr)}.resources>div{padding:12px 15px;gap:12px;border-bottom:1px solid var(--line)}.resources>div:nth-child(2){border-right:0}.resources>div:nth-child(3){border-bottom:0}.resources strong{font-size:21px}.hero{min-height:300px}.hero-copy{width:65%;padding:15px 0}.hero>.planet-art{right:-75px;top:0;width:330px;height:330px;opacity:.8}.hero h1{font-size:45px}.hero p{font-size:14px;max-width:180px}.hero .eyebrow{font-size:9px}.chips{flex-direction:column;gap:8px;width:max-content;margin-top:18px}.chips span{font-size:11px;padding:8px 10px}.two-columns{grid-template-columns:1fr;gap:0}.panel{padding:19px}.world-grid{grid-template-columns:1fr}.world-card{grid-template-columns:85px 1fr;grid-template-rows:25px 25px;padding:15px}.world-card .planet-art{width:80px;height:80px;grid-column:1;grid-row:1/3}.world-card strong{grid-column:2}.world-card span{grid-column:2}.planet-bar{align-items:flex-start;gap:10px}.planet-bar label{font-size:0;max-width:68%}.local-badge{font-size:10px;max-width:32%;line-height:1.5;padding-top:9px}.planet-bar select{max-width:100%}.build-row{flex-wrap:wrap;gap:13px}.item-icon{width:47px;height:47px;font-size:24px;align-self:flex-start}.item-copy{width:calc(100% - 60px);flex:auto}.item-copy h2{font-size:16px}.item-copy h2 span{font-size:12px}.build-row>button{width:100%;margin-top:2px}.cost{font-size:10px;gap:7px 12px}.targets{grid-template-columns:1fr}.target{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}.target-visual{grid-column:1/3;max-height:155px}.target>.eyebrow,.target>h2,.target>p,.target>.unknown,.target>.yields,.target>button{grid-column:1/3}.target>h2{font-size:23px}.ships{grid-template-columns:1fr}.ships .panel{display:grid;grid-template-columns:60px 1fr;gap:0 14px;margin:0}.ship-icon{grid-row:1/4;font-size:35px}.ships .panel h2,.ships .panel p,.ships .panel .cost{grid-column:2}.ships .panel button,.ships .panel .requirement{grid-column:1/3}.form-grid{grid-template-columns:repeat(2,1fr)}.form-grid label:first-child{grid-column:1/3}.page-heading{padding-top:20px}.page-heading h1{font-size:32px}.split{align-items:flex-start}.job strong{font-size:12px}.job span{white-space:nowrap;font-size:11px}nav{padding:7px 7px calc(7px + env(safe-area-inset-bottom))}nav button{font-size:10px;gap:5px;min-height:58px}footer{padding-bottom:120px}.section-title span{font-size:10px}.resources small{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+.ranking-scroll{overflow-x:auto;margin-top:20px}.ranking-table{width:100%;border-collapse:collapse;font-size:14px;text-align:left}.ranking-table caption{text-align:left;caption-side:bottom;padding:14px 0}.ranking-table th,.ranking-table td{padding:15px 12px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.ranking-table thead th{color:var(--muted);font-size:12px;font-weight:500}.ranking-table tbody th{max-width:240px}.ranking-table td small{display:block;margin-top:5px;color:var(--muted);font-size:11px}.ranking-me{background:#14546b55}.ranking-table td:first-child{color:var(--cyan);font-weight:700}.panel a{color:var(--cyan)}@media(max-width:760px){.ranking-table{font-size:12px}.ranking-table th,.ranking-table td{padding:12px 7px}.ranking-table td small{font-size:10px}.ranking-table tbody th{max-width:100px}nav button{font-size:9px}.ranking-table th:last-child,.ranking-table td:last-child{text-align:center}}
+
+/* WaHueLaPa Universe: transparent originals, shared planet and ship views. */
+.brand{letter-spacing:2px;font-size:26px;line-height:1.1}.brand span{font-size:12px;letter-spacing:5px;margin-top:6px}.welcome>.brand{text-align:center}.topbar{gap:16px}.commander{max-width:45%;overflow-wrap:anywhere}.asset-planet img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 22px #328eb633)}.asset-planet .lights{inset:12%;border-radius:50%;pointer-events:none}.ship-visual{height:190px;padding:0;margin:-8px -5px 14px;display:flex;align-items:center;justify-content:center}.ship-visual img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 16px #0006)}.welcome .asset-planet{margin-bottom:10px}@media(max-width:760px){.brand{font-size:22px;letter-spacing:1px}.brand span{font-size:10px;letter-spacing:4px}.hero>.asset-planet{right:-20px;top:0;width:300px;height:300px;opacity:.95}.hero-copy{width:62%}.hero-copy p{max-width:155px}.ships .panel{display:block}.ships .ship-visual{height:200px;margin:-5px 0 15px}.ships .panel h2{font-size:20px}.ships .panel button{margin-top:17px}.welcome>.asset-planet{width:280px;height:280px;margin:5px 0 0}.topbar .commander{font-size:11px}}
+
+.route-stop{border:1px solid var(--line,#31424d);border-radius:14px;padding:18px;margin:16px 0;min-width:0}.route-stop legend{padding:0 8px;color:#80d5df}.route-stop .split{gap:12px;flex-wrap:wrap}.route-stop label{flex:1}.form-grid small{display:block;color:#90a3af;font-size:11px;margin-top:5px}.mission .cost{min-height:12px}@media(max-width:600px){.route-stop{padding:12px}.route-stop .form-grid{grid-template-columns:1fr}}
+</style></head><body><div id="app"></div><div id="toast" role="status" aria-live="polite"></div><script type="module">const RES = ['metal','crystal','fuel'];
+const LABEL = {metal:'Metall',crystal:'Kristall',fuel:'Treibstoff'};
+const ICON = {metal:'◈',crystal:'◆',fuel:'▰'};
+const BUILDINGS = {
+ metal:{name:'Metallmine',icon:'⛏',cost:[80,35,0],time:8,description:'Fördert Metall für Gebäude und Schiffe.'},
+ crystal:{name:'Kristallmine',icon:'◆',cost:[65,60,0],time:9,description:'Kristalle für Forschung und Elektronik.'},
+ fuel:{name:'Treibstoffanlage',icon:'▰',cost:[90,50,0],time:10,description:'Versorgt deine Flotten mit Treibstoff.'},
+ solar:{name:'Solarkraftwerk',icon:'☀',cost:[75,40,0],time:8,description:'Liefert 45 Energie je Stufe.'},
+ warehouse:{name:'Lagerkomplex',icon:'▤',cost:[120,60,0],time:10,description:'Erweitert alle lokalen Ressourcenlager.'},
+ lab:{name:'Forschungslabor',icon:'⚗',cost:[150,100,0],time:12,description:'Schaltet imperiumsweite Forschung frei.'},
+ shipyard:{name:'Schiffswerft',icon:'⚒',cost:[200,100,0],time:12,description:'Baut Sonden, Frachter und Kolonieschiffe.',requires:{building:'lab',level:1}},
+ robotics:{name:'Arbeitsroboter',icon:'⚙',cost:[400,300,60],time:20,description:'Verkürzen neue Bauaufträge um 8 % je Stufe.',requires:{tech:'engineering',level:1}},
+ tidal:{name:'Gezeitenkraftwerk',icon:'≈',cost:[700,450,80],time:30,description:'Liefert 180 Energie je Stufe auf Ozeanwelten.',requires:{tech:'energy',level:3},ocean:true}
+};
+const TECHS = {
+ scout:{name:'Sensortechnik',description:'Stufe 1: Sonden. Weitere Stufen: kürzere Sondenflüge.',cost:[100,100,30],time:10,lab:1,max:5},
+ logistics:{name:'Transporttechnik',description:'Frachter freischalten; je Stufe +15 % Laderaum.',cost:[150,120,40],time:12,lab:1,max:5,requires:{tech:'scout',level:1}},
+ colonization:{name:'Kolonisierung',description:'Jede Stufe erlaubt eine weitere Kolonie (max. 2).',cost:[350,250,100],time:16,lab:2,max:2,requires:{tech:'scout',level:1}},
+ drive:{name:'Antriebstechnik',description:'Je Stufe kürzere Flüge und geringere Flugkosten.',cost:[200,150,80],time:14,lab:2,max:5,requires:{tech:'logistics',level:1}},
+ engineering:{name:'Bautechnik',description:'Je Stufe 5 % kürzere neue Bauaufträge; Arbeitsroboter.',cost:[250,200,40],time:16,lab:2,max:5},
+ energy:{name:'Energietechnik',description:'Je Stufe +10 % Energie; Stufe 3: Gezeitenkraftwerk.',cost:[200,180,50],time:15,lab:2,max:5}
+};
+const SHIPS = {
+ probe:{name:'Erkundungssonde',icon:'⌁',cost:[90,60,20],time:5,tech:'scout'},
+ transport:{name:'Kleiner Transporter',icon:'➤',cost:[180,100,40],time:8,tech:'logistics'},
+ colony:{name:'Kolonieschiff',icon:'✦',cost:[500,300,100],time:12,tech:'colonization'}
+};
+const TARGETS = [
+ {id:'ferrum',name:'Ferrum',coord:'1:2:7',kind:'Gesteinsplanet',specialty:'Metall',distance:2,mult:[1.8,0.75,0.65],color:'#ba7047',ocean:false,energy:1},
+ {id:'nereus',name:'Nereus',coord:'1:3:7',kind:'Eisplanet',specialty:'Treibstoff',distance:3,mult:[0.7,1,1.9],color:'#80cbe3',ocean:false,energy:1.2},
+ {id:'thalassa',name:'Thalassa',coord:'1:4:5',kind:'Ozeanplanet',specialty:'Kristall',distance:4,mult:[0.85,1.6,1.1],color:'#3c92c9',ocean:true,energy:1}
+];
+function vector(values){return Object.fromEntries(RES.map((k,i)=>[k,values[i]]));}
+function costAt(item,level){return vector(item.cost.map(v=>Math.ceil(v*Math.pow(1.6,level))));}
+
+
+function planet(id,name,meta={}){
+ return {id,name,coord:meta.coord||'1:1:4',kind:meta.kind||'Heimatwelt',mult:meta.mult||[1,1,1],color:meta.color||'#53add3',ocean:meta.ocean??true,energy:meta.energy||1,distance:meta.distance||0,reserves:vector([0,0,0]),resources:vector([0,0,0]),depot:vector([0,0,0]),buildings:Object.fromEntries(Object.keys(BUILDINGS).map(k=>[k,0])),ships:{probe:0,transport:0,colony:0},build:null,shipjob:null};
+}
+function newGame(name='Commander',now=Date.now()){
+ const home=planet('home','Aurelia');
+ home.resources=vector([3000,2200,1000]); Object.assign(home.buildings,{metal:1,crystal:1,fuel:1,solar:3});
+ return {version:1,name:name.trim().slice(0,30)||'Commander',time:now,created:now,seq:0,active:'home',planets:[home],tech:Object.fromEntries(Object.keys(TECHS).map(k=>[k,0])),research:null,discovered:[],missions:[],reports:[]};
+}
+function getPlanet(s,id){const p=s.planets.find(p=>p.id===id);if(!p)throw Error('Planet nicht gefunden.');return p;}
+function capacity(p){return 4000*Math.pow(1.7,p.buildings.warehouse);}
+function stats(s,p){
+ const supply=(p.buildings.solar*45+p.buildings.tidal*180)*(1+s.tech.energy*.1);
+ const demand=(p.buildings.metal*15+p.buildings.crystal*18+p.buildings.fuel*20)*p.energy;
+ const ratio=demand?Math.min(1,supply/demand):1;
+ const rates=vector(RES.map((k,i)=>p.buildings[k]?([300,220,140][i]*p.buildings[k]*Math.pow(1.12,p.buildings[k]-1)*p.mult[i]*ratio):0));
+ return {supply,demand,ratio,rates,cap:capacity(p)};
+}
+function settle(p){const cap=capacity(p);for(const k of RES){const n=Math.min(Math.max(0,cap-p.resources[k]),p.depot[k]);p.resources[k]+=n;p.depot[k]-=n;}}
+function deliver(p,cargo){for(const k of RES)p.depot[k]+=cargo[k];settle(p);}
+function produce(s,ms){for(const p of s.planets){settle(p);const z=stats(s,p);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);}}
+function report(s,title,body){s.reports.unshift({id:++s.seq,time:s.time,title,body});s.reports=s.reports.slice(0,60);}
+function need(s,p,req){if(!req)return '';if(req.tech&&s.tech[req.tech]<req.level)return `Benötigt ${TECHS[req.tech].name} Stufe ${req.level}.`;if(req.building&&p.buildings[req.building]<req.level)return `Benötigt ${BUILDINGS[req.building].name} Stufe ${req.level}.`;return '';}
+function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key];return {cost:costAt(b,l),ms:Math.ceil(b.time*Math.pow(1.35,l)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000),reason:need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=30?'Maximale Prototyp-Stufe 30 erreicht.':'')};}
+function researchInfo(s,p,key){const t=TECHS[key];if(!t)throw Error('Unbekannte Forschung.');const l=s.tech[key];return {cost:costAt(t,l),ms:Math.ceil(t.time*Math.pow(1.5,l)/Math.max(1,1+(p.buildings.lab-1)*.15)*1000),reason:p.buildings.lab<t.lab?`Benötigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.`:need(s,p,t.requires)||(l>=t.max?'Maximale Forschungsstufe erreicht.':'')};}
+function pay(p,c){settle(p);for(const k of RES)if(!Number.isFinite(c[k])||c[k]<0||p.resources[k]+1e-8<c[k])throw Error('Nicht genügend lokale Ressourcen.');for(const k of RES)p.resources[k]=Math.max(0,p.resources[k]-c[k]);settle(p);}
+function cargoCapacity(s,n=1){return Math.floor(1000*(1+s.tech.logistics*.15))*n;}
+function flightInfo(s,from,to,n=1,probe=false){const dist=Math.max(1,Math.abs((from.distance||0)-(to.distance||0)));return {ms:Math.ceil((10+dist*8)*1000/(1+s.tech.drive*.12+(probe?s.tech.scout*.1:0))),fuel:Math.ceil((probe?3:8)*dist*n/(1+s.tech.drive*.12))};}
+// Fleet fuel is prepaid for a complete itinerary; cargo never includes engine fuel.
+function legInfo(s,from,to,n=1){const f=flightInfo(s,from,to,n);return {...f,fuel:Math.ceil(f.fuel/2)};}
+function routeInfo(s,stops,count){let fuel=0,ms=0;for(let i=0;i<stops.length;i++){const f=legInfo(s,getPlanet(s,stops[i].planet),getPlanet(s,stops[(i+1)%stops.length].planet),count);fuel+=f.fuel;ms+=f.ms;}return {fuel,ms};}
+function validOrder(order){return order&&RES.every(k=>order[k]==='max'||Number.isSafeInteger(order[k])&&order[k]>=0&&order[k]<=1e12);}
+function loadCargo(s,p,cargo,order,count){settle(p);let room=cargoCapacity(s,count)-RES.reduce((a,k)=>a+cargo[k],0);for(const k of RES){const want=order[k]==='max'?Infinity:order[k];const amount=Math.min(room,want,Math.floor(Math.max(0,p.resources[k]+p.depot[k]-(p.reserves?.[k]||0))));cargo[k]+=amount;const local=Math.min(amount,p.resources[k]);p.resources[k]-=local;p.depot[k]-=amount-local;room-=amount;}settle(p);}
+function stopCargo(s,m,stop){const p=getPlanet(s,stop.planet),out=vector(RES.map(k=>stop.unload[k]==='max'?m.cargo[k]:Math.min(m.cargo[k],stop.unload[k])));for(const k of RES)m.cargo[k]-=out[k];deliver(p,out);loadCargo(s,p,m.cargo,stop.load,m.count);}
+function leaveRoute(s,m,index){const from=m.stops[m.index].planet,to=m.stops[index].planet,f=legInfo(s,getPlanet(s,from),getPlanet(s,to),m.count);m.from=from;m.to=to;m.index=index;m.start=s.time;m.duration=f.ms;m.due=s.time+f.ms;}
+function parkFleet(s,m,id,title){const p=getPlanet(s,id);deliver(p,m.cargo);p.ships[m.ship]+=m.count;s.missions=s.missions.filter(x=>x.id!==m.id);report(s,title,`${m.count} × ${SHIPS[m.ship].name} im Orbit von ${p.name}. Ladung wurde eingelagert.`);}
+function routeArrival(s,m){
+ if(m.index===0){deliver(getPlanet(s,m.home),m.cargo);m.cargo=vector([0,0,0]);m.rounds++;report(s,'Handelsrunde abgeschlossen',`${m.name}: Runde ${m.rounds} beendet.`);
+  if(!m.repeat||m.stopping){parkFleet(s,m,m.home,'Handelsroute beendet');return;}
+  const p=getPlanet(s,m.home),f=routeInfo(s,m.stops,m.count);
+  if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel){parkFleet(s,m,m.home,'Handelsroute pausiert: Treibstoff fehlt');return;}
+  pay(p,vector([0,0,f.fuel]));stopCargo(s,m,m.stops[0]);leaveRoute(s,m,1);
+ }else{stopCargo(s,m,m.stops[m.index]);report(s,'Handelsstopp',`${m.name}: ${getPlanet(s,m.to).name} · Runde ${m.rounds+1}.`);leaveRoute(s,m,(m.index+1)%m.stops.length);}
+}
+function advance(s,now){
+ if(!Number.isFinite(now))throw Error('Ungültige Zeit.');now=Math.max(now,s.time);
+ let guard=0;
+ while(true){
+  const times=[];for(const p of s.planets){if(p.build)times.push(p.build.end);if(p.shipjob)times.push(p.shipjob.end);}if(s.research)times.push(s.research.end);for(const m of s.missions)times.push(m.due);
+  const next=Math.min(...times);if(next>now||!Number.isFinite(next))break;if(++guard>100000){for(const m of s.missions)if(m.type==='route'&&!m.stopping){m.stopping=true;report(s,'Handelsroute endet nach langer Abwesenheit',`${m.name}: Die aktuelle Runde wird noch abgeschlossen.`);}guard=0;}
+  produce(s,Math.max(0,next-s.time));s.time=Math.max(s.time,next);
+  // Fixed order: research, buildings, shipbuilding, then missions by id.
+  if(s.research&&s.research.end<=s.time){const j=s.research;s.tech[j.key]=j.level;s.research=null;report(s,'Forschung abgeschlossen',`${TECHS[j.key].name} erreicht Stufe ${j.level}.`);}
+  for(const p of s.planets){if(p.build&&p.build.end<=s.time){const j=p.build;p.buildings[j.key]=j.level;p.build=null;report(s,'Ausbau abgeschlossen',`${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);}if(p.shipjob&&p.shipjob.end<=s.time){const j=p.shipjob;p.ships[j.key]+=j.count;p.shipjob=null;report(s,'Schiffbau abgeschlossen',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}}
+  for(const m of [...s.missions].sort((a,b)=>a.id-b.id))if(m.due<=s.time){
+   if(m.type==='route'){routeArrival(s,m);}
+   else if(m.type==='station'){parkFleet(s,m,m.to,'Flotte stationiert');}
+   else if(m.type==='collect'&&m.phase==='outbound'){loadCargo(s,getPlanet(s,m.to),m.cargo,m.order,m.count);m.phase='return';m.due=s.time+m.duration;report(s,'Material abgeholt',`${getPlanet(s,m.to).name}: Ladung auf dem Rückweg.`);}
+   else if(m.phase==='return'){if(m.type==='collect')deliver(getPlanet(s,m.from),m.cargo);getPlanet(s,m.from).ships[m.ship]+=m.count;s.missions=s.missions.filter(x=>x.id!==m.id);report(s,'Flotte zurückgekehrt',`${SHIPS[m.ship].name}: ${m.count} zurück auf ${getPlanet(s,m.from).name}.`);}
+   else if(m.type==='probe'){if(!s.discovered.includes(m.to))s.discovered.push(m.to);const t=TARGETS.find(t=>t.id===m.to);report(s,'Sondenbericht',`${t.name} [${t.coord}] · ${t.kind}. Metall ×${t.mult[0]}, Kristall ×${t.mult[1]}, Treibstoff ×${t.mult[2]}. Energiebedarf ×${t.energy}.`);m.phase='return';m.due=s.time+m.duration;}
+   else if(m.type==='colony'){const t=TARGETS.find(t=>t.id===m.to);if(!s.planets.some(p=>p.id===t.id)){const p=planet(t.id,t.name,t);p.buildings.solar=2;deliver(p,m.cargo);s.planets.push(p);report(s,'Kolonie gegründet',`${t.name} ist besiedelt. Mitgebrachte Startmaterialien stehen dort bereit. Baue zuerst lokale Minen.`);}s.missions=s.missions.filter(x=>x.id!==m.id);}
+   else {deliver(getPlanet(s,m.to),m.cargo);report(s,'Transport angekommen',`${getPlanet(s,m.from).name} → ${getPlanet(s,m.to).name}: ${RES.map(k=>`${Math.round(m.cargo[k])} ${k==='metal'?'Metall':k==='crystal'?'Kristall':'Treibstoff'}`).join(', ')}. Überschüsse bleiben im Lieferdepot.`);m.cargo=vector([0,0,0]);m.phase='return';m.due=s.time+m.duration;}
+  }
+ }
+ produce(s,now-s.time);s.time=now;return s;
+}
+function act(s,action,now=Date.now()){
+ // Work on a copy; a rejected command cannot partially mutate the caller.
+ const n=structuredClone(s);advance(n,now);const p=getPlanet(n,action.planet||n.active);
+ if(action.type==='build'){const info=buildInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(p.build)throw Error('Auf diesem Planeten läuft bereits ein Bauauftrag.');pay(p,info.cost);p.build={key:action.key,level:p.buildings[action.key]+1,start:n.time,end:n.time+info.ms};}
+ else if(action.type==='research'){const info=researchInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(n.research)throw Error('Es läuft bereits eine imperiumsweite Forschung.');pay(p,info.cost);n.research={key:action.key,level:n.tech[action.key]+1,start:n.time,end:n.time+info.ms,planet:p.id};}
+ else if(action.type==='ship'){const sh=SHIPS[action.key];if(!sh)throw Error('Unbekanntes Schiff.');if(!p.buildings.shipyard)throw Error('Benötigt Schiffswerft Stufe 1.');if(!n.tech[sh.tech])throw Error(`Benötigt ${TECHS[sh.tech].name} Stufe 1.`);if(p.shipjob)throw Error('Die Schiffswerft ist beschäftigt.');const count=action.count;if(!Number.isInteger(count)||count<1||count>50)throw Error('Baue zwischen 1 und 50 Schiffe.');pay(p,vector(sh.cost.map(v=>v*count)));p.shipjob={key:action.key,count,start:n.time,end:n.time+sh.time*count*1000};}
+ else if(action.type==='probe'||action.type==='colony'||action.type==='transport'){
+  const ship=action.type==='probe'?'probe':action.type==='colony'?'colony':'transport';const count=ship==='transport'?action.count:1;if(!Number.isInteger(count)||count<1||count>100)throw Error('Ungültige Flottengröße.');if(p.ships[ship]<count)throw Error('Nicht genügend verfügbare Schiffe.');
+  let dest,cargo=vector([0,0,0]);
+  if(ship==='transport'){dest=getPlanet(n,action.to);if(dest.id===p.id)throw Error('Wähle einen anderen Zielplaneten.');cargo=action.cargo;if(!cargo||RES.some(k=>!Number.isSafeInteger(cargo[k])||cargo[k]<0))throw Error('Ladung muss aus nichtnegativen ganzen Zahlen bestehen.');const total=RES.reduce((sum,k)=>sum+cargo[k],0);if(!total)throw Error('Wähle eine Ladung.');if(total>cargoCapacity(n,count))throw Error('Die Ladung übersteigt den Laderaum.');}
+  else {dest=TARGETS.find(t=>t.id===action.to);if(!dest)throw Error('Unbekanntes Erkundungsziel.');if(ship==='colony'){if(!n.discovered.includes(dest.id))throw Error('Zuerst mit einer Sonde erkunden.');if(n.planets.some(p=>p.id===dest.id)||n.missions.some(m=>m.type==='colony'&&m.to===dest.id))throw Error('Planet bereits besiedelt oder reserviert.');if(n.planets.length-1+n.missions.filter(m=>m.type==='colony').length>=n.tech.colonization)throw Error('Erforsche eine weitere Kolonisierungsstufe.');cargo=vector([350,250,100]);}}
+  const f=flightInfo(n,p,dest,count,ship==='probe');const cost={...cargo,fuel:cargo.fuel+f.fuel};pay(p,cost);p.ships[ship]-=count;n.missions.push({id:++n.seq,type:action.type,ship,count,from:p.id,to:dest.id,cargo,phase:'outbound',start:n.time,duration:f.ms,due:n.time+f.ms});
+ }
+ else if(action.type==='reserve'){if(!action.reserves||RES.some(k=>!Number.isSafeInteger(action.reserves[k])||action.reserves[k]<0||action.reserves[k]>1e12))throw Error('Ungültige Reserve.');p.reserves={...action.reserves};}
+ else if(action.type==='stop-route'){const m=n.missions.find(m=>m.id===action.id&&m.type==='route');if(!m)throw Error('Route nicht gefunden.');m.stopping=true;report(n,'Route endet nach dieser Runde',m.name);}
+ else if(['station','collect','route','deliver'].includes(action.type)){
+  if(n.missions.length>=100)throw Error('Zu viele Flotten unterwegs.');
+  if(action.type!=='station'&&action.ship&&action.ship!=='transport')throw Error('Liefern, Abholen und Handelsrouten benötigen Transporter.');
+  const ship=action.type==='station'?(action.ship||'transport'):'transport',count=action.count;
+  if(!Object.hasOwn(SHIPS,ship)||!Number.isInteger(count)||count<1||count>100||p.ships[ship]<count)throw Error('Nicht genügend verfügbare Schiffe (1–100 pro Flotte).');
+  const cargo=vector([0,0,0]);let m={id:++n.seq,type:action.type,ship,count,from:p.id,cargo,phase:'outbound',start:n.time};
+  if(action.type==='route'){
+   const stops=action.stops;if(!Array.isArray(stops)||stops.length<2||stops.length>12||stops[0].planet!==p.id)throw Error('Eine Route benötigt 2–12 Stopps und beginnt hier.');
+   for(let i=0;i<stops.length;i++){getPlanet(n,stops[i].planet);if(stops[i].planet===stops[(i+1)%stops.length].planet||!validOrder(stops[i].load)||!validOrder(stops[i].unload))throw Error('Ungültiger Stopp oder Laderegel.');}
+   const f=routeInfo(n,stops,count);if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel)throw Error('Treibstoff reicht nicht für die Runde einschließlich Reserve.');pay(p,vector([0,0,f.fuel]));
+   Object.assign(m,{name:String(action.name||'Handelsroute').trim().slice(0,40)||'Handelsroute',stops:structuredClone(stops),home:p.id,index:0,repeat:!!action.repeat,stopping:false,rounds:0});stopCargo(n,m,stops[0]);leaveRoute(n,m,1);
+  }else{
+   const dest=getPlanet(n,action.to);if(dest.id===p.id)throw Error('Wähle einen anderen Zielplaneten.');const f=legInfo(n,p,dest,count);
+   const order=action.order||action.cargo||vector([0,0,0]);if(!validOrder(order))throw Error('Ladung: ganze Mengen oder Maximum wählen.');
+   if(ship!=='transport'&&RES.some(k=>order[k]!==0))throw Error('Material benötigt Transporter.');
+   const fuel=f.fuel*(action.type==='station'?1:2);if(p.resources.fuel-(p.reserves?.fuel||0)<fuel)throw Error('Nicht genügend Treibstoff einschließlich Reserve.');pay(p,vector([0,0,fuel]));
+   if(action.type!=='collect'){const exact=RES.reduce((a,k)=>a+(order[k]==='max'?0:order[k]),0);if(exact>cargoCapacity(n,count)||RES.some(k=>order[k]!=='max'&&order[k]>Math.floor(Math.max(0,p.resources[k]+p.depot[k]-(p.reserves?.[k]||0)))))throw Error('Die gewählte Ladung passt nicht oder lokale Ressourcen fehlen.');loadCargo(n,p,cargo,order,count);if(action.type==='deliver'&&!RES.some(k=>cargo[k]>0))throw Error('Wähle verfügbare Ladung.');}else {if(!RES.some(k=>order[k]==='max'||order[k]>0))throw Error('Wähle Material zum Abholen.');m.order={...order};}
+   Object.assign(m,{to:dest.id,duration:f.ms,due:n.time+f.ms});
+  }
+  p.ships[ship]-=count;n.missions.push(m);
+ }
+ else throw Error('Unbekannte Aktion.');return n;
+}
+
+
+const SAVE_KEY='imperium-v1';
+const isNum=(x,max=1e12)=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=max;
+const integer=(x,max)=>isNum(x,max)&&Number.isInteger(x);
+const text=(x,max=100)=>typeof x==='string'&&x.length<=max;
+function check(ok){if(!ok)throw Error('Ungültiger oder inkompatibler Spielstand.');}
+function validateSave(input){
+ check(input&&typeof input==='object'&&input.version===1);
+ const s=structuredClone(input);
+ check(text(s.name,30)&&s.name.trim().length>0&&isNum(s.time,8.64e15)&&isNum(s.created,8.64e15)&&s.created<=s.time&&integer(s.seq,1e9));
+ check(Array.isArray(s.planets)&&s.planets.length>=1&&s.planets.length<=3);
+ check(s.tech&&Object.entries(TECHS).every(([k,t])=>integer(s.tech[k],t.max)));
+ const ids=s.planets.map(p=>p.id);check(ids[0]==='home'&&new Set(ids).size===ids.length&&ids.every(id=>id==='home'||TARGETS.some(t=>t.id===id))&&ids.includes(s.active));
+ const cargo=c=>c&&RES.every(k=>isNum(c[k]));
+ const job=(j,defs)=>j===null||(j&&Object.hasOwn(defs,j.key)&&isNum(j.start,8.64e15)&&isNum(j.end,8.64e15)&&j.start<=s.time&&j.end>=s.time&&j.end>j.start);
+ for(const p of s.planets){check(text(p.name,40)&&text(p.coord,30)&&text(p.kind,40)&&/^#[0-9a-f]{6}$/i.test(p.color)&&typeof p.ocean==='boolean'&&isNum(p.energy,10)&&p.energy>0&&isNum(p.distance,100));check(Array.isArray(p.mult)&&p.mult.length===3&&p.mult.every(x=>isNum(x,10)));p.reserves??={metal:0,crystal:0,fuel:0};check(cargo(p.reserves)&&cargo(p.resources)&&cargo(p.depot));check(p.buildings&&Object.keys(BUILDINGS).every(k=>integer(p.buildings[k],30)));check(p.ships&&Object.keys(SHIPS).every(k=>integer(p.ships[k],1e6)));check(job(p.build,BUILDINGS)&&(!p.build||p.build.level===p.buildings[p.build.key]+1));check(job(p.shipjob,SHIPS)&&(!p.shipjob||integer(p.shipjob.count,50)&&p.shipjob.count>0));}
+ check(job(s.research,TECHS)&&(!s.research||s.research.level===s.tech[s.research.key]+1&&ids.includes(s.research.planet)));
+ check(Array.isArray(s.discovered)&&s.discovered.length<=3&&new Set(s.discovered).size===s.discovered.length&&s.discovered.every(id=>TARGETS.some(t=>t.id===id)));
+ check(Array.isArray(s.missions)&&s.missions.length<=100);
+ const eventIds=[];
+ const order=o=>o&&RES.every(k=>o[k]==='max'||integer(o[k],1e12));
+ for(const m of s.missions){
+  check(integer(m.id,s.seq)&&m.id>0&&ids.includes(m.from)&&['probe','colony','transport','deliver','collect','station','route'].includes(m.type)&&Object.hasOwn(SHIPS,m.ship)&&integer(m.count,100)&&m.count>0&&cargo(m.cargo)&&['outbound','return'].includes(m.phase)&&isNum(m.start,8.64e15)&&m.start<=s.time&&isNum(m.due,8.64e15)&&m.due>=s.time&&isNum(m.duration,86400000)&&m.duration>0);
+  if(['probe','colony'].includes(m.type)){check(m.ship===m.type&&TARGETS.some(t=>t.id===m.to));check(m.type!=='colony'||m.phase==='outbound'&&m.count===1&&!ids.includes(m.to));}
+  else {check(ids.includes(m.to)&&m.from!==m.to);check(m.type==='station'||m.ship==='transport');}
+  if(m.type==='collect')check(order(m.order));
+  if(m.type==='station')check(m.phase==='outbound');
+  if(m.type==='route'){
+   check(m.phase==='outbound'&&text(m.name,40)&&typeof m.repeat==='boolean'&&typeof m.stopping==='boolean'&&integer(m.rounds,1e12)&&Array.isArray(m.stops)&&m.stops.length>=2&&m.stops.length<=12&&ids.includes(m.home)&&m.stops[0].planet===m.home&&integer(m.index,m.stops.length-1));
+   check(m.stops.every((stop,i)=>ids.includes(stop.planet)&&stop.planet!==m.stops[(i+1)%m.stops.length].planet&&order(stop.load)&&order(stop.unload))&&m.to===m.stops[m.index].planet&&m.from===m.stops[(m.index+m.stops.length-1)%m.stops.length].planet);
+  }
+  eventIds.push(m.id);
+ }
+ check(new Set(eventIds).size===eventIds.length);
+ check(Array.isArray(s.reports)&&s.reports.length<=60&&s.reports.every(r=>integer(r.id,s.seq)&&isNum(r.time,8.64e15)&&r.time<=s.time&&text(r.title,100)&&text(r.body,1000)));
+ return s;
+}
+function parseSave(raw){if(typeof raw!=='string'||raw.length>2000000)throw Error('Die Spielstanddatei ist zu groß.');try{return validateSave(JSON.parse(raw));}catch(e){throw Error(e.message==='Die Spielstanddatei ist zu groß.'?e.message:'Die Datei enthält keinen gültigen WaHueLaPa-Universe-Spielstand (Version 1).');}}
+function saveGame(s,store=globalThis.localStorage,key=SAVE_KEY){const raw=JSON.stringify(s);const old=store.getItem(key);if(old)store.setItem(key+'-backup',old);store.setItem(key,raw);}
+function loadGame(store=globalThis.localStorage,saveKey=SAVE_KEY){let damaged=false;for(const key of [saveKey,saveKey+'-backup']){const raw=store.getItem(key);if(raw){try{return {state:parseSave(raw),recovered:damaged};}catch{damaged=true;}}}if(damaged)throw Error('Spielstand und Sicherung sind beschädigt. Exportiere vorhandene Dateien oder starte bewusst neu.');return {state:null,recovered:false};}
+
+// Only public project settings belong here. Never enter a service-role/secret key.
+const CLOUD_CONFIG={
+ enabled:true,
+ url:'https://qavlbxbkhahjbpgcmazd.supabase.co',
+ publishableKey:'sb_publishable_L8-DpNaCVAWYkw7EEPmOXg_10ott0yw',
+ redirectUrl:'https://cimera311.github.io/Wahuelapa-Universe/'
+};
+
+
+class CloudConflict extends Error {constructor(){super('Ein anderes Gerät hat einen neueren Spielstand gespeichert. Exportiere bei Bedarf deinen lokalen Stand und lade dann den Cloud-Stand.');this.name='CloudConflict';}}
+// Client injected for tests. Saves use a database-side atomic revision check.
+function createCloud(client,redirectUrl){
+ let user=null,revision=0,loaded=false,busy=false;
+ const checked=result=>{if(result.error)throw result.error;return result.data;};
+ return {
+  get user(){return user;},get revision(){return revision;},get loaded(){return loaded;},
+  async session(){const data=checked(await client.auth.getSession());user=data.session?.user||null;loaded=false;return user;},
+  async signIn(email,password){const data=checked(await client.auth.signInWithPassword({email,password}));user=data.user;loaded=false;return user;},
+  async signUp(email,password){return checked(await client.auth.signUp({email,password,options:{emailRedirectTo:redirectUrl}}));},
+  async signOut(){checked(await client.auth.signOut());user=null;revision=0;loaded=false;},
+  async leaderboard(){if(!user)throw Error('Bitte anmelden, um die gemeinsame Rangliste zu sehen.');const result=await client.rpc('imperium_leaderboard');if(result.error){if(result.error.code==='PGRST202'||result.error.code==='42883')throw Error('Die Rangliste benötigt noch die einmalige Supabase-Erweiterung (supabase/leaderboard.sql).');throw result.error;}if(!Array.isArray(result.data))throw Error('Ungültige Ranglisten-Antwort.');return result.data;},
+  async load(){if(!user)throw Error('Bitte anmelden.');if(busy)throw Error('Speicherung läuft noch.');loaded=false;const row=checked(await client.from('game_saves').select('state,revision').eq('user_id',user.id).maybeSingle());const state=row?validateSave(row.state):null;revision=row?Number(row.revision):0;if(!Number.isSafeInteger(revision)||revision<0)throw Error('Ungültige Cloud-Version.');loaded=true;return state;},
+  async save(state){if(!user||!loaded)throw Error('Cloud-Spielstand zuerst laden.');if(busy)throw Error('Speicherung läuft noch.');const snapshot=validateSave(state);busy=true;try{const result=await client.rpc('save_imperium',{p_state:snapshot,p_expected:revision});if(result.error){if(result.error.message?.includes('SAVE_CONFLICT')){loaded=false;throw new CloudConflict();}throw result.error;}const next=Number(result.data);if(next!==revision+1)throw Error('Cloud-Speicherung lieferte keine gültige Bestätigung.');revision=next;return next;}finally{busy=false;}}
+ };
+}
+async function connectCloud(config){
+ if(!config.enabled)return null;
+ if(!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(config.url)||!config.publishableKey)throw Error('Cloud-Konfiguration fehlt oder ist ungültig.');
+ const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm');
+ return createCloud(createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}),config.redirectUrl);
+}
+
+
+
+
+
 
 const fleetDrafts=new Map();
 const app=document.getElementById('app');let state=null,tab='overview',readOnly=false,storageOK=true,lastSave=0;
@@ -94,3 +318,4 @@ document.addEventListener('submit',async e=>{if(!['cloud-auth-form','cloud-new-f
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-action]');if(!b||b.disabled||readOnly)return;try{switch(b.dataset.action){case 'cloud-save':await flushCloud();break;case 'cloud-load':if(cloud?.user&&confirm('Cloud-Stand laden? Nicht synchronisierte Änderungen werden ersetzt. Bei Bedarf zuerst exportieren.'))await loadAccount(true);break;case 'cloud-logout':await logoutAccount();break;case 'cloud-adopt':if(state)await finishAccount(structuredClone(state));break;}}catch(err){toast(err.message);}});
 async function initCloud(){if(!CLOUD_CONFIG.enabled||readOnly)return;cloudBlocked=true;try{cloud=await connectCloud(CLOUD_CONFIG);const user=await cloud.session();if(user)await loadAccount();else cloudBlocked=false;}catch(e){cloudMessage='⚠ Cloud-Verbindung nicht verfügbar';toast(e.message||cloudMessage); // Keep the guest save intact. Explicit login can retry.
  cloudBlocked=false;}render();}
+</script></body></html>

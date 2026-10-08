@@ -81,3 +81,13 @@ Gemeinsames Leaderboard, NPC-Raids, automatische Transportrouten und der große 
 ## Optionale Anmeldung
 
 Siehe [CLOUD_SETUP.md](CLOUD_SETUP.md) für E-Mail/Passwort und private Cloud-Spielstände. Der Live-Gastmodus bleibt aktiv, bis ein Supabase-Projekt eingerichtet ist. 22 Tests bestehen; die Cloud-Tests verwenden ein simuliertes Backend, keine echte Anmeldung.
+
+## Flotten und Handelsrouten
+
+Unter **Flotten** findest du den Hangar der aktiven Welt, den Schiffbau und eine Übersicht aller stationierten und reisenden Schiffe. Liefern bringt Material zum Ziel und die Transporter zurück. Abholen lädt erst bei Ankunft am Ziel. Stationieren verlegt einen Schiffstyp dauerhaft; Transporter können Material mitnehmen.
+
+Laderegeln akzeptieren ganze Mengen oder `max`. Die Priorität bei begrenztem Laderaum ist Metall, Kristall, Treibstoff. Lokale Reserven schützen Bestände vor Flottenbeladung, einschließlich Lieferdepot; Bau und Forschung dürfen Reserven verwenden. Einzelne Liefer- und Stationierungsaufträge weisen zu große exakte Mengen zurück. Handelsstopps und Abholungen laden bis zu den gewünschten Mengen, soweit Bestand und Laderaum reichen.
+
+Handelsrouten haben 2–12 Stopps, beginnen auf der aktiven Welt und kehren automatisch dorthin zurück. An jedem Zwischenstopp wird erst abgeladen und dann eingeladen. Bei Rückkehr wird die komplette Restladung eingelagert. Eine Route kann einmalig oder wiederholt laufen. „Route nach dieser Runde beenden“ bringt Schiffe und Material sicher zum Start zurück. Treibstoff wird für jede vollständige Runde dort vorab bezahlt; fehlt er, endet die Route dort. Flugkosten berücksichtigen Strecke, Transporterzahl und Antriebstechnik. Ob eine Route Treibstoff spart, hängt von ihrer Reihenfolge ab.
+
+Routen werden während Abwesenheit chronologisch simuliert. Nach außergewöhnlich langer Abwesenheit mit mehr als 100.000 Ereignissen enden automatische Routen nach ihrer aktuellen Runde mit einem Bericht; die Wirtschaft läuft bis zur aktuellen Zeit weiter. Spielstandformat und bestehende Cloud-/Ranglisten-SQL bleiben kompatibel. Für diese Erweiterung ist kein zusätzliches SQL erforderlich.
