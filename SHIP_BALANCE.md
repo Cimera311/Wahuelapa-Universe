@@ -9,10 +9,10 @@ Die Bilder und Rollen stammen aus dem Drive-Konzeptpaket ship-concepts-v1. Koste
 | Karawane | 800 | 450 | 180 | 20 s | 5000 | 0,90 | 12 | 2 | Transporttechnik 2 | Staustrahl 2 |
 | Atlas | 2400 | 1400 | 600 | 45 s | 16000 | 0,70 | 28 | 4 | Transporttechnik 3 | Impuls 2 |
 | Arche | 7600 | 4400 | 2000 | 90 s | 50000 | 0,55 | 70 | 6 | Transporttechnik 5 | Hyperraum 2 |
-| Falke | 240 | 150 | 60 | 10 s | Verbrennung 0 | 1,50 | 6 | 1 | Militärtechnik 1 | Verbrennung 0 |
-| Wächter | 900 | 600 | 220 | 25 s | Verbrennung 0 | 1,10 | 16 | 2 | Militärtechnik 2 | Staustrahl 1 |
-| Donner | 3000 | 1800 | 700 | 55 s | Verbrennung 0 | 0,85 | 40 | 4 | Militärtechnik 3 | Impuls 1 |
-| Titan | 9500 | 6500 | 2500 | 120 s | Verbrennung 0 | 0,60 | 100 | 6 | Militärtechnik 4 | Hyperraum 1 |
+| Falke | 240 | 150 | 60 | 10 s | 0 | 1,50 | 6 | 1 | Militärtechnik 1 | Verbrennung 0 |
+| Wächter | 900 | 600 | 220 | 25 s | 0 | 1,10 | 16 | 2 | Militärtechnik 2 | Staustrahl 1 |
+| Donner | 3000 | 1800 | 700 | 55 s | 0 | 0,85 | 40 | 4 | Militärtechnik 3 | Impuls 1 |
+| Titan | 9500 | 6500 | 2500 | 120 s | 0 | 0,60 | 100 | 6 | Militärtechnik 4 | Hyperraum 1 |
 
 * Treibstoff je Entfernungseinheit und Schiff für eine Strecke, vor Antriebstechnik und Rundung. Frachter-Laderaum steigt um 15 % je Transporttechnik-Stufe, je Schiff abgerundet. Flugzeit und Verbrauch sinken nur durch die dem Schiff zugeordneten Triebwerke; der Tempo-Multiplikator beeinflusst zusätzlich die Flugzeit. Pro Flottenauftrag wird ein Schiffstyp eingesetzt; gemischte Flotten gehören zum späteren Kampfsystem.
 
