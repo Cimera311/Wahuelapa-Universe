@@ -1,5 +1,11 @@
 # PvP v1 – WaHueLaPa Universe
 
+## Bestehender Live-Endpunkt
+
+Die im Dashboard angelegte Funktion hat den festen Slug **swift-handler**, auch wenn der Anzeigename **game-command** lautet. Die Website verwendet deshalb `commandFunction: 'swift-handler'` in `src/cloud-config.js`. Das angezeigte Umbenennen ändert den Slug nicht. Für Updates im Dashboard die vorhandene **swift-handler**-Funktion öffnen und den aktuellen Code aus `supabase/dashboard/game-command.ts` einfügen.
+
+Bei einer neuen Installation über CLI wird dagegen **game-command** deployed. In diesem Fall `commandFunction` in der Website-Konfiguration auf **game-command** setzen. Die Konfiguration muss immer zum echten URL-Slug passen.
+
 ## Status und Installation
 
 Der Code implementiert PvP ohne laufenden Cron. Angemeldete Spieler senden Spielaktionen an die Supabase Edge Function `game-command`. Diese berechnet die verbindliche Wirtschaft, lokale Flotten, Galaxiemissionen und Kämpfe anhand der Datenbankzeit. Der Browser zeigt eine Vorschau zwischen den Abgleichen.

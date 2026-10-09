@@ -35,3 +35,9 @@ test('A lost command response is retried with the identical request ID; rejectio
  assert.equal(requests.length,2);assert.equal(requests[0].requestId,requests[1].requestId);assert.equal(c.pending,null);
  reject=true;await assert.rejects(c.gameRequest({type:'attack',action:{}}),/Insufficient ships/);assert.equal(c.pending,null);
 });
+
+test('Configured Edge Function slug is used for loading and game commands',async()=>{
+ const calls=[],s=newGame('Configured server'),client={auth:{getSession:async()=>({data:{session:{user:{id:'a'}}}})},rpc:async()=>({data:{version:1,enabled:false}}),functions:{invoke:async(name,{body})=>{calls.push({name,type:body.type});return {data:{state:s,revision:1,pvp:{serverNow:s.time,enabled:false}}};}}};
+ const c=createCloud(client,'https://example.invalid/','swift-handler');await c.session();await c.load();await c.gameRequest({type:'command',action:{type:'build',key:'metal'}});
+ assert.deepEqual(calls,[{name:'swift-handler',type:'sync'},{name:'swift-handler',type:'command'}]);assert.ok(c.authoritative);
+});

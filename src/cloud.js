@@ -2,9 +2,9 @@ import {validateGalaxy} from './galaxy.js';
 import {validateSave} from './storage.js';
 export class CloudConflict extends Error {constructor(){super('Ein anderes Gerät hat einen neueren Spielstand gespeichert. Exportiere bei Bedarf deinen lokalen Stand und lade dann den Cloud-Stand.');this.name='CloudConflict';}}
 // Client injected for tests. Saves use a database-side atomic revision check.
-export function createCloud(client,redirectUrl){
+export function createCloud(client,redirectUrl,commandFunction='game-command'){
  let user=null,revision=0,loaded=false,busy=false,authoritative=false,pvp=null,receivedAt=0,pending=null;
- async function perform(request){const result=await client.functions.invoke('game-command',{body:request});if(result.error){let message=result.error.message;try{message=(await result.error.context?.json())?.error||message;}catch{}const failure=Error(message||'Spielserver nicht erreichbar.');failure.definitive=result.error.context?.status>=400&&result.error.context?.status<500;throw failure;}if(result.data?.error){const failure=Error(result.data.error);failure.definitive=true;throw failure;}const next=Number(result.data?.revision);if(!Number.isSafeInteger(next)||next<0||!result.data?.pvp)throw Error('Ungültige Serverantwort.');const state=result.data.state?validateSave(result.data.state):null;revision=next;pvp=result.data.pvp;receivedAt=Date.now();return {state,pvp};}
+ async function perform(request){const result=await client.functions.invoke(commandFunction,{body:request});if(result.error){let message=result.error.message;try{message=(await result.error.context?.json())?.error||message;}catch{}const failure=Error(message||'Spielserver nicht erreichbar.');failure.definitive=result.error.context?.status>=400&&result.error.context?.status<500;throw failure;}if(result.data?.error){const failure=Error(result.data.error);failure.definitive=true;throw failure;}const next=Number(result.data?.revision);if(!Number.isSafeInteger(next)||next<0||!result.data?.pvp)throw Error('Ungültige Serverantwort.');const state=result.data.state?validateSave(result.data.state):null;revision=next;pvp=result.data.pvp;receivedAt=Date.now();return {state,pvp};}
  const checked=result=>{if(result.error)throw result.error;return result.data;};
  return {
   get authoritative(){return authoritative;},get pvp(){return pvp;},get pending(){return pending;},get now(){return pvp?Math.max(pvp.serverNow,pvp.serverNow+Date.now()-receivedAt):Date.now();},get user(){return user;},get revision(){return revision;},get loaded(){return loaded;},
@@ -26,5 +26,5 @@ export async function connectCloud(config){
  if(!config.enabled)return null;
  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(config.url)||!config.publishableKey)throw Error('Cloud-Konfiguration fehlt oder ist ungültig.');
  const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm');
- return createCloud(createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}),config.redirectUrl);
+ return createCloud(createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}),config.redirectUrl,config.commandFunction||'game-command');
 }
