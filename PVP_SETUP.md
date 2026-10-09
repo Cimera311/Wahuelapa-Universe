@@ -58,9 +58,9 @@ Zum Einschalten `false` durch `true` ersetzen. Das Erhöhen von `epoch` verhinde
 
 ## Ablauf und Regeln
 
-- Tutorial-Welten sind dauerhaft geschützt. Angriffe starten ausschließlich an eigenen besiedelten gemeinsamen Kolonien.
-- Jede neue gemeinsame Kolonie hat 24 Stunden Schutz ab Ankunft des Kolonieschiffs. Ein eigener Angriff beendet den Schutz der Startkolonie. Beim Start und bei Ankunft wird der Zielschutz geprüft.
-- Bereits vorhandene Kolonien behalten ihre bekannte Gründungszeit aus abgeschlossenen Missionen. Fehlt diese, erhalten sie bei der ersten Installation einmal 24 Stunden Schonfrist.
+- Tutorial-Welten sind dauerhaft geschützt. Angriffe können von eigenen besiedelten gemeinsamen Kolonien oder aus dem Heimatsystem starten. Für Heimatstarts ist mindestens eine tatsächlich besiedelte eigene Galaxiekolonie erforderlich; eine Reservierung zählt nicht. Staustrahltechnik 1 und die zum Schiff passende Galaxie-Triebwerksforschung sind erforderlich. Falken benötigen Falke-Galaxieantrieb; kleine Transporter und Kurier können nicht aus der Heimat mitfliegen. Die Entfernung wird vom persönlichen Galaxie-Startplatz berechnet.
+- Jede neue gemeinsame Kolonie hat 1 Stunde Schutz ab Ankunft des Kolonieschiffs. Ein eigener Angriff beendet den Schutz der Startkolonie. Ein Heimatangriff beendet den Schutz aller eigenen besiedelten Galaxiekolonien; die Heimat bleibt geschützt. Beim Start und bei Ankunft wird der Zielschutz geprüft.
+- Bereits vorhandene Kolonien behalten ihre bekannte Gründungszeit aus abgeschlossenen Missionen. Fehlt diese, erhalten sie bei der ersten Installation einmal 1 Stunde Schonfrist.
 - 1–100 Schiffe je Angriffsflotte, mindestens ein Kriegsschiff. Maximal eine aktive Angriffsflotte je Commander und zwei Starts gegen denselben Commander innerhalb von 24 Stunden.
 - Für diese erste Version maximal 5000 Einheiten je Planet einschließlich Bauaufträgen und zugehörigen Rückflotten. Gemeinsame Kolonien mit größeren Altbeständen müssen vor dem Umstieg angepasst werden. Die Reservierungsprüfung verhindert, dass spätere eigene Ankünfte den Grenzwert überschreiten.
 - Interstellare Falken benötigen die neue Forschung **Falke-Galaxieantrieb** sowie Staustrahltechnik. Kleine Transporter und Kurier können nur innerhalb desselben Systems angreifen.
@@ -128,3 +128,11 @@ npx deno check --node-modules-dir=auto --no-lock supabase/functions/game-command
 Tests decken Berechtigungen, Schutzgrenzen, Warnungsgeheimhaltung, gleichzeitig wirkenden Beschuss, beschädigte Rückflotten, Bunker/Depot, Beutebudget, Offline-Nachholen, Bauabschlüsse an der Ankunftsgrenze, Pause sowie doppelte/verlorene Anfragen ab. PostgreSQL wird durch PGlite geprüft, nicht durch eine SQL-Attrappe.
 
 Offizielle Grundlagen: [Edge-Function-Authentifizierung](https://supabase.com/docs/guides/functions/auth-legacy-jwt), [getUser](https://supabase.com/docs/reference/javascript/auth-getuser), [Edge Functions deployen](https://supabase.com/docs/guides/functions/quickstart).
+
+## Update: Heimatangriffe und 1 Stunde Schutz (9. Oktober 2026)
+
+Die neue Website aktiviert Heimatangriffe erst, wenn die Serverantwort `homeAttacks: true` liefert. Bis zum Server-Deploy zeigt sie die alten Regeln und einen Hinweis auf das fehlende Spielserver-Update.
+
+**Aktivierung:** Den vollständigen aktuellen Inhalt von `supabase/dashboard/game-command.ts` in der vorhandenen Edge Function **swift-handler → Code → index.ts** ersetzen und deployen. Keine neue Funktion anlegen; keine SQL-Migration erforderlich. Danach die Website neu laden.
+
+Der neue Schutzzeitraum gilt auch für bestehende Kolonien ab ihrer gespeicherten Gründungszeit. Schutz, der durch einen eigenen Angriff schon beendet wurde, wird nicht erneuert. Die 24-Stunden-Grenzen für Wiederholungsangriffe und Beutebudgets bleiben bestehen.

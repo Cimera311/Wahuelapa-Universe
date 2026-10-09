@@ -4,6 +4,7 @@ import {validateSave} from './storage.js';
 import {galaxyFlight} from './galaxy.js';
 import {attackFleet,attackFlight,warningFraction,resolveBattle,loadPlunder,takeHulls,putHulls} from './combat.js';
 export const DAY=86400000;
+export const COLONY_PROTECTION=3600000;
 const ms=v=>typeof v==='number'?v:Date.parse(v);
 const zero=()=>vector([0,0,0]);
 function log(s,time,title,body){s.reports.unshift({id:++s.seq,time:Math.max(time,s.time),title,body:body.slice(0,1000)});s.reports=s.reports.slice(0,60);}
@@ -39,7 +40,7 @@ function survey(w,m){if(!w.surveys.some(q=>q.user_id===m.user_id&&q.planet_id===
 function shieldFactor(until,time){return until?Math.max(0,Math.min(1,1-(until-time)/300000)):1;}
 function resolveAttack(w,m,time){
  const a=stateOf(w,m.attacker_id),target=w.planets.find(p=>p.id===m.to),row=w.saves.find(x=>x.user_id===m.defender_id);
- if(!target||target.owner_id!==m.defender_id||target.reserved||!row||(!target.protection_ended&&time<(target.colonized_at||time)+DAY)){
+ if(!target||target.owner_id!==m.defender_id||target.reserved||!row||(!target.protection_ended&&time<(target.colonized_at||time)+COLONY_PROTECTION)){
   m.status='returning';m.survivors={...m.fleet};m.return_hulls=m.hulls;m.cargo=zero();m.resolved_at=w.now;
   m.report={outcome:'cancelled',at:time,reason:'Das Ziel ist nicht mehr angreifbar.'};log(a,time,'Angriff abgebrochen',m.report.reason);return;
  }
@@ -114,15 +115,19 @@ function launchGalaxy(w,uid,action,id){
 function launchAttack(w,uid,action,id){
  if(!w.settings.enabled)throw Error('PvP ist momentan pausiert.');
  const s=stateOf(w,uid),from=getPlanet(s,action.from),target=w.planets.find(p=>p.id===action.to),origin=w.planets.find(p=>p.id===from.id);
- if(!origin||origin.owner_id!==uid||origin.reserved||!target||!target.owner_id||target.owner_id===uid||target.reserved)throw Error('Wähle eine eigene gemeinsame Kolonie und eine fremde besiedelte Kolonie.');
- if(!target.protection_ended&&w.now<(target.colonized_at||w.now)+DAY)throw Error('Diese Kolonie hat noch 24-Stunden-Gründungsschutz.');
+ if(!target||!target.owner_id||target.owner_id===uid||target.reserved)throw Error('Wähle eine fremde besiedelte gemeinsame Kolonie als Ziel.');
+ const colonies=w.planets.filter(p=>p.owner_id===uid&&!p.reserved&&s.planets.some(q=>q.id===p.id&&q.system));
+ if(from.system){if(!origin||origin.owner_id!==uid||origin.reserved)throw Error('Wähle eine eigene besiedelte gemeinsame Kolonie als Start.');}
+ else if(!colonies.length)throw Error('Für Angriffe aus dem Heimatsystem benötigst du mindestens eine eigene besiedelte Galaxiekolonie.');
+ if(!target.protection_ended&&w.now<(target.colonized_at||w.now)+COLONY_PROTECTION)throw Error('Diese Kolonie hat noch 1 Stunde Gründungsschutz.');
  if(w.attacks.some(m=>m.attacker_id===uid&&m.status!=='returned'))throw Error('Du hast bereits eine Angriffsflotte unterwegs.');
  if(w.attacks.filter(m=>m.attacker_id===uid&&m.defender_id===target.owner_id&&m.started_at>w.now-DAY).length>=2)throw Error('Maximal zwei Angriffe auf denselben Commander innerhalb von 24 Stunden.');
  const fleet=attackFleet(action.fleet);
  for(const [k,n] of Object.entries(fleet))if((from.ships[k]||0)<n)throw Error('Nicht genügend verfügbare Schiffe.');
  const f=attackFlight(s,from,target.meta,fleet),defender=stateOf(w,target.owner_id),fraction=warningFraction(defender.tech.scout||0);
  subtract(from,vector([0,0,f.fuel]));const hulls=takeHulls(from,fleet);for(const [k,n] of Object.entries(fleet))from.ships[k]-=n;
- origin.protection_ended=true;
+ if(origin)origin.protection_ended=true;
+ else for(const p of colonies)p.protection_ended=true;
  w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,combat:{fleet,tech:{...s.tech},hulls},shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
 }
 
@@ -162,8 +167,8 @@ export function processWorld(snapshot,uid,request){
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,
- colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+DAY})),
+ return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,arrival:m.arrival_at,returnAt:m.return_at})),
  incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),
  reports:w.attacks.filter(m=>(m.attacker_id===uid||m.defender_id===uid)&&m.report).sort((a,b)=>b.arrival_at-a.arrival_at).slice(0,30).map(m=>({id:m.id,from:m.from,to:m.to,returnAt:m.return_at,...m.report}))};

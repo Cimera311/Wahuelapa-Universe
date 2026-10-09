@@ -23,13 +23,17 @@ export function attackFleet(fleet){
  return {...fleet};
 }
 export function attackFlight(s,from,to,fleet){
- attackFleet(fleet);if(!from.system||!to.system)throw Error('Angriffe starten und enden an gemeinsamen Kolonien.');
- const dist=Math.max(1,Math.hypot(from.x-to.x,from.y-to.y)/40+Math.abs(from.slot-to.slot)*.15);
+ attackFleet(fleet);if(!to.system)throw Error('Angriffsziele müssen fremde gemeinsame Kolonien sein.');
+ const origin=from.system?from:{...s.galaxy,slot:0};
+ if(![origin.x,origin.y,origin.slot,to.x,to.y,to.slot].every(Number.isFinite))throw Error('Der persönliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.');
+ if(!from.system&&(s.tech.ramjet||0)<1)throw Error('Für Angriffe aus dem Heimatsystem fehlen Staustrahltriebwerke Stufe 1.');
+ const dist=Math.max(1,Math.hypot(origin.x-to.x,origin.y-to.y)/40+Math.abs(origin.slot-to.slot)*.15);
  let ms=0,fuel=0,slowest='';
  for(const [key,count] of Object.entries(fleet)){
   const sh=SHIPS[key],remote=from.system!==to.system;
   let engine=sh.engine||'drive';
   if(remote&&!sh.engine){if(key!=='falke'||!s.tech.assaultDrive)throw Error('Für interstellare Flüge fehlt ein geeigneter Antrieb.');engine='ramjet';}
+  if(remote&&(s.tech[engine]||0)<1)throw Error('Für interstellare Flüge fehlt die passende Triebwerksforschung.');
   const factor=1+.12*(s.tech[engine]||0);
   const time=Math.max(300000,Math.ceil((600+dist*120)*1000/(sh.speed*factor)));
   if(time>ms){ms=time;slowest=key;}fuel+=Math.ceil(sh.fuel*2*dist*count/factor);

@@ -90,7 +90,7 @@ test('PvP database and trusted command boundary',async t=>{
   await runServerCommand(rpc,A,colony);const cm=(await db.query('select * from public.galaxy_missions where id=$1',[await missionId(A,colony.requestId)])).rows[0];
   fakeNow=new Date(cm.arrival_at).getTime()+1;const colonized=await runServerCommand(rpc,A,{type:'sync'});assert.equal(colonized.state.planets.length,3);
   const gp=(await db.query("select * from public.galaxy_planets where id='g-cetus-p1'")).rows[0];assert.equal(gp.reserved,false);assert.equal(new Date(gp.colonized_at).getTime(),new Date(cm.arrival_at).getTime());
-  assert.equal(colonized.pvp.colonies.find(p=>p.id==='g-cetus-p1').protectedUntil,new Date(cm.arrival_at).getTime()+86400000);
+  assert.equal(colonized.pvp.colonies.find(p=>p.id==='g-cetus-p1').protectedUntil,new Date(cm.arrival_at).getTime()+3600000);
  });
 
 });
