@@ -17,3 +17,7 @@ Alte Spielstände und Routen mit einem Schiffstyp bleiben kompatibel. Version 1 
 
 ## Prüfung
 Tests decken vorhandene Spielstände, getrennte Forschungsboni, Kapazität, Zeit, Verbrauch, unveränderte Flüge vor der Rückkehr, atomaren Wechsel, fehlende Schiffe, erneute Aktivierung, Verwerfen und sicheres Beenden ab. Die PostgreSQL-Prüfung vergleicht Ranglistenpunkte mit einer gleichwertigen Einzelflottenliste.
+
+## Routenmenüs
+
+Handelsrouten öffnet standardmäßig **Bestehende Routen**. Diese Übersicht enthält ausschließlich aktive Routen, ihre echte Flotte, aktuelle Fracht, Laderaum, nächste Ankunft und Fortschritt der aktuellen Flugstrecke. Suche nach Namen, Planeten oder Schiffen und Filter nach Status sind kombinierbar. **Neue Route** enthält ausschließlich den Erstellungseditor. **Bearbeiten** öffnet den Editor genau einer Route unter Bestehende Routen. Nach Start oder Vormerkung kehrt die Ansicht zur Übersicht zurück. Ungespeicherte Formulare bleiben beim Menüwechsel als lokale Entwürfe erhalten. Die Untermenüs sind per Tab und Pfeiltasten bedienbar.
