@@ -1,0 +1,82 @@
+{
+  "actions/attack": {
+    "card": "actions/attack.webp",
+    "icon": "actions/attack-128.webp"
+  },
+  "actions/cancelShip": {
+    "card": "actions/cancelShip.webp",
+    "icon": "actions/cancelShip-128.webp"
+  },
+  "actions/debris": {
+    "card": "actions/debris.webp",
+    "icon": "actions/debris-128.webp"
+  },
+  "actions/protection": {
+    "card": "actions/protection.webp",
+    "icon": "actions/protection-128.webp"
+  },
+  "actions/pvpPause": {
+    "card": "actions/pvpPause.webp",
+    "icon": "actions/pvpPause-128.webp"
+  },
+  "actions/repair": {
+    "card": "actions/repair.webp",
+    "icon": "actions/repair-128.webp"
+  },
+  "buildings/bunker": {
+    "card": "buildings/bunker.webp",
+    "icon": "buildings/bunker-128.webp"
+  },
+  "buildings/orbital": {
+    "card": "buildings/orbital.webp",
+    "icon": "buildings/orbital-128.webp"
+  },
+  "defense/flak": {
+    "card": "defense/flak.webp",
+    "icon": "defense/flak-128.webp"
+  },
+  "defense/laser": {
+    "card": "defense/laser.webp",
+    "icon": "defense/laser-128.webp"
+  },
+  "defense/plasma": {
+    "card": "defense/plasma.webp",
+    "icon": "defense/plasma-128.webp"
+  },
+  "defense/rail": {
+    "card": "defense/rail.webp",
+    "icon": "defense/rail-128.webp"
+  },
+  "research/armor": {
+    "card": "research/armor.webp",
+    "icon": "research/armor-128.webp"
+  },
+  "research/assaultDrive": {
+    "card": "research/assaultDrive.webp",
+    "icon": "research/assaultDrive-128.webp"
+  },
+  "research/shields": {
+    "card": "research/shields.webp",
+    "icon": "research/shields-128.webp"
+  },
+  "research/weapons": {
+    "card": "research/weapons.webp",
+    "icon": "research/weapons-128.webp"
+  },
+  "resources/crystal": {
+    "card": "resources/crystal.webp",
+    "icon": "resources/crystal-128.webp"
+  },
+  "resources/energy": {
+    "card": "resources/energy.webp",
+    "icon": "resources/energy-128.webp"
+  },
+  "resources/fuel": {
+    "card": "resources/fuel.webp",
+    "icon": "resources/fuel-128.webp"
+  },
+  "resources/metal": {
+    "card": "resources/metal.webp",
+    "icon": "resources/metal-128.webp"
+  }
+}
