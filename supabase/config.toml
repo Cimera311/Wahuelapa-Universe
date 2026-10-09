@@ -1,0 +1,5 @@
+project_id = "wahuelapa-universe"
+
+[functions.game-command]
+# Authentication is verified in the handler with auth.getUser; supports modern signing keys.
+verify_jwt = false

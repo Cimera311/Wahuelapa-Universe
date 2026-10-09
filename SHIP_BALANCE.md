@@ -43,3 +43,6 @@ Jede Routenstrecke dauert 25 % länger und benötigt 25 % weniger Treibstoff als
 Das SQL-Update zählt nun auch alle vier Tutorial-Welten, Kolonisierung bis 6 und alle neuen Triebwerksforschungen.
 
 Fernsonde: 280/200/80 Ressourcen, 10 s, Werft 2, Sensortechnik 2, Staustrahl 1. Interstellares Kolonieschiff: 1200/850/400, 30 s, Werft 3, Kolonisierung 4, Staustrahl 1. Beide nutzen vorhandene Sonden-/Kolonieschiffbilder.
+
+
+Seit PvP v1 gelten für Falke/Wächter/Donner/Titan 1/3/8/20 Minuten Bauzeit. Kampfwerte, Verteidigung und die vollständigen Serverregeln stehen in [PVP_SETUP.md](PVP_SETUP.md).
