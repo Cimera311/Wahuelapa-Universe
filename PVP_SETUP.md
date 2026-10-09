@@ -10,7 +10,9 @@ Installationsreihenfolge:
 
 1. Bestehende SQL-Erweiterungen installiert lassen: setup.sql, leaderboard.sql, ship-tiers.sql, galaxy.sql, player-systems.sql, mixed-routes.sql, public-colonies.sql.
 2. Neue Website-Version bauen und bereitstellen. Solange die PvP-Migration fehlt, funktioniert die bisherige Cloud-Anbindung weiter.
-3. Supabase CLI anmelden und die Edge Function deployen:
+3. Edge Function bereitstellen: Alternativ zur CLI den gesamten Inhalt von `supabase/dashboard/game-command.ts` in **Edge Functions → Deploy a new function → Via Editor** unter dem Namen **game-command** als `index.ts` einfügen, deployen und in den Funktionsdetails **Verify JWT with legacy secret** ausschalten. Die Funktion prüft Benutzer selbst mit `auth.getUser`. Details: `supabase/dashboard/README.md`.
+
+   Oder Supabase CLI anmelden und die Edge Function deployen:
    ```powershell
    npx supabase login
    npx supabase functions deploy game-command --project-ref qavlbxbkhahjbpgcmazd
