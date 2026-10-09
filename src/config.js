@@ -48,3 +48,14 @@ export const TARGETS = [
 export function vector(values){return Object.fromEntries(RES.map((k,i)=>[k,values[i]]));}
 export function costAt(item,level){return vector(item.cost.map(v=>Math.ceil(v*Math.pow(1.6,level))));}
 export const ROUTE_ECONOMY={time:1.25,fuel:.75};
+
+// Cosmetic selection only: preserve tutorial art and keep shared planet variants stable across accounts.
+export function planetImagePath(p){
+ const families={home:'continental',ferrum:'rock',nereus:'ice',thalassa:'ocean'};
+ const base=Object.hasOwn(families,p.image||p.id)?(p.image||p.id):'home';
+ if(!/^g-[a-z]+-p(?:[1-9]|10)$/.test(p.id||''))return `./assets/${base}.webp`;
+ let hash=2166136261;
+ for(const c of 'planet-art-v2:'+p.id)hash=Math.imul(hash^c.charCodeAt(0),16777619)>>>0;
+ const variant=hash%4;
+ return variant?`./assets/planets-v2/${families[base]}-v${variant}.webp`:`./assets/${base}.webp`;
+}
