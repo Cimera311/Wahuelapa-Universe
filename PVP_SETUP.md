@@ -146,3 +146,13 @@ Die neue Website aktiviert Heimatangriffe erst, wenn die Serverantwort `homeAtta
 **Aktivierung:** Den vollständigen aktuellen Inhalt von `supabase/dashboard/game-command.ts` in der vorhandenen Edge Function **swift-handler → Code → index.ts** ersetzen und deployen. Keine neue Funktion anlegen; keine SQL-Migration erforderlich. Danach die Website neu laden.
 
 Der neue Schutzzeitraum gilt auch für bestehende Kolonien ab ihrer gespeicherten Gründungszeit. Schutz, der durch einen eigenen Angriff schon beendet wurde, wird nicht erneuert. Die 24-Stunden-Grenzen für Wiederholungsangriffe und Beutebudgets bleiben bestehen.
+
+## Flugkarten und dauerhaftes Berichtsarchiv
+
+Die Flugkarte verwendet vorhandene Start-/Ankunfts-/Rückkehrzeitpunkte. Der Fortschritt wird mit der abgeglichenen Serverzeit aktualisiert. Pro Schiffsklasse wird das bestehende Bild verwendet; unbekannte Zielplaneten zeigen eine Silhouette. Hin- und Rückflug haben jeweils einen eigenen Fortschritt. Die Entfernung wird aus dem persönlichen Startplatz beziehungsweise der Startkolonie berechnet.
+
+Unter jedem Einsatz liegen seine Start- und Kampfberichte in einem Akkordeon. **Flotten → Berichte & Archiv** bietet eine Liste mit vollständigen Zeitstempeln, Filtern nach Typ, Ergebnis, Zeitraum und Suche sowie aufklappbaren Details und Kampfrunden. Berichte können archiviert und wiederhergestellt werden.
+
+**Einmalig `supabase/reports.sql` im SQL Editor ausführen.** Es wird keine neue Edge Function benötigt. Die Migration speichert vorhandene und künftige Berichte außerhalb des begrenzten Spielstand-Caches. Wiederholtes Ausführen erhält Archivmarkierungen. Vor der Installation zeigt die Website die noch verfügbaren Berichte; Archivierung bleibt deaktiviert. Bereits früher aus dem Spielstand gelöschte allgemeine Berichte lassen sich nicht rekonstruieren.
+
+Archivdaten sind privat. Nur eigene Berichte können über die angemeldeten RPCs gelesen oder archiviert werden. Ein Defender erhält keinen Startbericht vor dem Gefecht; die bisherigen Warnzeitpunkte und Kampfregeln bleiben bestehen. Seeds und interne Weltzustände werden nicht ins Archiv übernommen. Die Liste lädt 50 Berichte pro Seite, damit lange Archive nicht vollständig in den Browser übertragen werden.
