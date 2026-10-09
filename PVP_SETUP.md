@@ -128,3 +128,13 @@ npx deno check --node-modules-dir=auto --no-lock supabase/functions/game-command
 Tests decken Berechtigungen, Schutzgrenzen, Warnungsgeheimhaltung, gleichzeitig wirkenden Beschuss, beschädigte Rückflotten, Bunker/Depot, Beutebudget, Offline-Nachholen, Bauabschlüsse an der Ankunftsgrenze, Pause sowie doppelte/verlorene Anfragen ab. PostgreSQL wird durch PGlite geprüft, nicht durch eine SQL-Attrappe.
 
 Offizielle Grundlagen: [Edge-Function-Authentifizierung](https://supabase.com/docs/guides/functions/auth-legacy-jwt), [getUser](https://supabase.com/docs/reference/javascript/auth-getuser), [Edge Functions deployen](https://supabase.com/docs/guides/functions/quickstart).
+
+## Schiffsbau abbrechen
+
+In Übersicht und Hangar & Werft kann ein noch laufender Schiffsbauauftrag abgebrochen werden. Die Werft wird sofort frei; bezahlte Rohstoffe kommen zurück und Lagerüberschüsse bleiben im Lieferdepot. Die aktuelle Bauweise schließt einen ganzen Stapel auf einmal ab: Vor dem Endzeitpunkt wird der ganze Stapel abgebrochen, am Endzeitpunkt bleiben die fertiggestellten Einheiten erhalten und es gibt keine Erstattung.
+
+Neue Aufträge speichern eine eindeutige ID und die tatsächlich bezahlten Ressourcen sowie eingesetztes Reparaturmaterial. Abbrechen stellt beide getrennt wieder her. Bei älteren normalen Schiffsaufträgen werden die festen Baukosten erstattet. Bei älteren Verteidigungsaufträgen ohne Zahlungsdaten werden Metall und Kristall als geschütztes Reparaturmaterial und Treibstoff regulär zurückgegeben.
+
+Serveraufträge prüfen den gewählten Bauauftrag einschließlich ID und Zeitpunkten. Ein alter Button kann keinen neuen Auftrag abbrechen; wiederholte Anfragen mit derselben Auftrags-ID erstatten nicht doppelt.
+
+Für die neue Aktion muss die vorhandene **swift-handler**-Funktion mit dem aktuellen Inhalt von **supabase/dashboard/game-command.ts** aktualisiert werden. Es ist keine neue SQL erforderlich. Das Frontend aktiviert den Abbruch erst, wenn der Server `features.cancelShip` meldet; ältere Server bleiben kompatibel.

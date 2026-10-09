@@ -1,6 +1,5 @@
 // @ts-nocheck
-// Generated dashboard bundle. Paste this complete file into game-command/index.ts.
-// Source: supabase/functions/game-command/index.ts and src/ modules.
+// Generated dashboard bundle; edit the original source modules and rebuild.
 // supabase/functions/game-command/index.ts
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
 
@@ -1271,6 +1270,48 @@ function pay(p, c) {
 function defenseSlots(p) {
   return Object.entries(SHIPS).reduce((a, [k, sh]) => a + (sh.slots || 0) * (p.ships[k] || 0), 0) + (SHIPS[p.shipjob?.key]?.slots || 0) * (p.shipjob?.count || 0);
 }
+function shipRefund(job) {
+  if (!job) return {
+    resources: vector([
+      0,
+      0,
+      0
+    ]),
+    salvage: vector([
+      0,
+      0,
+      0
+    ]),
+    legacyDefense: false
+  };
+  if (job.payment) return {
+    resources: {
+      ...job.payment.resources
+    },
+    salvage: {
+      ...job.payment.salvage
+    },
+    legacyDefense: false
+  };
+  const gross = vector(SHIPS[job.key].cost.map((v) => v * job.count)), legacyDefense = SHIPS[job.key].category === "defense";
+  return {
+    resources: legacyDefense ? vector([
+      0,
+      0,
+      gross.fuel
+    ]) : gross,
+    salvage: legacyDefense ? vector([
+      gross.metal,
+      gross.crystal,
+      0
+    ]) : vector([
+      0,
+      0,
+      0
+    ]),
+    legacyDefense
+  };
+}
 function shipInfo(s, p, key, count = 1) {
   const sh = SHIPS[key];
   if (!sh) throw Error("Unbekanntes Schiff.");
@@ -1596,11 +1637,42 @@ function act(s, action, now = Date.now()) {
     if (p.defenseSalvage) for (const k of RES) p.defenseSalvage[k] -= info.salvage[k];
     pay(p, info.cost);
     p.shipjob = {
+      id: ++n.seq,
       key: action.key,
       count,
       start: n.time,
-      end: n.time + info.ms
+      end: n.time + info.ms,
+      payment: {
+        resources: {
+          ...info.cost
+        },
+        salvage: {
+          ...info.salvage
+        }
+      }
     };
+  } else if (action.type === "cancel-ship") {
+    const j = p.shipjob, o = action.order;
+    if (!j) throw Error("Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen.");
+    if (!o || [
+      "key",
+      "count",
+      "start",
+      "end"
+    ].some((k) => o[k] !== j[k]) || j.id !== void 0 && o.id !== j.id) throw Error("Der Bauauftrag hat sich ge\xE4ndert. Bitte die Ansicht aktualisieren.");
+    const refund = shipRefund(j);
+    for (const k of RES) {
+      p.depot[k] += refund.resources[k];
+      p.defenseSalvage ??= vector([
+        0,
+        0,
+        0
+      ]);
+      p.defenseSalvage[k] += refund.salvage[k];
+    }
+    settle(p);
+    p.shipjob = null;
+    report(n, "Schiffsbau abgebrochen", p.name + ": " + j.count + " \xD7 " + SHIPS[j.key].name + ". Rohstoffe zur\xFCckerstattet; \xDCbersch\xFCsse bleiben im Lieferdepot." + (refund.legacyDefense ? " Metall und Kristall des alten Verteidigungsauftrags bleiben als Reparaturmaterial verf\xFCgbar." : ""));
   } else if (action.type === "probe" || action.type === "colony" || action.type === "transport") {
     const ship = action.type === "probe" ? "probe" : action.type === "colony" ? "colony" : "transport";
     const count = ship === "transport" ? action.count : 1;
@@ -1839,6 +1911,11 @@ function validateSave(input) {
     check(p.ships && Object.keys(SHIPS).every((k) => integer(p.ships[k], 1e6)));
     check(job(p.build, BUILDINGS) && (!p.build || p.build.level === p.buildings[p.build.key] + 1));
     check(job(p.shipjob, SHIPS) && (!p.shipjob || integer(p.shipjob.count, 50) && p.shipjob.count > 0));
+  }
+  for (const p of s.planets) if (p.shipjob) {
+    const j = p.shipjob;
+    if (j.id !== void 0) check(integer(j.id, s.seq) && j.id > 0);
+    if (j.payment !== void 0) check(j.payment && cargo(j.payment.resources) && cargo(j.payment.salvage) && RES.every((k) => Number.isSafeInteger(j.payment.resources[k]) && Number.isSafeInteger(j.payment.salvage[k])) && j.payment.salvage.fuel === 0 && (SHIPS[j.key].category === "defense" || RES.every((k) => j.payment.salvage[k] === 0)));
   }
   check(job(s.research, TECHS) && (!s.research || s.research.level === s.tech[s.research.key] + 1 && ids.includes(s.research.planet)));
   check(Array.isArray(s.discovered) && s.discovered.length <= 3 && new Set(s.discovered).size === s.discovered.length && s.discovered.every((id) => TARGETS.some((t) => t.id === id)));
@@ -2297,7 +2374,8 @@ function processWorld(snapshot, uid, request) {
       "collect",
       "route",
       "deliver",
-      "repair"
+      "repair",
+      "cancel-ship"
     ].includes(action.type)) throw Error("Unbekannte Spielaktion.");
     if (action.type === "ship" && Object.values(getPlanet(s, action.planet || s.active).ships).reduce((a, b) => a + b, 0) + action.count > 5e3) throw Error("Vorerst maximal 5000 Einheiten je Planet.");
     const updated = act(s, action, w.now);
@@ -2327,6 +2405,9 @@ function projectPvP(w, uid) {
     enabled: w.settings.enabled,
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
+    features: {
+      cancelShip: true
+    },
     colonies: w.planets.filter((p) => p.owner_id && !p.reserved).map((p) => ({
       id: p.id,
       protectedUntil: p.protection_ended ? 0 : (p.colonized_at || w.now) + DAY
