@@ -1,6 +1,6 @@
--- Run after galaxy.sql. Publishes only system/commander names and edge positions.
+-- Run after galaxy.sql and player-systems.sql. Repeatable; preserves colonies and saves.
+-- Ownership and reservations are public to signed-in players; planet properties require a survey.
 begin;
-do $$declare u record;begin for u in select user_id from public.game_saves loop perform public.imperium_galaxy_start(u.user_id);end loop;end $$;
 create or replace function public.imperium_galaxy_projection(uid uuid)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare result jsonb;

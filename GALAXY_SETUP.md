@@ -7,7 +7,7 @@ Unter **Galaxie → Mein Tutorial / Gemeinsame Galaxie** bleiben die privaten Tu
 ## Erkundung und Besiedlung
 
 - Fernsonde bauen: Werft 2, Sensortechnik 2, Staustrahltriebwerke 1. Kosten 280 Metall / 200 Kristall / 80 Treibstoff, Bauzeit 10 Sekunden.
-- System und Planet wählen, Fernsonde losschicken. Bei Ankunft werden nur diesem Spieler Name, Typ, Vorkommen, Energiebedarf und Besitzer angezeigt. Die Sonde kehrt danach zurück. Die Erkundung eines Planeten enthüllt nicht automatisch die übrigen Planeten des Systems.
+- System und Planet wählen, Fernsonde losschicken. Bei Ankunft werden nur diesem Spieler Name, Typ, Vorkommen, Energiebedarf angezeigt. Die Sonde kehrt danach zurück. Die Erkundung eines Planeten enthüllt nicht automatisch die übrigen Planeten des Systems.
 - Kolonisierung 4–6 erlaubt 1–3 gemeinsame Kolonien zusätzlich zu den drei reservierten Tutorial-Plätzen. Die üblichen Triebwerksvoraussetzungen für diese Forschung bleiben bestehen.
 - Interstellares Kolonieschiff bauen: Werft 3, Kolonisierung 4, Staustrahl 1. Kosten 1200/850/400, Bauzeit 30 Sekunden.
 - Ein untersuchtes, freies Ziel kolonisieren. Der Server reserviert es beim Start atomar; bei Ankunft wird es dauerhaft zu deiner Kolonie. Das Schiff wird verbraucht. 350 Metall, 250 Kristall und 100 Treibstoff werden zusätzlich als Startmaterial mitgenommen und eingelagert.
@@ -21,7 +21,7 @@ Galaxieentfernung: euklidischer Abstand vom tatsächlichen Startsystem bzw. priv
 
 ## Speicherung, Besitzer und Datenzugriff
 
-Die neuen Tabellen sind durch RLS und entzogene Tabellenrechte geschützt. Zugriffe laufen über authentifizierte RPCs. Unbekannte Planetenantworten enthalten ausschließlich ID, System, Platz und `surveyed:false`; keine geheimen Werte oder Besitzer. Andere Spieler können die privaten Untersuchungsdaten nicht über interne RPCs auslesen.
+Die neuen Tabellen sind durch RLS und entzogene Tabellenrechte geschützt. Zugriffe laufen über authentifizierte RPCs. Unbekannte Planetenantworten enthalten ID, System, Platz, `surveyed:false` sowie den öffentlichen Besitzerstatus, Reservierungsstatus und Commander-Namen. Planetentyp, Name, Vorkommen und Energiebedarf bleiben bis zur Untersuchung verborgen. Andere Spieler können die privaten Untersuchungsdaten nicht über interne RPCs auslesen.
 
 Galaxieaktionen sperren den betreffenden Spielstand und prüfen dessen Revision. Reservierungen sperren den Zielplaneten. Lokale Spielaktionen pausieren während des kurzen Serverabgleichs; bei einem Konflikt muss der aktuelle Cloud-Spielstand geladen werden. Imports alter Sicherungen und „Neues Spiel“ dürfen bestehende gemeinsame Kolonien nicht entfernen. Eine bewusste Aufgabe von Kolonien ist noch nicht implementiert; deshalb lehnt der Server solche Änderungen ab. Ein Serverfehler lässt die Tutorialwelt und lokale Sicherung erhalten.
 
@@ -36,3 +36,6 @@ Grafikquellen: Drive-Paket galaxy-concepts-v1, Nebelhintergrund und Zentralstern
 ## Spieler-Sonnensysteme
 Nach `galaxy.sql` zusätzlich `supabase/player-systems.sql` ausführen. Diese Datei ist wiederholbar. Wird `galaxy.sql` erneut ausgeführt, anschließend auch `player-systems.sql` erneut ausführen.
 Unter **Galaxie → Mein Sonnensystem** den Namen (1–30 Zeichen) speichern. Er wird mit dem Spielstand synchronisiert. Für angemeldete Spieler sind Systemname, Commander-Name und feste Startposition öffentlich. Planeten, Ressourcen, Forschungen, E-Mail-Adressen und Spielstände bleiben privat. Bestehende Cloud-Konten erhalten bei der Migration ihre Startposition; neue Konten erscheinen nach dem ersten Galaxie-Abgleich. Die Anzeige bezeichnet registrierte Welten und zeigt keinen Online-Status.
+
+## Öffentliche Kolonien
+Nach den bisherigen Migrationen einmal `supabase/public-colonies.sql` im SQL Editor ausführen. Bei erneuter Installation von `galaxy.sql` danach `player-systems.sql` und `public-colonies.sql` ausführen. Die Migration ist wiederholbar und verändert keine Spielstände, Reservierungen oder Untersuchungen. Alle angemeldeten Spieler sehen fremde Kolonien und Reservierungen ohne Scan. Die Systemmarkierung zählt besiedelte und reservierte Plätze; Planetenliste und Detailansicht zeigen den Commander-Namen. Reservierungen sind ab Start des Kolonieschiffs sichtbar; nach abgeschlossenem Serverabgleich wird daraus eine Kolonie. Die bestehenden Scan- und Kolonisierungsvoraussetzungen bleiben gültig.
