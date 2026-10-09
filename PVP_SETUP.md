@@ -129,6 +129,16 @@ Tests decken Berechtigungen, Schutzgrenzen, Warnungsgeheimhaltung, gleichzeitig 
 
 Offizielle Grundlagen: [Edge-Function-Authentifizierung](https://supabase.com/docs/guides/functions/auth-legacy-jwt), [getUser](https://supabase.com/docs/reference/javascript/auth-getuser), [Edge Functions deployen](https://supabase.com/docs/guides/functions/quickstart).
 
+## Schiffsbau abbrechen
+
+In Übersicht und Hangar & Werft kann ein noch laufender Schiffsbauauftrag abgebrochen werden. Die Werft wird sofort frei; bezahlte Rohstoffe kommen zurück und Lagerüberschüsse bleiben im Lieferdepot. Die aktuelle Bauweise schließt einen ganzen Stapel auf einmal ab: Vor dem Endzeitpunkt wird der ganze Stapel abgebrochen, am Endzeitpunkt bleiben die fertiggestellten Einheiten erhalten und es gibt keine Erstattung.
+
+Neue Aufträge speichern eine eindeutige ID und die tatsächlich bezahlten Ressourcen sowie eingesetztes Reparaturmaterial. Abbrechen stellt beide getrennt wieder her. Bei älteren normalen Schiffsaufträgen werden die festen Baukosten erstattet. Bei älteren Verteidigungsaufträgen ohne Zahlungsdaten werden Metall und Kristall als geschütztes Reparaturmaterial und Treibstoff regulär zurückgegeben.
+
+Serveraufträge prüfen den gewählten Bauauftrag einschließlich ID und Zeitpunkten. Ein alter Button kann keinen neuen Auftrag abbrechen; wiederholte Anfragen mit derselben Auftrags-ID erstatten nicht doppelt.
+
+Für die neue Aktion muss die vorhandene **swift-handler**-Funktion mit dem aktuellen Inhalt von **supabase/dashboard/game-command.ts** aktualisiert werden. Es ist keine neue SQL erforderlich. Das Frontend aktiviert den Abbruch erst, wenn der Server `features.cancelShip` meldet; ältere Server bleiben kompatibel.
+
 ## Update: Heimatangriffe und 1 Stunde Schutz (9. Oktober 2026)
 
 Die neue Website aktiviert Heimatangriffe erst, wenn die Serverantwort `homeAttacks: true` liefert. Bis zum Server-Deploy zeigt sie die alten Regeln und einen Hinweis auf das fehlende Spielserver-Update.

@@ -93,4 +93,14 @@ test('PvP database and trusted command boundary',async t=>{
   assert.equal(colonized.pvp.colonies.find(p=>p.id==='g-cetus-p1').protectedUntil,new Date(cm.arrival_at).getTime()+3600000);
  });
 
+ await t.test('Ship cancellation commits one refund even after a lost response and rejects stale orders',async()=>{
+  const state=newGame('Cancellation',Date.now()),p=state.planets[0];p.buildings.shipyard=1;state.tech.logistics=1;p.resources=vector([2000,2000,2000]);for(const k of ['metal','crystal','fuel'])p.buildings[k]=0;
+  await db.query('update public.game_saves set state=$1,revision=revision+1 where user_id=$2',[JSON.stringify(state),A]);fakeNow=state.time;
+  const queued=await runServerCommand(rpc,A,{type:'command',requestId:'10000000-0000-0000-0000-000000000010',action:{type:'ship',planet:'home',key:'transport',count:2}}),j=queued.state.planets[0].shipjob;
+  const request={type:'command',requestId:'10000000-0000-0000-0000-000000000011',action:{type:'cancel-ship',planet:'home',order:{id:j.id,key:j.key,count:j.count,start:j.start,end:j.end}}};fakeNow++;
+  const first=await runServerCommand(rpc,A,request),retry=await runServerCommand(rpc,A,request);assert.equal(first.state.planets[0].shipjob,null);assert.deepEqual(first.state.planets[0].resources,vector([2000,2000,2000]));assert.deepEqual(retry.state.planets[0].resources,first.state.planets[0].resources);
+  const replacement=await runServerCommand(rpc,A,{type:'command',requestId:'10000000-0000-0000-0000-000000000012',action:{type:'ship',planet:'home',key:'transport',count:2}});
+  await assert.rejects(runServerCommand(rpc,A,{...request,requestId:'10000000-0000-0000-0000-000000000013'}),/geändert/);assert.deepEqual((await snapshot()).saves.find(r=>r.user_id===A).state.planets[0].shipjob,replacement.state.planets[0].shipjob);
+ });
+
 });

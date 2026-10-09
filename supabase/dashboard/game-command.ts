@@ -1,6 +1,5 @@
 // @ts-nocheck
-// Generated dashboard bundle. Paste this complete file into game-command/index.ts.
-// Source: supabase/functions/game-command/index.ts and src/ modules.
+// Generated dashboard bundle; edit the original source modules and rebuild.
 // supabase/functions/game-command/index.ts
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
 
@@ -930,23 +929,46 @@ function attackFleet(fleet) {
     ...fleet
   };
 }
-function attackFlight(s,from,to,fleet){
- attackFleet(fleet);if(!to.system)throw Error('Angriffsziele müssen fremde gemeinsame Kolonien sein.');
- const origin=from.system?from:{...s.galaxy,slot:0};
- if(![origin.x,origin.y,origin.slot,to.x,to.y,to.slot].every(Number.isFinite))throw Error('Der persönliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.');
- if(!from.system&&(s.tech.ramjet||0)<1)throw Error('Für Angriffe aus dem Heimatsystem fehlen Staustrahltriebwerke Stufe 1.');
- const dist=Math.max(1,Math.hypot(origin.x-to.x,origin.y-to.y)/40+Math.abs(origin.slot-to.slot)*.15);
- let ms=0,fuel=0,slowest='';
- for(const [key,count] of Object.entries(fleet)){
-  const sh=SHIPS[key],remote=from.system!==to.system;
-  let engine=sh.engine||'drive';
-  if(remote&&!sh.engine){if(key!=='falke'||!s.tech.assaultDrive)throw Error('Für interstellare Flüge fehlt ein geeigneter Antrieb.');engine='ramjet';}
-  if(remote&&(s.tech[engine]||0)<1)throw Error('Für interstellare Flüge fehlt die passende Triebwerksforschung.');
-  const factor=1+.12*(s.tech[engine]||0);
-  const time=Math.max(300000,Math.ceil((600+dist*120)*1000/(sh.speed*factor)));
-  if(time>ms){ms=time;slowest=key;}fuel+=Math.ceil(sh.fuel*2*dist*count/factor);
- }
- return {distance:dist,ms,fuel,slowest};
+function attackFlight(s, from, to, fleet) {
+  attackFleet(fleet);
+  if (!to.system) throw Error("Angriffsziele m\xFCssen fremde gemeinsame Kolonien sein.");
+  const origin = from.system ? from : {
+    ...s.galaxy,
+    slot: 0
+  };
+  if (![
+    origin.x,
+    origin.y,
+    origin.slot,
+    to.x,
+    to.y,
+    to.slot
+  ].every(Number.isFinite)) throw Error("Der pers\xF6nliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.");
+  if (!from.system && (s.tech.ramjet || 0) < 1) throw Error("F\xFCr Angriffe aus dem Heimatsystem fehlen Staustrahltriebwerke Stufe 1.");
+  const dist = Math.max(1, Math.hypot(origin.x - to.x, origin.y - to.y) / 40 + Math.abs(origin.slot - to.slot) * 0.15);
+  let ms2 = 0, fuel = 0, slowest = "";
+  for (const [key, count] of Object.entries(fleet)) {
+    const sh = SHIPS[key], remote = from.system !== to.system;
+    let engine = sh.engine || "drive";
+    if (remote && !sh.engine) {
+      if (key !== "falke" || !s.tech.assaultDrive) throw Error("F\xFCr interstellare Fl\xFCge fehlt ein geeigneter Antrieb.");
+      engine = "ramjet";
+    }
+    if (remote && (s.tech[engine] || 0) < 1) throw Error("F\xFCr interstellare Fl\xFCge fehlt die passende Triebwerksforschung.");
+    const factor = 1 + 0.12 * (s.tech[engine] || 0);
+    const time = Math.max(3e5, Math.ceil((600 + dist * 120) * 1e3 / (sh.speed * factor)));
+    if (time > ms2) {
+      ms2 = time;
+      slowest = key;
+    }
+    fuel += Math.ceil(sh.fuel * 2 * dist * count / factor);
+  }
+  return {
+    distance: dist,
+    ms: ms2,
+    fuel,
+    slowest
+  };
 }
 function warningFraction(sensorLevel) {
   return Math.max(0.1, Math.min(0.9, 0.9 - 0.16 * sensorLevel));
@@ -1261,6 +1283,48 @@ function pay(p, c) {
 }
 function defenseSlots(p) {
   return Object.entries(SHIPS).reduce((a, [k, sh]) => a + (sh.slots || 0) * (p.ships[k] || 0), 0) + (SHIPS[p.shipjob?.key]?.slots || 0) * (p.shipjob?.count || 0);
+}
+function shipRefund(job) {
+  if (!job) return {
+    resources: vector([
+      0,
+      0,
+      0
+    ]),
+    salvage: vector([
+      0,
+      0,
+      0
+    ]),
+    legacyDefense: false
+  };
+  if (job.payment) return {
+    resources: {
+      ...job.payment.resources
+    },
+    salvage: {
+      ...job.payment.salvage
+    },
+    legacyDefense: false
+  };
+  const gross = vector(SHIPS[job.key].cost.map((v) => v * job.count)), legacyDefense = SHIPS[job.key].category === "defense";
+  return {
+    resources: legacyDefense ? vector([
+      0,
+      0,
+      gross.fuel
+    ]) : gross,
+    salvage: legacyDefense ? vector([
+      gross.metal,
+      gross.crystal,
+      0
+    ]) : vector([
+      0,
+      0,
+      0
+    ]),
+    legacyDefense
+  };
 }
 function shipInfo(s, p, key, count = 1) {
   const sh = SHIPS[key];
@@ -1587,11 +1651,42 @@ function act(s, action, now = Date.now()) {
     if (p.defenseSalvage) for (const k of RES) p.defenseSalvage[k] -= info.salvage[k];
     pay(p, info.cost);
     p.shipjob = {
+      id: ++n.seq,
       key: action.key,
       count,
       start: n.time,
-      end: n.time + info.ms
+      end: n.time + info.ms,
+      payment: {
+        resources: {
+          ...info.cost
+        },
+        salvage: {
+          ...info.salvage
+        }
+      }
     };
+  } else if (action.type === "cancel-ship") {
+    const j = p.shipjob, o = action.order;
+    if (!j) throw Error("Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen.");
+    if (!o || [
+      "key",
+      "count",
+      "start",
+      "end"
+    ].some((k) => o[k] !== j[k]) || j.id !== void 0 && o.id !== j.id) throw Error("Der Bauauftrag hat sich ge\xE4ndert. Bitte die Ansicht aktualisieren.");
+    const refund = shipRefund(j);
+    for (const k of RES) {
+      p.depot[k] += refund.resources[k];
+      p.defenseSalvage ??= vector([
+        0,
+        0,
+        0
+      ]);
+      p.defenseSalvage[k] += refund.salvage[k];
+    }
+    settle(p);
+    p.shipjob = null;
+    report(n, "Schiffsbau abgebrochen", p.name + ": " + j.count + " \xD7 " + SHIPS[j.key].name + ". Rohstoffe zur\xFCckerstattet; \xDCbersch\xFCsse bleiben im Lieferdepot." + (refund.legacyDefense ? " Metall und Kristall des alten Verteidigungsauftrags bleiben als Reparaturmaterial verf\xFCgbar." : ""));
   } else if (action.type === "probe" || action.type === "colony" || action.type === "transport") {
     const ship = action.type === "probe" ? "probe" : action.type === "colony" ? "colony" : "transport";
     const count = ship === "transport" ? action.count : 1;
@@ -1831,6 +1926,11 @@ function validateSave(input) {
     check(job(p.build, BUILDINGS) && (!p.build || p.build.level === p.buildings[p.build.key] + 1));
     check(job(p.shipjob, SHIPS) && (!p.shipjob || integer(p.shipjob.count, 50) && p.shipjob.count > 0));
   }
+  for (const p of s.planets) if (p.shipjob) {
+    const j = p.shipjob;
+    if (j.id !== void 0) check(integer(j.id, s.seq) && j.id > 0);
+    if (j.payment !== void 0) check(j.payment && cargo(j.payment.resources) && cargo(j.payment.salvage) && RES.every((k) => Number.isSafeInteger(j.payment.resources[k]) && Number.isSafeInteger(j.payment.salvage[k])) && j.payment.salvage.fuel === 0 && (SHIPS[j.key].category === "defense" || RES.every((k) => j.payment.salvage[k] === 0)));
+  }
   check(job(s.research, TECHS) && (!s.research || s.research.level === s.tech[s.research.key] + 1 && ids.includes(s.research.planet)));
   check(Array.isArray(s.discovered) && s.discovered.length <= 3 && new Set(s.discovered).size === s.discovered.length && s.discovered.every((id) => TARGETS.some((t) => t.id === id)));
   check(Array.isArray(s.missions) && s.missions.length <= 100);
@@ -1904,7 +2004,7 @@ function galaxyFlight(s, from, target, start, ship = "longProbe") {
 
 // src/server-world.js
 var DAY = 864e5;
-var COLONY_PROTECTION = 3600000;
+var COLONY_PROTECTION = 36e5;
 var ms = (v) => typeof v === "number" ? v : Date.parse(v);
 var zero = () => vector([
   0,
@@ -2014,30 +2114,87 @@ function survey(w, m) {
 function shieldFactor(until, time) {
   return until ? Math.max(0, Math.min(1, 1 - (until - time) / 3e5)) : 1;
 }
-function resolveAttack(w,m,time){
- const a=stateOf(w,m.attacker_id),target=w.planets.find(p=>p.id===m.to),row=w.saves.find(x=>x.user_id===m.defender_id);
- if(!target||target.owner_id!==m.defender_id||target.reserved||!row||(!target.protection_ended&&time<(target.colonized_at||time)+COLONY_PROTECTION)){
-  m.status='returning';m.survivors={...m.fleet};m.return_hulls=m.hulls;m.cargo=zero();m.resolved_at=w.now;
-  m.report={outcome:'cancelled',at:time,reason:'Das Ziel ist nicht mehr angreifbar.'};log(a,time,'Angriff abgebrochen',m.report.reason);return;
- }
- const d=row.state,p=getPlanet(d,m.to),defense={fleet:{...p.ships},tech:{...d.tech},hulls:p.hulls,shieldFactor:shieldFactor(p.shieldUntil,time)};
- const result=resolveBattle({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id);
- const before={...p.ships};
- for(const key of Object.keys(SHIPS))p.ships[key]=result.defender.fleet[key]||0;
- p.hulls=result.defender.hulls;p.shieldUntil=time+300000;
- p.defenseSalvage??=zero();for(const k of RES)p.defenseSalvage[k]+=result.defenseRepair[k];
- const bunker=Math.min(2000,capacity(p)*.025*(p.buildings.bunker||0));
- if(result.outcome==='attacker'&&(!p.raidWindowStart||time-p.raidWindowStart>=DAY)){p.raidWindowStart=time;p.raidBudget=vector(RES.map(k=>Math.floor(Math.max(0,p.resources[k]+p.depot[k]-bunker)*.25)));}
- const cap=fleetCapacity({tech:m.combat.tech},result.attacker.fleet);
- const field=vector(RES.map(k=>(target.debris?.[k]||0)+result.debris[k]));
- const cargo=loadPlunder(p.resources,p.depot,bunker,cap,field,result.outcome==='attacker',p.raidBudget||zero());
- withdraw(p,cargo.loot);if(p.raidBudget)for(const k of RES)p.raidBudget[k]-=cargo.loot[k];
- target.debris??=zero();for(const k of RES)target.debris[k]=field[k]-cargo.salvage[k];
- m.status=Object.keys(result.attacker.fleet).length?'returning':'returned';m.resolved_at=w.now;m.survivors=result.attacker.fleet;m.return_hulls=result.attacker.hulls;m.cargo=cargo.cargo;m.shieldUntil=time+300000;
- m.report={at:time,outcome:result.outcome,rounds:result.rounds,attackerBefore:m.fleet,attackerAfter:m.survivors,defenderBefore:before,defenderAfter:{...p.ships},loot:cargo.loot,salvage:cargo.salvage,debrisLeft:{...target.debris},defenseRepair:result.defenseRepair};
- const outcome=result.outcome==='attacker'?'Angreifer gewinnt':result.outcome==='defender'?'Verteidiger gewinnt':'Unentschieden';
- const body=outcome+' · '+target.meta.name+' · '+result.rounds.length+' Runden. Angreifer übrig: '+fleetText(m.survivors)+'. Beute M/K/T: '+RES.map(k=>cargo.loot[k]).join('/')+'. Trümmer geborgen M/K: '+cargo.salvage.metal+'/'+cargo.salvage.crystal+'.';
- log(a,time,'PvP-Kampfbericht',body);log(d,time,'PvP-Kampfbericht',body);
+function resolveAttack(w, m, time) {
+  const a = stateOf(w, m.attacker_id), target = w.planets.find((p2) => p2.id === m.to), row = w.saves.find((x) => x.user_id === m.defender_id);
+  if (!target || target.owner_id !== m.defender_id || target.reserved || !row || !target.protection_ended && time < (target.colonized_at || time) + COLONY_PROTECTION) {
+    m.status = "returning";
+    m.survivors = {
+      ...m.fleet
+    };
+    m.return_hulls = m.hulls;
+    m.cargo = zero();
+    m.resolved_at = w.now;
+    m.report = {
+      outcome: "cancelled",
+      at: time,
+      reason: "Das Ziel ist nicht mehr angreifbar."
+    };
+    log(a, time, "Angriff abgebrochen", m.report.reason);
+    return;
+  }
+  const d = row.state, p = getPlanet(d, m.to), defense = {
+    fleet: {
+      ...p.ships
+    },
+    tech: {
+      ...d.tech
+    },
+    hulls: p.hulls,
+    shieldFactor: shieldFactor(p.shieldUntil, time)
+  };
+  const result = resolveBattle({
+    ...m.combat,
+    shieldFactor: shieldFactor(m.shieldUntil, time)
+  }, defense, m.seed || m.id);
+  const before = {
+    ...p.ships
+  };
+  for (const key of Object.keys(SHIPS)) p.ships[key] = result.defender.fleet[key] || 0;
+  p.hulls = result.defender.hulls;
+  p.shieldUntil = time + 3e5;
+  p.defenseSalvage ??= zero();
+  for (const k of RES) p.defenseSalvage[k] += result.defenseRepair[k];
+  const bunker = Math.min(2e3, capacity(p) * 0.025 * (p.buildings.bunker || 0));
+  if (result.outcome === "attacker" && (!p.raidWindowStart || time - p.raidWindowStart >= DAY)) {
+    p.raidWindowStart = time;
+    p.raidBudget = vector(RES.map((k) => Math.floor(Math.max(0, p.resources[k] + p.depot[k] - bunker) * 0.25)));
+  }
+  const cap = fleetCapacity({
+    tech: m.combat.tech
+  }, result.attacker.fleet);
+  const field = vector(RES.map((k) => (target.debris?.[k] || 0) + result.debris[k]));
+  const cargo = loadPlunder(p.resources, p.depot, bunker, cap, field, result.outcome === "attacker", p.raidBudget || zero());
+  withdraw(p, cargo.loot);
+  if (p.raidBudget) for (const k of RES) p.raidBudget[k] -= cargo.loot[k];
+  target.debris ??= zero();
+  for (const k of RES) target.debris[k] = field[k] - cargo.salvage[k];
+  m.status = Object.keys(result.attacker.fleet).length ? "returning" : "returned";
+  m.resolved_at = w.now;
+  m.survivors = result.attacker.fleet;
+  m.return_hulls = result.attacker.hulls;
+  m.cargo = cargo.cargo;
+  m.shieldUntil = time + 3e5;
+  m.report = {
+    at: time,
+    outcome: result.outcome,
+    rounds: result.rounds,
+    attackerBefore: m.fleet,
+    attackerAfter: m.survivors,
+    defenderBefore: before,
+    defenderAfter: {
+      ...p.ships
+    },
+    loot: cargo.loot,
+    salvage: cargo.salvage,
+    debrisLeft: {
+      ...target.debris
+    },
+    defenseRepair: result.defenseRepair
+  };
+  const outcome = result.outcome === "attacker" ? "Angreifer gewinnt" : result.outcome === "defender" ? "Verteidiger gewinnt" : "Unentschieden";
+  const body = outcome + " \xB7 " + target.meta.name + " \xB7 " + result.rounds.length + " Runden. Angreifer \xFCbrig: " + fleetText(m.survivors) + ". Beute M/K/T: " + RES.map((k) => cargo.loot[k]).join("/") + ". Tr\xFCmmer geborgen M/K: " + cargo.salvage.metal + "/" + cargo.salvage.crystal + ".";
+  log(a, time, "PvP-Kampfbericht", body);
+  log(d, time, "PvP-Kampfbericht", body);
 }
 function returnAttack(w, m, time) {
   const s = stateOf(w, m.attacker_id), p = getPlanet(s, m.from);
@@ -2135,23 +2292,53 @@ function launchGalaxy(w, uid, action, id) {
     completed: false
   });
 }
-function launchAttack(w,uid,action,id){
- if(!w.settings.enabled)throw Error('PvP ist momentan pausiert.');
- const s=stateOf(w,uid),from=getPlanet(s,action.from),target=w.planets.find(p=>p.id===action.to),origin=w.planets.find(p=>p.id===from.id);
- if(!target||!target.owner_id||target.owner_id===uid||target.reserved)throw Error('Wähle eine fremde besiedelte gemeinsame Kolonie als Ziel.');
- const colonies=w.planets.filter(p=>p.owner_id===uid&&!p.reserved&&s.planets.some(q=>q.id===p.id&&q.system));
- if(from.system){if(!origin||origin.owner_id!==uid||origin.reserved)throw Error('Wähle eine eigene besiedelte gemeinsame Kolonie als Start.');}
- else if(!colonies.length)throw Error('Für Angriffe aus dem Heimatsystem benötigst du mindestens eine eigene besiedelte Galaxiekolonie.');
- if(!target.protection_ended&&w.now<(target.colonized_at||w.now)+COLONY_PROTECTION)throw Error('Diese Kolonie hat noch 1 Stunde Gründungsschutz.');
- if(w.attacks.some(m=>m.attacker_id===uid&&m.status!=='returned'))throw Error('Du hast bereits eine Angriffsflotte unterwegs.');
- if(w.attacks.filter(m=>m.attacker_id===uid&&m.defender_id===target.owner_id&&m.started_at>w.now-DAY).length>=2)throw Error('Maximal zwei Angriffe auf denselben Commander innerhalb von 24 Stunden.');
- const fleet=attackFleet(action.fleet);
- for(const [k,n] of Object.entries(fleet))if((from.ships[k]||0)<n)throw Error('Nicht genügend verfügbare Schiffe.');
- const f=attackFlight(s,from,target.meta,fleet),defender=stateOf(w,target.owner_id),fraction=warningFraction(defender.tech.scout||0);
- subtract(from,vector([0,0,f.fuel]));const hulls=takeHulls(from,fleet);for(const [k,n] of Object.entries(fleet))from.ships[k]-=n;
- if(origin)origin.protection_ended=true;
- else for(const p of colonies)p.protection_ended=true;
- w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,combat:{fleet,tech:{...s.tech},hulls},shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
+function launchAttack(w, uid, action, id) {
+  if (!w.settings.enabled) throw Error("PvP ist momentan pausiert.");
+  const s = stateOf(w, uid), from = getPlanet(s, action.from), target = w.planets.find((p) => p.id === action.to), origin = w.planets.find((p) => p.id === from.id);
+  if (!target || !target.owner_id || target.owner_id === uid || target.reserved) throw Error("W\xE4hle eine fremde besiedelte gemeinsame Kolonie als Ziel.");
+  const colonies = w.planets.filter((p) => p.owner_id === uid && !p.reserved && s.planets.some((q) => q.id === p.id && q.system));
+  if (from.system) {
+    if (!origin || origin.owner_id !== uid || origin.reserved) throw Error("W\xE4hle eine eigene besiedelte gemeinsame Kolonie als Start.");
+  } else if (!colonies.length) throw Error("F\xFCr Angriffe aus dem Heimatsystem ben\xF6tigst du mindestens eine eigene besiedelte Galaxiekolonie.");
+  if (!target.protection_ended && w.now < (target.colonized_at || w.now) + COLONY_PROTECTION) throw Error("Diese Kolonie hat noch 1 Stunde Gr\xFCndungsschutz.");
+  if (w.attacks.some((m) => m.attacker_id === uid && m.status !== "returned")) throw Error("Du hast bereits eine Angriffsflotte unterwegs.");
+  if (w.attacks.filter((m) => m.attacker_id === uid && m.defender_id === target.owner_id && m.started_at > w.now - DAY).length >= 2) throw Error("Maximal zwei Angriffe auf denselben Commander innerhalb von 24 Stunden.");
+  const fleet = attackFleet(action.fleet);
+  for (const [k, n] of Object.entries(fleet)) if ((from.ships[k] || 0) < n) throw Error("Nicht gen\xFCgend verf\xFCgbare Schiffe.");
+  const f = attackFlight(s, from, target.meta, fleet), defender = stateOf(w, target.owner_id), fraction = warningFraction(defender.tech.scout || 0);
+  subtract(from, vector([
+    0,
+    0,
+    f.fuel
+  ]));
+  const hulls = takeHulls(from, fleet);
+  for (const [k, n] of Object.entries(fleet)) from.ships[k] -= n;
+  if (origin) origin.protection_ended = true;
+  else for (const p of colonies) p.protection_ended = true;
+  w.attacks.push({
+    id,
+    attacker_id: uid,
+    defender_id: target.owner_id,
+    from: from.id,
+    to: target.id,
+    fleet,
+    hulls,
+    combat: {
+      fleet,
+      tech: {
+        ...s.tech
+      },
+      hulls
+    },
+    shieldUntil: from.shieldUntil || 0,
+    started_at: w.now,
+    warning_at: w.now + Math.ceil(f.ms * fraction),
+    arrival_at: w.now + f.ms,
+    return_at: w.now + 2 * f.ms,
+    status: "outbound",
+    fuel: f.fuel,
+    slowest: f.slowest
+  });
 }
 function assertFleetLimits(w) {
   for (const row of w.saves) {
@@ -2207,7 +2394,8 @@ function processWorld(snapshot, uid, request) {
       "collect",
       "route",
       "deliver",
-      "repair"
+      "repair",
+      "cancel-ship"
     ].includes(action.type)) throw Error("Unbekannte Spielaktion.");
     if (action.type === "ship" && Object.values(getPlanet(s, action.planet || s.active).ships).reduce((a, b) => a + b, 0) + action.count > 5e3) throw Error("Vorerst maximal 5000 Einheiten je Planet.");
     const updated = act(s, action, w.now);
@@ -2232,13 +2420,46 @@ function processWorld(snapshot, uid, request) {
   for (const row of w.saves) row.state = validateSave(row.state);
   return w;
 }
-function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,homeAttacks:true,protectionMs:COLONY_PROTECTION,
- colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
- outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,arrival:m.arrival_at,returnAt:m.return_at})),
- incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),
- reports:w.attacks.filter(m=>(m.attacker_id===uid||m.defender_id===uid)&&m.report).sort((a,b)=>b.arrival_at-a.arrival_at).slice(0,30).map(m=>({id:m.id,from:m.from,to:m.to,returnAt:m.return_at,...m.report}))};
+function projectPvP(w, uid) {
+  return {
+    enabled: w.settings.enabled,
+    isAdmin: w.admins.includes(uid),
+    serverNow: w.now,
+    features: {
+      cancelShip: true
+    },
+    homeAttacks: true,
+    protectionMs: COLONY_PROTECTION,
+    colonies: w.planets.filter((p) => p.owner_id && !p.reserved).map((p) => ({
+      id: p.id,
+      protectedUntil: p.protection_ended ? 0 : (p.colonized_at || w.now) + COLONY_PROTECTION
+    })),
+    outgoing: w.attacks.filter((m) => m.attacker_id === uid && m.status !== "returned").map((m) => ({
+      id: m.id,
+      from: m.from,
+      to: m.to,
+      fleet: m.status === "outbound" ? m.fleet : m.survivors,
+      status: m.status,
+      arrival: m.arrival_at,
+      returnAt: m.return_at
+    })),
+    incoming: w.attacks.filter((m) => m.defender_id === uid && m.status === "outbound" && m.warning_at <= w.now).map((m) => ({
+      id: m.id,
+      to: m.to,
+      commander: w.saves.find((r) => r.user_id === m.attacker_id)?.state.name || "Commander",
+      arrival: m.arrival_at
+    })),
+    reports: w.attacks.filter((m) => (m.attacker_id === uid || m.defender_id === uid) && m.report).sort((a, b) => b.arrival_at - a.arrival_at).slice(0, 30).map((m) => ({
+      id: m.id,
+      from: m.from,
+      to: m.to,
+      returnAt: m.return_at,
+      ...m.report
+    }))
+  };
 }
+
+// src/server-service.js
 var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var value = (result) => {
   if (result.error) {
