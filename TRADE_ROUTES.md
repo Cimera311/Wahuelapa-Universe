@@ -3,7 +3,7 @@
 Unter Flotten → Handelsrouten werden aktive Routen kompakt angezeigt. „Bearbeiten / Flotte wechseln“ öffnet deren Stopps und Flottenzusammenstellung. Die Stopps stehen am Desktop nebeneinander; auf kleinen Bildschirmen klappen sie auf.
 
 ## Eingaben
-−/+ ändern um eine Einheit. +100/+500 addieren bei jedem Klick. 0 setzt zurück. MAX ist eine dynamische Laderegel, kein eingefrorener Bestand. Nach MAX beginnt eine neue feste Menge bei 0. Mengen können direkt eingegeben werden. Erst abladen, dann einladen; bei vollem Laderaum bleibt die Ladereihenfolge Metall, Kristall, Treibstoff. Bestände sind nur aktuelle Vorschauen.
++100/+500 addieren bei jedem Klick. 0 setzt zurück. MAX ist eine dynamische Laderegel, kein eingefrorener Bestand. Nach MAX beginnt eine neue feste Menge bei 0. Mengen können direkt eingegeben werden. Erst abladen, dann einladen; bei vollem Laderaum bleibt die Ladereihenfolge Metall, Kristall, Treibstoff. Bestände sind nur aktuelle Vorschauen.
 
 ## Flotte
 Eine Route hat 1–100 Frachter insgesamt, auch aus verschiedenen Klassen. Laderäume addieren sich einschließlich Transportforschung. Die langsamste erforschte Klasse bestimmt jede Flugstrecke. Verbrauch wird pro Klasse addiert, einschließlich Triebwerksforschung und des Sparflugfaktors. Der bestehende Sparflug bleibt +25 % Flugzeit und −25 % Verbrauch; Rundung erfolgt wie bisher je Klasse und Strecke.
