@@ -20,5 +20,5 @@ test('Shared planets keep a stable type-correct mix of original and new art with
 });
 
 test('Every building and research image is present',()=>{
- for(const [folder,items] of Object.entries({buildings:BUILDINGS,research:TECHS}))for(const key of Object.keys(items))assert.ok(existsSync(`assets/buildings-research-v1/${folder}/${key}.webp`));
+ for(const [folder,items] of Object.entries({buildings:BUILDINGS,research:TECHS}))for(const [key,item] of Object.entries(items))assert.ok(existsSync(item.asset?.replace('./','')||`assets/buildings-research-v1/${folder}/${key}.webp`));
 });
