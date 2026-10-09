@@ -931,8 +931,21 @@ function attackFleet(fleet) {
 }
 function attackFlight(s, from, to, fleet) {
   attackFleet(fleet);
-  if (!from.system || !to.system) throw Error("Angriffe starten und enden an gemeinsamen Kolonien.");
-  const dist = Math.max(1, Math.hypot(from.x - to.x, from.y - to.y) / 40 + Math.abs(from.slot - to.slot) * 0.15);
+  if (!to.system) throw Error("Angriffsziele m\xFCssen fremde gemeinsame Kolonien sein.");
+  const origin = from.system ? from : {
+    ...s.galaxy,
+    slot: 0
+  };
+  if (![
+    origin.x,
+    origin.y,
+    origin.slot,
+    to.x,
+    to.y,
+    to.slot
+  ].every(Number.isFinite)) throw Error("Der pers\xF6nliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.");
+  if (!from.system && (s.tech.ramjet || 0) < 1) throw Error("F\xFCr Angriffe aus dem Heimatsystem fehlen Staustrahltriebwerke Stufe 1.");
+  const dist = Math.max(1, Math.hypot(origin.x - to.x, origin.y - to.y) / 40 + Math.abs(origin.slot - to.slot) * 0.15);
   let ms2 = 0, fuel = 0, slowest = "";
   for (const [key, count] of Object.entries(fleet)) {
     const sh = SHIPS[key], remote = from.system !== to.system;
@@ -941,6 +954,7 @@ function attackFlight(s, from, to, fleet) {
       if (key !== "falke" || !s.tech.assaultDrive) throw Error("F\xFCr interstellare Fl\xFCge fehlt ein geeigneter Antrieb.");
       engine = "ramjet";
     }
+    if (remote && (s.tech[engine] || 0) < 1) throw Error("F\xFCr interstellare Fl\xFCge fehlt die passende Triebwerksforschung.");
     const factor = 1 + 0.12 * (s.tech[engine] || 0);
     const time = Math.max(3e5, Math.ceil((600 + dist * 120) * 1e3 / (sh.speed * factor)));
     if (time > ms2) {
@@ -1990,6 +2004,7 @@ function galaxyFlight(s, from, target, start, ship = "longProbe") {
 
 // src/server-world.js
 var DAY = 864e5;
+var COLONY_PROTECTION = 36e5;
 var ms = (v) => typeof v === "number" ? v : Date.parse(v);
 var zero = () => vector([
   0,
@@ -2101,7 +2116,7 @@ function shieldFactor(until, time) {
 }
 function resolveAttack(w, m, time) {
   const a = stateOf(w, m.attacker_id), target = w.planets.find((p2) => p2.id === m.to), row = w.saves.find((x) => x.user_id === m.defender_id);
-  if (!target || target.owner_id !== m.defender_id || target.reserved || !row || !target.protection_ended && time < (target.colonized_at || time) + DAY) {
+  if (!target || target.owner_id !== m.defender_id || target.reserved || !row || !target.protection_ended && time < (target.colonized_at || time) + COLONY_PROTECTION) {
     m.status = "returning";
     m.survivors = {
       ...m.fleet
@@ -2280,8 +2295,12 @@ function launchGalaxy(w, uid, action, id) {
 function launchAttack(w, uid, action, id) {
   if (!w.settings.enabled) throw Error("PvP ist momentan pausiert.");
   const s = stateOf(w, uid), from = getPlanet(s, action.from), target = w.planets.find((p) => p.id === action.to), origin = w.planets.find((p) => p.id === from.id);
-  if (!origin || origin.owner_id !== uid || origin.reserved || !target || !target.owner_id || target.owner_id === uid || target.reserved) throw Error("W\xE4hle eine eigene gemeinsame Kolonie und eine fremde besiedelte Kolonie.");
-  if (!target.protection_ended && w.now < (target.colonized_at || w.now) + DAY) throw Error("Diese Kolonie hat noch 24-Stunden-Gr\xFCndungsschutz.");
+  if (!target || !target.owner_id || target.owner_id === uid || target.reserved) throw Error("W\xE4hle eine fremde besiedelte gemeinsame Kolonie als Ziel.");
+  const colonies = w.planets.filter((p) => p.owner_id === uid && !p.reserved && s.planets.some((q) => q.id === p.id && q.system));
+  if (from.system) {
+    if (!origin || origin.owner_id !== uid || origin.reserved) throw Error("W\xE4hle eine eigene besiedelte gemeinsame Kolonie als Start.");
+  } else if (!colonies.length) throw Error("F\xFCr Angriffe aus dem Heimatsystem ben\xF6tigst du mindestens eine eigene besiedelte Galaxiekolonie.");
+  if (!target.protection_ended && w.now < (target.colonized_at || w.now) + COLONY_PROTECTION) throw Error("Diese Kolonie hat noch 1 Stunde Gr\xFCndungsschutz.");
   if (w.attacks.some((m) => m.attacker_id === uid && m.status !== "returned")) throw Error("Du hast bereits eine Angriffsflotte unterwegs.");
   if (w.attacks.filter((m) => m.attacker_id === uid && m.defender_id === target.owner_id && m.started_at > w.now - DAY).length >= 2) throw Error("Maximal zwei Angriffe auf denselben Commander innerhalb von 24 Stunden.");
   const fleet = attackFleet(action.fleet);
@@ -2294,7 +2313,8 @@ function launchAttack(w, uid, action, id) {
   ]));
   const hulls = takeHulls(from, fleet);
   for (const [k, n] of Object.entries(fleet)) from.ships[k] -= n;
-  origin.protection_ended = true;
+  if (origin) origin.protection_ended = true;
+  else for (const p of colonies) p.protection_ended = true;
   w.attacks.push({
     id,
     attacker_id: uid,
@@ -2408,9 +2428,11 @@ function projectPvP(w, uid) {
     features: {
       cancelShip: true
     },
+    homeAttacks: true,
+    protectionMs: COLONY_PROTECTION,
     colonies: w.planets.filter((p) => p.owner_id && !p.reserved).map((p) => ({
       id: p.id,
-      protectedUntil: p.protection_ended ? 0 : (p.colonized_at || w.now) + DAY
+      protectedUntil: p.protection_ended ? 0 : (p.colonized_at || w.now) + COLONY_PROTECTION
     })),
     outgoing: w.attacks.filter((m) => m.attacker_id === uid && m.status !== "returned").map((m) => ({
       id: m.id,

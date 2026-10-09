@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {newGame,act,advance} from '../src/engine.js';
 import {SHIPS,TECHS,vector} from '../src/config.js';
 import {validateSave} from '../src/storage.js';
-import {processWorld,prepareWorld,advanceWorld,projectPvP,DAY} from '../src/server-world.js';
+import {processWorld,prepareWorld,advanceWorld,projectPvP,DAY,COLONY_PROTECTION} from '../src/server-world.js';
 import {resolveBattle,attackFlight,warningFraction,loadPlunder} from '../src/combat.js';
-import {pvpSettings,pvpView} from '../src/pvp-ui.js';
+import {pvpSettings,pvpView,pvpEstimate} from '../src/pvp-ui.js';
 export const A='00000000-0000-0000-0000-000000000001',B='00000000-0000-0000-0000-000000000002';
 export const ID='10000000-0000-0000-0000-000000000001',T=1700000000000;
 export function fixture(){
@@ -30,10 +30,10 @@ test('Warning stays private until exact research-dependent cutoff',()=>{
  w.now=m.warning_at;const warning=projectPvP(w,B).incoming[0];assert.ok(warning);assert.deepEqual(Object.keys(warning).sort(),['arrival','commander','id','to']);
  assert.equal(warningFraction(0),.9);assert.ok(Math.abs(warningFraction(5)-.1)<1e-10);assert.equal(projectPvP(w,'stranger').outgoing.length,0);
 });
-test('24h protection has an exact boundary; tutorials, own targets and unavailable ships reject without mutation',()=>{
- const w=fixture();w.planets[1].colonized_at=T-DAY+1;assert.throws(()=>processWorld(w,A,attack()),/Gründungsschutz/);
- w.planets[1].colonized_at=T-DAY;assert.equal(processWorld(w,A,attack()).attacks.length,1);
- const before=JSON.stringify(w);assert.throws(()=>processWorld(w,A,{...attack(),action:{...attack().action,from:'home'}}),/gemeinsame/);
+test('1h protection has an exact boundary; tutorial targets, own targets and unavailable ships reject without mutation',()=>{
+ const w=fixture();w.planets[1].colonized_at=T-COLONY_PROTECTION+1;assert.throws(()=>processWorld(w,A,attack()),/Gründungsschutz/);
+ w.planets[1].colonized_at=T-COLONY_PROTECTION;assert.equal(processWorld(w,A,attack()).attacks.length,1);
+ const before=JSON.stringify(w);assert.throws(()=>processWorld(w,A,{...attack(),action:{...attack().action,to:'home'}}),/gemeinsame/);
  assert.throws(()=>processWorld(w,A,{...attack(),action:{...attack().action,to:'g-helion-p1'}}),/gemeinsame/);
  assert.throws(()=>processWorld(w,A,{...attack(),action:{...attack().action,fleet:{titan:100}}}),/Schiffe/);assert.equal(JSON.stringify(w),before);
 });
@@ -115,4 +115,51 @@ test('Local defense salvage reduces displayed and paid costs without becoming or
 test('A failed raid does not start or consume the victim loot-budget window',()=>{
  let w=fixture();w.saves[1].state.planets[1].ships.titan=100;w=processWorld(w,A,attack());w.now=w.attacks[0].arrival_at;w=processWorld(w,B,{type:'sync'});
  assert.equal(w.attacks[0].report.outcome,'defender');assert.equal(w.saves[1].state.planets[1].raidWindowStart,undefined);assert.equal(w.saves[1].state.planets[1].raidBudget,undefined);assert.equal(w.attacks[0].status,'returned');
+});
+
+const request=(from='home',fleet={waechter:4,karawane:4})=>({type:'attack',requestId:ID,action:{from,to:'g-orion-p1',fleet}});
+function homeWorld(){const w=fixture(),s=w.saves[0].state,home=s.planets[0];s.active='home';home.ships.waechter=4;home.ships.karawane=4;home.resources.fuel=10000;home.buildings.warehouse=4;w.planets[0].colonized_at=T;return w;}
+function publicGalaxy(w){return {start:{x:500,y:960},systems:[{id:'orion',x:380,y:250}],planets:w.planets.map(p=>({id:p.id,system:p.meta.system,slot:p.meta.slot,owner:p.owner_id===A?'mine':'foreign',reserved:p.reserved,commander:'Commander'}))};}
+test('Home attacks use assigned coordinates and return ships and loot to home while ending outpost protection',()=>{
+ const w=homeWorld(),before=JSON.stringify(w),home=w.saves[0].state.planets[0];
+ let n=processWorld(w,A,request());const m=n.attacks[0],s=n.saves[0].state;
+ const f=attackFlight(s,s.planets[0],w.planets[1].meta,request().action.fleet);
+ assert.equal(m.from,'home');assert.equal(m.arrival_at,T+f.ms);assert.equal(m.return_at,T+2*f.ms);
+ assert.equal(s.planets[0].resources.fuel,home.resources.fuel-f.fuel);assert.equal(s.planets[0].ships.waechter,0);
+ assert.equal(n.planets[0].protection_ended,true);assert.equal(projectPvP(n,A).colonies.some(p=>p.id==='home'),false);
+ assert.equal(f.distance,Math.hypot(500-380,960-250)/40+.15);
+ n=processWorld({...n,now:m.return_at},B,{type:'sync'});assert.equal(n.attacks[0].status,'returned');assert.equal(n.saves[0].state.planets[0].ships.waechter,4);assert.equal(n.saves[0].state.planets[0].ships.karawane,4);
+ assert.equal(JSON.stringify(w),before);
+});
+test('Home attacks require an actually settled owned outpost, a start position and suitable engines',()=>{
+ let w=homeWorld();w.planets[0].reserved=true;assert.throws(()=>processWorld(w,A,request()),/besiedelte Galaxiekolonie/);
+ w=homeWorld();w.planets[0].owner_id=B;assert.throws(()=>processWorld(w,A,request()),/besiedelte Galaxiekolonie/);
+ w=homeWorld();w.saves[0].state.tech.ramjet=0;assert.throws(()=>processWorld(w,A,request()),/Staustrahl/);
+ w=homeWorld();w.starts=[];delete w.saves[0].state.galaxy;assert.throws(()=>processWorld(w,A,request()),/Startplatz/);
+ w=homeWorld();const s=w.saves[0].state;s.planets[0].ships.falke=1;s.planets[0].ships.transport=1;
+ assert.throws(()=>processWorld(w,A,request('home',{falke:1,transport:1})),/geeigneter Antrieb/);
+ s.tech.assaultDrive=0;assert.throws(()=>processWorld(w,A,request('home',{falke:1})),/geeigneter Antrieb/);
+ s.tech.assaultDrive=1;assert.equal(processWorld(w,A,request('home',{falke:1})).attacks.length,1);
+});
+test('Every private tutorial planet may be a base but never an attack target',()=>{
+ const w=homeWorld(),p=structuredClone(w.saves[0].state.planets[0]);p.id='ferrum';w.saves[0].state.planets.push(p);
+ assert.equal(processWorld(w,A,request('ferrum')).attacks[0].from,'ferrum');
+ assert.throws(()=>processWorld(w,A,{...request(),action:{...request().action,to:'home'}}),/gemeinsame Kolonie/);
+});
+test('One-hour protection is projected and enforced for existing colonies at start and arrival',()=>{
+ let w=homeWorld();w.planets[1].colonized_at=T-COLONY_PROTECTION+1;
+ assert.equal(projectPvP(w,A).colonies[1].protectedUntil,T+1);assert.throws(()=>processWorld(w,A,request()),/1 Stunde/);
+ w.planets[1].colonized_at=T-COLONY_PROTECTION;w=processWorld(w,A,request());
+ w.planets[1].colonized_at=w.attacks[0].arrival_at-1;w=processWorld({...w,now:w.attacks[0].arrival_at},B,{type:'sync'});
+ assert.equal(w.attacks[0].report.outcome,'cancelled');
+});
+test('Home planner matches server flight estimate and distinguishes loading, missing colonies and old server',()=>{
+ const w=homeWorld(),s=w.saves[0].state;s.galaxy={x:500,y:960};const g=publicGalaxy(w),pvp=projectPvP(w,A);
+ assert.match(pvpView(s,pvp,g),/pvp-attack-form/);assert.match(pvpView(s,pvp,g),/1 Stunde Gründungsschutz/);
+ assert.match(pvpView(s,pvp,null),/Angriffsziele werden geladen/);
+ assert.doesNotMatch(pvpView(s,{...pvp,homeAttacks:false,protectionMs:86400000},g),/pvp-attack-form/);
+ assert.match(pvpView(s,{...pvp,homeAttacks:false,protectionMs:86400000},g),/Spielserver-Update/);
+ g.planets[0].reserved=true;assert.match(pvpView(s,pvp,g),/besiedelte Galaxiekolonie/);g.planets[0].reserved=false;
+ const f=attackFlight(s,s.planets[0],w.planets[1].meta,request().action.fleet);
+ assert.ok(pvpEstimate(s,g,'g-orion-p1',request().action.fleet).includes(f.fuel+' Treibstoff'));
 });
