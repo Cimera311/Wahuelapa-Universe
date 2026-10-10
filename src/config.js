@@ -27,7 +27,7 @@ export const TECHS = {
  weapons:{asset:'./assets/pvp-resource-v1/research/weapons.webp',name:'Waffentechnik',description:'Je Stufe +8 % Angriffsschaden.',cost:[400,300,100],time:60,lab:3,max:5,requires:{tech:'military',level:1}},
  shields:{asset:'./assets/pvp-resource-v1/research/shields.webp',name:'Schildtechnik',description:'Je Stufe +8 % Schildstärke.',cost:[350,450,100],time:60,lab:3,max:5,requires:{tech:'military',level:1}},
  armor:{asset:'./assets/pvp-resource-v1/research/armor.webp',name:'Panzerung',description:'Je Stufe +8 % Hüllenpunkte.',cost:[500,250,100],time:60,lab:3,max:5,requires:{tech:'military',level:1}},
- assaultDrive:{asset:'./assets/pvp-resource-v1/research/assaultDrive.webp',name:'Falke-Galaxieantrieb',description:'Rüstet Falken für interstellare Angriffe mit Staustrahlantrieb aus.',cost:[600,400,200],time:60,lab:3,max:1,requires:{tech:'ramjet',level:1}},
+ assaultDrive:{asset:'./assets/pvp-resource-v1/research/assaultDrive.webp',name:'Falke-Galaxieantrieb',description:'Rüstet Falken für interstellare Angriffe und Stationierungen mit Staustrahlantrieb aus.',cost:[600,400,200],time:60,lab:3,max:1,requires:{tech:'ramjet',level:1}},
  energy:{name:'Energietechnik',description:'Je Stufe +10 % Energie; Stufe 3: Gezeitenkraftwerk.',cost:[200,180,50],time:15,lab:2,max:5}
 };
 export const SHIPS = {
@@ -69,3 +69,7 @@ export function planetImagePath(p){
  const variant=hash%4;
  return variant?`./assets/planets-v2/${families[base]}-v${variant}.webp`:`./assets/${base}.webp`;
 }
+
+// The researched Falke retrofit applies to every interstellar flight type.
+export function shipFlightEngine(s,key,remote=false){return remote&&key==='falke'&&(s.tech.assaultDrive||0)>=1?'ramjet':SHIPS[key]?.engine||'drive';}
+export function canFlyInterstellar(s,key){const engine=shipFlightEngine(s,key,true);return (key==='falke'?(s.tech.assaultDrive||0)>=1:!!SHIPS[key]?.engine)&&(s.tech[engine]||0)>=1;}

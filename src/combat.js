@@ -1,4 +1,4 @@
-import {RES,SHIPS,vector} from './config.js';
+import {RES,SHIPS,vector,shipFlightEngine,canFlyInterstellar} from './config.js';
 export const COMBAT={
  probe:{hp:30,shield:0,attack:0,shots:1},longProbe:{hp:60,shield:10,attack:0,shots:1},
  colony:{hp:250,shield:30,attack:0,shots:1},starColony:{hp:500,shield:80,attack:0,shots:1},
@@ -31,8 +31,8 @@ export function attackFlight(s,from,to,fleet){
  let ms=0,fuel=0,slowest='';
  for(const [key,count] of Object.entries(fleet)){
   const sh=SHIPS[key],remote=from.system!==to.system;
-  let engine=sh.engine||'drive';
-  if(remote&&!sh.engine){if(key!=='falke'||!s.tech.assaultDrive)throw Error('Für interstellare Flüge fehlt ein geeigneter Antrieb.');engine='ramjet';}
+  const engine=shipFlightEngine(s,key,remote);
+  if(remote&&!canFlyInterstellar(s,key))throw Error(key==='falke'?'Für interstellare Flüge fehlt ein geeigneter Antrieb: Falke-Galaxieantrieb 1 und Staustrahltriebwerke 1 erforderlich.':'Für interstellare Flüge fehlt ein geeigneter Antrieb.');
   if(remote&&(s.tech[engine]||0)<1)throw Error('Für interstellare Flüge fehlt die passende Triebwerksforschung.');
   const factor=1+.12*(s.tech[engine]||0);
   const time=Math.max(300000,Math.ceil((600+dist*120)*1000/(sh.speed*factor)));
