@@ -18,3 +18,23 @@ test('24 hours offline matches incremental simulation over thousands of route ev
 test('Invalid orders, unavailable ships, malformed stops and oversized loads reject atomically',()=>{const s=fixture(),before=JSON.stringify(s);for(const a of [{type:'deliver',to:'ferrum',count:1,ship:'probe',order:max()},{type:'station',to:'ferrum',count:1,order:vector([5000,0,0])},{type:'route',count:1,stops:[stop('home'),stop('home')]},{type:'collect',to:'ferrum',count:1,order:{metal:-1,crystal:0,fuel:0}}])assert.throws(()=>act(s,a,s.time));assert.equal(JSON.stringify(s),before);});
 test('Old version-one saves migrate reserves; route tampering is rejected',()=>{const s=fixture();for(const p of s.planets)delete p.reserves;assert.deepEqual(validateSave(s).planets[0].reserves,zero());let r=act(s,{type:'route',count:1,stops:[stop('home'),stop('ferrum')],repeat:true},s.time);validateSave(r);r.missions[0].index=999;assert.throws(()=>validateSave(r));});
 test('Deliver uses both-leg fuel and returns empty ships after unloading',()=>{let s=fixture();const before=totals(s),fuel=legInfo(s,s.planets[0],s.planets[1],1).fuel*2;s=act(s,{type:'deliver',to:'ferrum',count:1,order:vector([200,0,0])},s.time);s=step(s);assert.equal(s.missions[0].cargo.metal,0);s=step(s);assert.deepEqual(totals(s),{...before,fuel:before.fuel-fuel});assert.equal(s.planets[0].ships.transport,3);});
+
+test('Researched Falken station between systems, use ramjet bonuses and preserve ships on both legs',()=>{
+ let s=fixture();s.galaxy={x:50,y:500};s.tech.ramjet=1;s.tech.assaultDrive=1;
+ const colony={...structuredClone(s.planets[0]),id:'g-helion-p1',system:'helion',slot:1,x:500,y:500,name:'Kolonie'};s.planets.push(colony);s.tech.colonization=4;
+ s.planets[0].ships.falke=2;s.planets[0].buildings.warehouse=15;s.planets[0].resources.fuel=10000;
+ colony.ships.falke=0;colony.buildings.warehouse=15;colony.resources.fuel=10000;
+ const f=legInfo(s,s.planets[0],colony,2,'falke');
+ const boosted=structuredClone(s);boosted.tech.ramjet=5;const faster=legInfo(boosted,boosted.planets[0],boosted.planets.at(-1),2,'falke');assert.ok(faster.ms<f.ms);assert.ok(faster.fuel<f.fuel);
+ const local=legInfo(s,s.planets[0],s.planets[1],2,'falke'),localBoosted=legInfo(boosted,boosted.planets[0],boosted.planets[1],2,'falke');assert.deepEqual(localBoosted,local);
+ s=act(s,{type:'station',ship:'falke',count:2,to:colony.id},s.time);assert.equal(s.planets[0].ships.falke,0);assert.equal(s.missions[0].duration,f.ms);s=step(s);assert.equal(s.planets.at(-1).ships.falke,2);assert.equal(s.missions.length,0);
+ s=act(s,{type:'station',planet:colony.id,ship:'falke',count:2,to:'home'},s.time);s=step(s);assert.equal(s.planets[0].ships.falke,2);assert.equal(s.planets.at(-1).ships.falke,0);assert.equal(s.missions.length,0);validateSave(s);
+});
+test('Falken require both retrofit and ramjet for interstellar stationing, remain usable locally and carry no resources',()=>{
+ const s=fixture();s.galaxy={x:50,y:500};s.tech.colonization=4;s.planets[0].ships.falke=2;s.planets[0].resources.fuel=1000;
+ s.planets.push({...structuredClone(s.planets[0]),id:'g-helion-p1',system:'helion',slot:1,x:100,y:500,name:'Kolonie'});
+ const order={type:'station',ship:'falke',count:1,to:'g-helion-p1'};
+ for(const [retrofit,ramjet] of [[0,0],[0,1],[1,0]]){s.tech.assaultDrive=retrofit;s.tech.ramjet=ramjet;const before=JSON.stringify(s);assert.throws(()=>act(s,order,s.time),/Falke-Galaxieantrieb/);assert.equal(JSON.stringify(s),before);}
+ s.tech.assaultDrive=0;s.tech.ramjet=0;assert.doesNotThrow(()=>act(s,{...order,to:'ferrum'},s.time));
+ s.tech.assaultDrive=1;s.tech.ramjet=1;assert.throws(()=>act(s,{...order,order:vector([1,0,0])},s.time),/Transporter/);
+});

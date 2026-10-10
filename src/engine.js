@@ -1,4 +1,4 @@
-import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,ROUTE_ECONOMY,vector,costAt,isFreighter} from './config.js';
+import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,ROUTE_ECONOMY,vector,costAt,isFreighter,shipFlightEngine,canFlyInterstellar} from './config.js';
 
 import {takeHulls,putHulls} from './combat.js';
 
@@ -36,7 +36,7 @@ export function shipRefund(job){
 }
 export function shipInfo(s,p,key,count=1){const sh=SHIPS[key];if(!sh)throw Error('Unbekanntes Schiff.');const gross=vector(sh.cost.map(v=>v*count)),salvage=vector(RES.map(k=>sh.category==='defense'?Math.min(gross[k],p.defenseSalvage?.[k]||0):0));return {cost:vector(RES.map(k=>gross[k]-salvage[k])),salvage,ms:sh.time*count*1000,reason:sh.slots&&defenseSlots(p)+sh.slots*count>(p.buildings.orbital||0)*4?'Nicht genügend freie Plätze auf der Orbitalplattform.':p.buildings.shipyard<(sh.shipyard||1)?`Benötigt Schiffswerft Stufe ${sh.shipyard||1}.`:s.tech[sh.tech]<(sh.techLevel||1)?`Benötigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel||1}.`:(s.tech[sh.engine||'drive']||0)<(sh.engineLevel||0)?`Benötigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.`:''};}
 export function cargoCapacity(s,n=1,ship='transport'){return Math.floor((SHIPS[ship]?.cargo||0)*(1+s.tech.logistics*.15))*n;}
-export function flightInfo(s,from,to,n=1,probe=false,ship='transport'){const def=SHIPS[probe?'probe':ship];if(!def)throw Error('Unbekanntes Schiff.');const remote=(from.system||'tutorial')!==(to.system||'tutorial');const anchor=s.galaxy||{x:500,y:960};const a=from.system?from:anchor,b=to.system?to:anchor;const dist=remote?Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)/40):Math.max(1,Math.abs((from.distance||0)-(to.distance||0)));return {ms:Math.ceil((10+dist*8)*1000/((1+(s.tech[def.engine||'drive']||0)*.12+(probe?s.tech.scout*.1:0))*def.speed)),fuel:Math.ceil(def.fuel*2*dist*n/(1+(s.tech[def.engine||'drive']||0)*.12))};}
+export function flightInfo(s,from,to,n=1,probe=false,ship='transport'){const def=SHIPS[probe?'probe':ship];if(!def)throw Error('Unbekanntes Schiff.');const remote=(from.system||'tutorial')!==(to.system||'tutorial');const engine=shipFlightEngine(s,probe?'probe':ship,remote);const anchor=s.galaxy||{x:500,y:960};const a=from.system?from:anchor,b=to.system?to:anchor;const dist=remote?Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)/40):Math.max(1,Math.abs((from.distance||0)-(to.distance||0)));return {ms:Math.ceil((10+dist*8)*1000/((1+(s.tech[engine]||0)*.12+(probe?s.tech.scout*.1:0))*def.speed)),fuel:Math.ceil(def.fuel*2*dist*n/(1+(s.tech[engine]||0)*.12))};}
 // Fleet fuel is prepaid for a complete itinerary; cargo never includes engine fuel.
 export function legInfo(s,from,to,n=1,ship='transport'){const f=flightInfo(s,from,to,n,ship==='probe',ship);return {...f,fuel:Math.ceil(f.fuel/2)};}
 export function routeLegInfo(s,from,to,n=1,ship='transport'){const f=legInfo(s,from,to,n,ship);return {ms:Math.ceil(f.ms*ROUTE_ECONOMY.time),fuel:Math.ceil(f.fuel*ROUTE_ECONOMY.fuel)};}
@@ -120,7 +120,7 @@ export function act(s,action,now=Date.now()){
    if(Object.entries(manifest).some(([k,v])=>p.ships[k]<v))throw Error('Nicht genügend verfügbare Schiffe.');setFleet(m,manifest);const f=routeInfo(n,stops,manifest);if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel)throw Error('Treibstoff reicht nicht für die Runde einschließlich Reserve.');pay(p,vector([0,0,f.fuel]));
    Object.assign(m,{name:String(action.name||'Handelsroute').trim().slice(0,40)||'Handelsroute',stops:structuredClone(stops),home:p.id,index:0,repeat:!!action.repeat,stopping:false,rounds:0});stopCargo(n,m,stops[0]);leaveRoute(n,m,1);
   }else{
-   const dest=getPlanet(n,action.to);if(dest.id===p.id)throw Error('Wähle einen anderen Zielplaneten.');if((p.system||'tutorial')!==(dest.system||'tutorial')&&!SHIPS[ship].engine)throw Error('Interstellare Flüge benötigen Staustrahl-, Impuls- oder Hyperraumtriebwerke.');const f=legInfo(n,p,dest,count,ship);
+   const dest=getPlanet(n,action.to);if(dest.id===p.id)throw Error('Wähle einen anderen Zielplaneten.');if((p.system||'tutorial')!==(dest.system||'tutorial')&&!canFlyInterstellar(n,ship))throw Error(ship==='falke'?'Interstellare Falkenflüge benötigen Falke-Galaxieantrieb 1 und Staustrahltriebwerke 1.':'Interstellare Flüge benötigen Staustrahl-, Impuls- oder Hyperraumtriebwerke.');const f=legInfo(n,p,dest,count,ship);
    const order=action.order||action.cargo||vector([0,0,0]);if(!validOrder(order))throw Error('Ladung: ganze Mengen oder Maximum wählen.');
    if(!isFreighter(ship)&&RES.some(k=>order[k]!==0))throw Error('Material benötigt Transporter.');
    const fuel=f.fuel*(action.type==='station'?1:2);if(p.resources.fuel-(p.reserves?.fuel||0)<fuel)throw Error('Nicht genügend Treibstoff einschließlich Reserve.');pay(p,vector([0,0,fuel]));
