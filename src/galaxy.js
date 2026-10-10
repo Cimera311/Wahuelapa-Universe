@@ -1,3 +1,4 @@
+import {sharedDistance,sharedFlight} from './flight.js';
 // Public navigation only. Ownership is public; planet properties are supplied by the server after surveying.
 export const GALAXY_SYSTEMS=[
  {id:'helion',name:'Helion',x:520,y:400},{id:'orion',name:'Orion',x:380,y:250},
@@ -6,11 +7,11 @@ export const GALAXY_SYSTEMS=[
  {id:'umbra',name:'Umbra',x:760,y:650},{id:'nyx',name:'Nyx',x:520,y:720},
  {id:'solace',name:'Solace',x:870,y:730},{id:'nova',name:'Nova',x:330,y:700}
 ];
-export function galaxyDistance(start,system,slot=1){return Math.max(1,Math.hypot(start.x-system.x,start.y-system.y)/40+slot*.15);}
+export function galaxyDistance(start,system,slot=1){return sharedDistance({system:'origin',...start},{system:system.id||'destination',...system,slot},start);}
 export function galaxyFlight(s,from,target,start,ship='longProbe'){
- const origin=from.system?{x:from.x,y:from.y}:start;
- const distance=galaxyDistance(origin,target,target.slot||1),level=s.tech.ramjet||0;
- return {distance,ms:Math.ceil((60+distance*25)/(1+level*.12))*1000,fuel:Math.ceil(distance*(ship==='longProbe'?6:18)/(1+level*.12))};
+ const destination={...target,system:target.system||target.id||'galaxy',slot:target.slot||1};
+ const f=sharedFlight(s,from,destination,1,ship,start);
+ return {...f,fuel:f.fuel*(ship==='longProbe'?2:1)};
 }
 export function validateGalaxy(data){
  if(!data||!Array.isArray(data.systems)||data.systems.length!==10||!Array.isArray(data.planets)||!Array.isArray(data.missions)||!data.start)throw Error('Ungültige Galaxie-Antwort.');
