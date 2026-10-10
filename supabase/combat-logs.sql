@@ -43,7 +43,7 @@ returns jsonb language plpgsql security definer set search_path='' as $$
 declare uid uuid:=auth.uid(); h public.pvp_battle_logs; q jsonb; result jsonb;
 begin
  if uid is null then raise exception 'AUTH_REQUIRED';end if;
- if p_offset<0 or p_offset>40000 or (p_round is not null and p_round not between 1 and 6) then raise exception 'INVALID_PAGE';end if;
+ if p_offset<0 or (p_round is not null and p_round not between 1 and 6) then raise exception 'INVALID_PAGE';end if;
  select * into h from public.pvp_battle_logs where mission_id=p_mission and uid in (attacker_id,defender_id);
  if not found then raise exception 'BATTLE_LOG_NOT_FOUND';end if;
  if p_round is null then

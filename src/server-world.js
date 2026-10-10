@@ -132,20 +132,6 @@ function launchAttack(w,uid,action,id){
  w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,ruleVersion:COMBAT_RULE_VERSION,combat:{fleet,tech:{...s.tech},hulls},shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
 }
 
-function assertFleetLimits(w){
- for(const row of w.saves){
-  const counts=Object.fromEntries(row.state.planets.map(p=>[p.id,Object.values(p.ships).reduce((a,b)=>a+b,0)+(p.shipjob?.count||0)]));
-  const add=(id,fleet)=>{if(Object.hasOwn(counts,id))counts[id]+=Object.values(fleet).reduce((a,b)=>a+b,0);};
-  for(const m of row.state.missions)if(m.type!=='colony'){
-   let fleet=m.fleet||{[m.ship]:m.count};
-   add(m.type==='station'?m.to:m.type==='route'?m.home:m.from,fleet);
-  }
-  for(const m of w.missions)if(m.user_id===row.user_id&&m.kind==='scan'&&!m.completed)add(m.from_id,{longProbe:1});
-  for(const m of w.attacks)if(m.attacker_id===row.user_id&&m.status!=='returned')add(m.from,m.status==='outbound'?m.fleet:m.survivors);
-  if(Object.values(counts).some(n=>n>5000))throw Error('Maximal 5000 Einheiten einschließlich Bauaufträgen und gebundener Rückflotten je Planet.');
- }
-}
-
 export function processWorld(snapshot,uid,request){
  const w=advanceWorld(prepareWorld(snapshot)),type=request.type,action=request.action||{};
  if(!w.saves.some(r=>r.user_id===uid)){
@@ -157,14 +143,13 @@ export function processWorld(snapshot,uid,request){
  if(start)s.galaxy={x:start.x,y:start.y};
  if(type==='command'){
   if(!['build','research','ship','probe','colony','transport','reserve','edit-route','cancel-route-edit','stop-route','station','collect','route','deliver','repair','cancel-ship'].includes(action.type))throw Error('Unbekannte Spielaktion.');
-  if(action.type==='ship'&&Object.values(getPlanet(s,action.planet||s.active).ships).reduce((a,b)=>a+b,0)+action.count>5000)throw Error('Vorerst maximal 5000 Einheiten je Planet.');
   const updated=act(s,action,w.now);w.saves.find(r=>r.user_id===uid).state=updated;
  }else if(type==='galaxy')launchGalaxy(w,uid,action,request.eventId||request.requestId);
  else if(type==='attack'){launchAttack(w,uid,action,request.eventId||request.requestId);w.attacks[w.attacks.length-1].seed=request.combatSeed||request.requestId;}
  else if(type==='set-pvp'){if(!w.admins.includes(uid))throw Error('Nur Administratoren dürfen PvP umschalten.');if(typeof request.enabled!=='boolean')throw Error('Ungültiger PvP-Status.');w.settings.enabled=request.enabled;}
  else if(type==='rename'){const name=String(request.name||'').trim();if(!name||name.length>30)throw Error('Name muss 1–30 Zeichen lang sein.');s.systemName=name;}
  else if(!['new','sync'].includes(type))throw Error('Unbekannte Anfrage.');
- assertFleetLimits(w);for(const row of w.saves)row.state=validateSave(row.state);
+ for(const row of w.saves)row.state=validateSave(row.state);
  return w;
 }
 export function projectPvP(w,uid){

@@ -47,6 +47,7 @@ test('Battle logs are stored atomically, separately and once; only participants 
  const uid=id=>db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);
  const fetch=async(round=null,offset=0)=>(await db.query('select public.imperium_battle_log($1,$2,$3) as data',[ID,round,offset])).rows[0].data;
  await uid(A);await db.exec('set role authenticated');const h=await fetch();assert.equal(h.ownSide,'attacker');assert.equal(h.initial.length,120);const p1=await fetch(1,0),p2=await fetch(1,200),p3=await fetch(1,400);assert.equal(p1.shots.length,200);assert.equal(p2.shots.length,200);assert.equal(p3.shots.length,80);assert.deepEqual([...p1.shots,...p2.shots,...p3.shots],trace.rounds[0].shots);
+ await db.exec('reset role');await db.exec(readFileSync('supabase/combat-log-pagination.sql','utf8'));await db.exec('set role authenticated');assert.equal((await fetch(1,40200)).shots.length,0);await assert.rejects(fetch(1,-1),/INVALID_PAGE/);
  await assert.rejects(db.query('select * from public.pvp_battle_logs'),/permission denied/);
  await uid(B);assert.equal((await fetch()).ownSide,'defender');await uid(C);await assert.rejects(fetch(),/NOT_FOUND/);await uid('');await assert.rejects(fetch(),/AUTH_REQUIRED/);
  await db.exec('reset role');await db.query('update public.pvp_attacks set data=$1 where id=$2',[JSON.stringify(data),ID]);assert.equal((await db.query('select count(*)::int as n from public.pvp_battle_logs')).rows[0].n,1);

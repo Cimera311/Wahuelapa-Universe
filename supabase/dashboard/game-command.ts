@@ -1007,8 +1007,7 @@ function units(fleet, tech, hulls, shieldFactor2 = 1) {
   const out = [];
   for (const key of Object.keys(fleet).sort()) {
     const n = fleet[key];
-    if (!Number.isInteger(n) || n < 0) throw Error("Ung\xFCltiger Flottenbestand.");
-    if (out.length + n > 5e3) throw Error("Kampfflotten sind vorerst auf 5000 Einheiten je Seite begrenzt.");
+    if (!Number.isSafeInteger(n) || n < 0) throw Error("Ung\xFCltiger Flottenbestand.");
     const z = combatStats(key, tech);
     z.shield *= shieldFactor2;
     for (let i = 0; i < n; i++) out.push({
@@ -1146,11 +1145,16 @@ function resolveBattle(attacker, defender, seed, version = COMBAT_RULE_VERSION) 
         "military",
         "defense"
       ].includes(SHIPS[t.key].category)) : targets;
-      const defense = allowed.filter((t) => SHIPS[t.key].category === "defense");
+      const defense = allowed.filter((t) => SHIPS[t.key].category === "defense"), pools = /* @__PURE__ */ new Map();
       for (const u of shooters) if (u.attack) {
-        const bonusTargets = allowed.filter((t) => (u.bonus?.[t.key] || 0) > 0);
-        const pool = bonusTargets.length ? bonusTargets : military.length ? military : defense.length ? defense : allowed;
-        const reason = bonusTargets.length ? "bonus" : military.length ? "military" : defense.length ? "defense" : "civil";
+        if (!pools.has(u.key)) {
+          const bonusTargets = allowed.filter((t) => (u.bonus?.[t.key] || 0) > 0);
+          pools.set(u.key, {
+            pool: bonusTargets.length ? bonusTargets : military.length ? military : defense.length ? defense : allowed,
+            reason: bonusTargets.length ? "bonus" : military.length ? "military" : defense.length ? "defense" : "civil"
+          });
+        }
+        const { pool, reason } = pools.get(u.key);
         for (let shot = 1; shot <= u.shots; shot++) {
           const target = pool[Math.floor(random() * pool.length)], base = u.attack / u.shots, bonus = u.bonus?.[target.key] || 0, hit = base * (1 + bonus);
           shots.push({
@@ -1551,7 +1555,7 @@ function fleetManifest(m) {
   };
 }
 function checkedFleet(fleet) {
-  if (!fleet || typeof fleet !== "object" || Array.isArray(fleet) || !Object.keys(fleet).length || Object.entries(fleet).some(([k, n]) => !isFreighter(k) || !Number.isInteger(n) || n < 1 || n > 100) || Object.values(fleet).reduce((a, b) => a + b, 0) > 100) throw Error("W\xE4hle 1\u2013100 Frachter insgesamt.");
+  if (!fleet || typeof fleet !== "object" || Array.isArray(fleet) || !Object.keys(fleet).length || Object.entries(fleet).some(([k, n]) => !isFreighter(k) || !Number.isSafeInteger(n) || n < 1)) throw Error("W\xE4hle verf\xFCgbare Frachter in positiven ganzen Zahlen.");
   return {
     ...fleet
   };
@@ -1823,7 +1827,7 @@ function act(s, action, now = Date.now()) {
     if (info.reason) throw Error(info.reason);
     if (p.shipjob) throw Error("Die Schiffswerft ist besch\xE4ftigt.");
     const count = action.count;
-    if (!Number.isInteger(count) || count < 1 || count > 50) throw Error("Baue zwischen 1 und 50 Schiffe.");
+    if (!Number.isSafeInteger(count) || count < 1) throw Error("W\xE4hle eine positive ganze Anzahl Schiffe.");
     if (p.defenseSalvage) for (const k of RES) p.defenseSalvage[k] -= info.salvage[k];
     pay(p, info.cost);
     p.shipjob = {
@@ -1866,7 +1870,7 @@ function act(s, action, now = Date.now()) {
   } else if (action.type === "probe" || action.type === "colony" || action.type === "transport") {
     const ship = action.type === "probe" ? "probe" : action.type === "colony" ? "colony" : "transport";
     const count = ship === "transport" ? action.count : 1;
-    if (!Number.isInteger(count) || count < 1 || count > 100) throw Error("Ung\xFCltige Flottengr\xF6\xDFe.");
+    if (!Number.isSafeInteger(count) || count < 1) throw Error("Ung\xFCltige Flottengr\xF6\xDFe.");
     if (p.ships[ship] < count) throw Error("Nicht gen\xFCgend verf\xFCgbare Schiffe.");
     let dest, cargo = vector([
       0,
@@ -1968,7 +1972,7 @@ function act(s, action, now = Date.now()) {
     }) : null;
     const ship = manifest ? Object.keys(manifest)[0] : action.ship || "transport", count = manifest ? manifest[ship] : action.count;
     if (SHIPS[ship]?.category === "defense") throw Error("Orbitale Verteidigung kann nicht verlegt werden.");
-    if (!Object.hasOwn(SHIPS, ship) || !Number.isInteger(count) || count < 1 || count > 100 || p.ships[ship] < count) throw Error("Nicht gen\xFCgend verf\xFCgbare Schiffe (1\u2013100 pro Flotte).");
+    if (!Object.hasOwn(SHIPS, ship) || !Number.isSafeInteger(count) || count < 1 || p.ships[ship] < count) throw Error("Nicht gen\xFCgend verf\xFCgbare Schiffe oder ung\xFCltige Anzahl.");
     const cargo = vector([
       0,
       0,
@@ -2098,9 +2102,9 @@ function validateSave(input) {
         "colony"
       ].includes(k) && !Object.hasOwn(p.ships, k)) p.ships[k] = 0;
     }
-    check(p.ships && Object.keys(SHIPS).every((k) => integer(p.ships[k], 1e6)));
+    check(p.ships && Object.keys(SHIPS).every((k) => integer(p.ships[k], Number.MAX_SAFE_INTEGER)));
     check(job(p.build, BUILDINGS) && (!p.build || p.build.level === p.buildings[p.build.key] + 1));
-    check(job(p.shipjob, SHIPS) && (!p.shipjob || integer(p.shipjob.count, 50) && p.shipjob.count > 0));
+    check(job(p.shipjob, SHIPS) && (!p.shipjob || integer(p.shipjob.count, Number.MAX_SAFE_INTEGER) && p.shipjob.count > 0));
   }
   for (const p of s.planets) if (p.shipjob) {
     const j = p.shipjob;
@@ -2110,7 +2114,7 @@ function validateSave(input) {
   check(job(s.research, TECHS) && (!s.research || s.research.level === s.tech[s.research.key] + 1 && ids.includes(s.research.planet)));
   check(Array.isArray(s.discovered) && s.discovered.length <= 3 && new Set(s.discovered).size === s.discovered.length && s.discovered.every((id) => TARGETS.some((t) => t.id === id)));
   check(Array.isArray(s.missions) && s.missions.length <= 100);
-  const fleetOK = (f) => f && typeof f === "object" && !Array.isArray(f) && Object.keys(f).length > 0 && Object.entries(f).every(([k, n]) => isFreighter(k) && integer(n, 100) && n > 0) && Object.values(f).reduce((a, b) => a + b, 0) <= 100;
+  const fleetOK = (f) => f && typeof f === "object" && !Array.isArray(f) && Object.keys(f).length > 0 && Object.entries(f).every(([k, n]) => isFreighter(k) && integer(n, Number.MAX_SAFE_INTEGER) && n > 0);
   const eventIds = [];
   const order = (o) => o && RES.every((k) => o[k] === "max" || integer(o[k], 1e12));
   for (const m of s.missions) {
@@ -2122,7 +2126,7 @@ function validateSave(input) {
       "collect",
       "station",
       "route"
-    ].includes(m.type) && Object.hasOwn(SHIPS, m.ship) && integer(m.count, 100) && m.count > 0 && cargo(m.cargo) && [
+    ].includes(m.type) && Object.hasOwn(SHIPS, m.ship) && integer(m.count, Number.MAX_SAFE_INTEGER) && m.count > 0 && cargo(m.cargo) && [
       "outbound",
       "return"
     ].includes(m.phase) && isNum(m.start, 864e13) && m.start <= s.time && isNum(m.due, 864e13) && m.due >= s.time && isNum(m.duration, 864e5) && m.duration > 0);
@@ -2526,28 +2530,6 @@ function launchAttack(w, uid, action, id) {
     slowest: f.slowest
   });
 }
-function assertFleetLimits(w) {
-  for (const row of w.saves) {
-    const counts = Object.fromEntries(row.state.planets.map((p) => [
-      p.id,
-      Object.values(p.ships).reduce((a, b) => a + b, 0) + (p.shipjob?.count || 0)
-    ]));
-    const add = (id, fleet) => {
-      if (Object.hasOwn(counts, id)) counts[id] += Object.values(fleet).reduce((a, b) => a + b, 0);
-    };
-    for (const m of row.state.missions) if (m.type !== "colony") {
-      let fleet = m.fleet || {
-        [m.ship]: m.count
-      };
-      add(m.type === "station" ? m.to : m.type === "route" ? m.home : m.from, fleet);
-    }
-    for (const m of w.missions) if (m.user_id === row.user_id && m.kind === "scan" && !m.completed) add(m.from_id, {
-      longProbe: 1
-    });
-    for (const m of w.attacks) if (m.attacker_id === row.user_id && m.status !== "returned") add(m.from, m.status === "outbound" ? m.fleet : m.survivors);
-    if (Object.values(counts).some((n) => n > 5e3)) throw Error("Maximal 5000 Einheiten einschlie\xDFlich Bauauftr\xE4gen und gebundener R\xFCckflotten je Planet.");
-  }
-}
 function processWorld(snapshot, uid, request) {
   const w = advanceWorld(prepareWorld(snapshot)), type = request.type, action = request.action || {};
   if (!w.saves.some((r) => r.user_id === uid)) {
@@ -2583,7 +2565,6 @@ function processWorld(snapshot, uid, request) {
       "repair",
       "cancel-ship"
     ].includes(action.type)) throw Error("Unbekannte Spielaktion.");
-    if (action.type === "ship" && Object.values(getPlanet(s, action.planet || s.active).ships).reduce((a, b) => a + b, 0) + action.count > 5e3) throw Error("Vorerst maximal 5000 Einheiten je Planet.");
     const updated = act(s, action, w.now);
     w.saves.find((r) => r.user_id === uid).state = updated;
   } else if (type === "galaxy") launchGalaxy(w, uid, action, request.eventId || request.requestId);
@@ -2602,7 +2583,6 @@ function processWorld(snapshot, uid, request) {
     "new",
     "sync"
   ].includes(type)) throw Error("Unbekannte Anfrage.");
-  assertFleetLimits(w);
   for (const row of w.saves) row.state = validateSave(row.state);
   return w;
 }

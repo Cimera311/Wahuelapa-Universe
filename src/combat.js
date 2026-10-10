@@ -45,7 +45,7 @@ export function takeHulls(p,fleet){const out={};p.hulls??={};for(const [k,n] of 
 export function putHulls(p,hulls={}){p.hulls??={};for(const [k,hp] of Object.entries(hulls))if(hp.length)p.hulls[k]=[...(p.hulls[k]||[]),...hp];}
 function rng(seed){let n=2166136261;for(const c of seed)n=Math.imul(n^c.charCodeAt(0),16777619)>>>0;return ()=>{n^=n<<13;n^=n>>>17;n^=n<<5;return (n>>>0)/4294967296;};}
 function units(fleet,tech,hulls,shieldFactor=1){
- const out=[];for(const key of Object.keys(fleet).sort()){const n=fleet[key];if(!Number.isInteger(n)||n<0)throw Error('Ungültiger Flottenbestand.');if(out.length+n>5000)throw Error('Kampfflotten sind vorerst auf 5000 Einheiten je Seite begrenzt.');const z=combatStats(key,tech);z.shield*=shieldFactor;for(let i=0;i<n;i++)out.push({key,...z,maxHp:z.hp,hp:z.hp*(hulls?.[key]?.[i]??1)});}return out;
+ const out=[];for(const key of Object.keys(fleet).sort()){const n=fleet[key];if(!Number.isSafeInteger(n)||n<0)throw Error('Ungültiger Flottenbestand.');const z=combatStats(key,tech);z.shield*=shieldFactor;for(let i=0;i<n;i++)out.push({key,...z,maxHp:z.hp,hp:z.hp*(hulls?.[key]?.[i]??1)});}return out;
 }
 function survivors(list){const fleet={},hulls={};for(const u of list)if(u.hp>1e-8){fleet[u.key]=(fleet[u.key]||0)+1;if(u.hp<u.maxHp-1e-8)(hulls[u.key]??=[]).push(u.hp/u.maxHp);}return {fleet,hulls};}
 function resolveBattleLegacy(attacker,defender,seed){
@@ -80,11 +80,10 @@ export function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION
   function fire(shooters,targets){
    const military=targets.filter(t=>SHIPS[t.key].category==='military');
    const allowed=military.length?targets.filter(t=>['military','defense'].includes(SHIPS[t.key].category)):targets;
-   const defense=allowed.filter(t=>SHIPS[t.key].category==='defense');
+   const defense=allowed.filter(t=>SHIPS[t.key].category==='defense'),pools=new Map();
    for(const u of shooters)if(u.attack){
-    const bonusTargets=allowed.filter(t=>(u.bonus?.[t.key]||0)>0);
-    const pool=bonusTargets.length?bonusTargets:military.length?military:defense.length?defense:allowed;
-    const reason=bonusTargets.length?'bonus':military.length?'military':defense.length?'defense':'civil';
+    if(!pools.has(u.key)){const bonusTargets=allowed.filter(t=>(u.bonus?.[t.key]||0)>0);pools.set(u.key,{pool:bonusTargets.length?bonusTargets:military.length?military:defense.length?defense:allowed,reason:bonusTargets.length?'bonus':military.length?'military':defense.length?'defense':'civil'});}
+    const {pool,reason}=pools.get(u.key);
     for(let shot=1;shot<=u.shots;shot++){
      const target=pool[Math.floor(random()*pool.length)],base=u.attack/u.shots,bonus=u.bonus?.[target.key]||0,hit=base*(1+bonus);
      shots.push({shooter:u.id,target:target.id,shot,base,bonus,damage:hit,reason});damage.set(target,(damage.get(target)||0)+hit);
