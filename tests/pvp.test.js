@@ -103,9 +103,9 @@ test('PvP UI exposes the switch only to admins, escapes names and supports publi
  assert.ok(html.includes('&lt;script&gt;'));assert.ok(html.includes('Unbekannt'));assert.ok(html.includes('pvp-attack-form'));
 });
 
-test('Stationing and shipbuilding cannot overbook the combat limit with a future incoming fleet',()=>{
+test('Stationing permits hangars above the former 5000-unit limit',()=>{
  const w=fixture(),source=w.saves[0].state.planets[1],home=w.saves[0].state.planets[0];source.ships.waechter=100;source.resources.fuel=50000;home.ships.transport=4990;
- assert.throws(()=>processWorld(w,A,{type:'command',action:{type:'station',planet:source.id,to:'home',ship:'waechter',count:100}}),/5000/);
+ const n=processWorld(w,A,{type:'command',action:{type:'station',planet:source.id,to:'home',ship:'waechter',count:100}});assert.equal(n.saves[0].state.missions[0].count,100);const m=n.saves[0].state.missions[0];n.now=m.due;const arrived=advanceWorld(n);assert.equal(arrived.saves[0].state.planets[0].ships.waechter,100);assert.ok(Object.values(arrived.saves[0].state.planets[0].ships).reduce((a,b)=>a+b,0)>5000);
 });
 test('Local defense salvage reduces displayed and paid costs without becoming ordinary cargo',()=>{
  const w=fixture();let s=w.saves[0].state,p=s.planets[1];p.buildings.shipyard=2;p.defenseSalvage=vector([112,56,0]);p.resources=vector([48,24,20]);
@@ -168,4 +168,30 @@ test('New attacks pin v2, legacy launches stay v1, and full traces never enter s
  const launched=processWorld(fixture(),A,attack());assert.equal(launched.attacks[0].ruleVersion,2);
  const resolved=processWorld({...structuredClone(launched),now:launched.attacks[0].arrival_at},B,{type:'sync'});assert.ok(resolved.attacks[0].report.trace);assert.equal(projectPvP(resolved,B).reports[0].trace,undefined);assert.equal(projectPvP(resolved,B).reports[0].traceAvailable,true);
  const legacy=structuredClone(launched);delete legacy.attacks[0].ruleVersion;legacy.now=legacy.attacks[0].arrival_at;const old=processWorld(legacy,B,{type:'sync'});assert.equal(old.attacks[0].report.ruleVersion,1);assert.equal(old.attacks[0].report.trace,undefined);
+});
+test('Attacks can send all 110 selected ships and still enforce availability',()=>{
+ const w=fixture(),p=w.saves[0].state.planets[1];Object.assign(p.ships,{falke:100,titan:4,karawane:6});p.resources.fuel=100000;
+ const request=attack();request.action.fleet={falke:100,titan:4,karawane:6};
+ const next=processWorld(w,A,request);assert.deepEqual(next.attacks[0].fleet,request.action.fleet);
+ assert.equal(next.saves[0].state.planets[1].ships.falke,0);
+ request.action.fleet.falke=101;assert.throws(()=>processWorld(w,A,request),/Schiffe/);
+ const ui=pvpView(w.saves[0].state,{...projectPvP(prepareWorld(w),A),incoming:[],outgoing:[],reports:[]},{planets:w.planets.map(q=>({...q.meta,owner:q.owner_id===A?'mine':'foreign',ownerName:'Commander'}))},w.now);
+ assert.match(ui,/data-action="pvp-select-all"/);assert.match(ui,/data-action="pvp-select-none"/);
+ assert.match(ui,/name="falke" type="number" min="0" max="100"/);
+});
+
+test('Large shipbuilding and transport fleets preserve save validation and resource rules',()=>{
+ const w=fixture();let s=w.saves[0].state,p=s.planets[1];p.buildings.shipyard=4;p.resources=vector([100000,100000,100000]);
+ s=act(s,{type:'ship',key:'probe',count:51},s.time);assert.equal(s.planets[1].shipjob.count,51);validateSave(s);
+ s=advance(s,s.planets[1].shipjob.end);p=s.planets[1];p.ships.karawane=151;p.resources.fuel=100000;
+ s=act(s,{type:'station',to:'home',ship:'karawane',count:151,order:vector([0,0,0])},s.time);assert.equal(s.missions[0].count,151);validateSave(s);
+ p=s.planets[1];p.ships.falke=1000001;validateSave(s);
+ assert.throws(()=>act(s,{type:'ship',key:'probe',count:1.5},s.time));
+});
+test('Combat records all units and shots above the former 5000-unit cap',()=>{
+ const r=resolveBattle({fleet:{falke:5001},tech:{}},{fleet:{falke:1,atlas:1},tech:{}},'large-fleet');
+ assert.equal(r.trace.initial.filter(u=>u.side==='attacker').length,5001);
+ assert.equal(r.trace.rounds[0].shots.filter(s=>s.shooter.startsWith('A-')).length,5001);
+ assert.ok(r.trace.rounds[0].shots.filter(s=>s.shooter.startsWith('A-')).every(s=>s.target==='D-falke-001'));
+ assert.equal(r.trace.final.length,5003);
 });
