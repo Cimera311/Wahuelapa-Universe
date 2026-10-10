@@ -2,7 +2,7 @@ import {RES,BUILDINGS,SHIPS,vector} from './config.js';
 import {newGame,getPlanet,advance,act,capacity,settle,fleetCapacity} from './engine.js';
 import {validateSave} from './storage.js';
 import {galaxyFlight} from './galaxy.js';
-import {attackFleet,attackFlight,warningFraction,resolveBattle,loadPlunder,takeHulls,putHulls} from './combat.js';
+import {attackFleet,attackFlight,warningFraction,resolveBattle,COMBAT_RULE_VERSION,loadPlunder,takeHulls,putHulls} from './combat.js';
 export const DAY=86400000;
 export const COLONY_PROTECTION=3600000;
 const ms=v=>typeof v==='number'?v:Date.parse(v);
@@ -45,7 +45,7 @@ function resolveAttack(w,m,time){
   m.report={outcome:'cancelled',at:time,reason:'Das Ziel ist nicht mehr angreifbar.'};log(a,time,'Angriff abgebrochen',m.report.reason);return;
  }
  const d=row.state,p=getPlanet(d,m.to),defense={fleet:{...p.ships},tech:{...d.tech},hulls:p.hulls,shieldFactor:shieldFactor(p.shieldUntil,time)};
- const result=resolveBattle({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id);
+ const result=resolveBattle({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,m.ruleVersion||1);
  const before={...p.ships};
  for(const key of Object.keys(SHIPS))p.ships[key]=result.defender.fleet[key]||0;
  p.hulls=result.defender.hulls;p.shieldUntil=time+300000;
@@ -58,7 +58,8 @@ function resolveAttack(w,m,time){
  withdraw(p,cargo.loot);if(p.raidBudget)for(const k of RES)p.raidBudget[k]-=cargo.loot[k];
  target.debris??=zero();for(const k of RES)target.debris[k]=field[k]-cargo.salvage[k];
  m.status=Object.keys(result.attacker.fleet).length?'returning':'returned';m.resolved_at=w.now;m.survivors=result.attacker.fleet;m.return_hulls=result.attacker.hulls;m.cargo=cargo.cargo;m.shieldUntil=time+300000;
- m.report={at:time,outcome:result.outcome,rounds:result.rounds,attackerBefore:m.fleet,attackerAfter:m.survivors,defenderBefore:before,defenderAfter:{...p.ships},loot:cargo.loot,salvage:cargo.salvage,debrisLeft:{...target.debris},defenseRepair:result.defenseRepair};
+ if(result.trace)result.trace.participants={attacker:a.name,defender:d.name};
+ m.report={at:time,outcome:result.outcome,ruleVersion:m.ruleVersion||1,traceAvailable:!!result.trace,...(result.trace?{trace:result.trace}:{}),rounds:result.rounds,attackerBefore:m.fleet,attackerAfter:m.survivors,defenderBefore:before,defenderAfter:{...p.ships},loot:cargo.loot,salvage:cargo.salvage,debrisLeft:{...target.debris},defenseRepair:result.defenseRepair};
  const outcome=result.outcome==='attacker'?'Angreifer gewinnt':result.outcome==='defender'?'Verteidiger gewinnt':'Unentschieden';
  const body=outcome+' · '+target.meta.name+' · '+result.rounds.length+' Runden. Angreifer übrig: '+fleetText(m.survivors)+'. Beute M/K/T: '+RES.map(k=>cargo.loot[k]).join('/')+'. Trümmer geborgen M/K: '+cargo.salvage.metal+'/'+cargo.salvage.crystal+'.';
  log(a,time,'PvP-Kampfbericht',body);log(d,time,'PvP-Kampfbericht',body);
@@ -128,7 +129,7 @@ function launchAttack(w,uid,action,id){
  subtract(from,vector([0,0,f.fuel]));const hulls=takeHulls(from,fleet);for(const [k,n] of Object.entries(fleet))from.ships[k]-=n;
  if(origin)origin.protection_ended=true;
  else for(const p of colonies)p.protection_ended=true;
- w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,combat:{fleet,tech:{...s.tech},hulls},shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
+ w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,ruleVersion:COMBAT_RULE_VERSION,combat:{fleet,tech:{...s.tech},hulls},shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
 }
 
 function assertFleetLimits(w){
@@ -167,9 +168,9 @@ export function processWorld(snapshot,uid,request){
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,features:{cancelShip:true},homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,features:{cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},homeAttacks:true,protectionMs:COLONY_PROTECTION,
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,arrival:m.arrival_at,returnAt:m.return_at})),
  incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),
- reports:w.attacks.filter(m=>(m.attacker_id===uid||m.defender_id===uid)&&m.report).sort((a,b)=>b.arrival_at-a.arrival_at).slice(0,30).map(m=>({id:m.id,from:m.from,to:m.to,returnAt:m.return_at,...m.report}))};
+ reports:w.attacks.filter(m=>(m.attacker_id===uid||m.defender_id===uid)&&m.report).sort((a,b)=>b.arrival_at-a.arrival_at).slice(0,30).map(m=>({id:m.id,from:m.from,to:m.to,returnAt:m.return_at,...Object.fromEntries(Object.entries(m.report).filter(([key])=>key!=='trace'))}))};
 }

@@ -163,3 +163,9 @@ test('Home planner matches server flight estimate and distinguishes loading, mis
  const f=attackFlight(s,s.planets[0],w.planets[1].meta,request().action.fleet);
  assert.ok(pvpEstimate(s,g,'g-orion-p1',request().action.fleet).includes(f.fuel+' Treibstoff'));
 });
+
+test('New attacks pin v2, legacy launches stay v1, and full traces never enter sync projections',()=>{
+ const launched=processWorld(fixture(),A,attack());assert.equal(launched.attacks[0].ruleVersion,2);
+ const resolved=processWorld({...structuredClone(launched),now:launched.attacks[0].arrival_at},B,{type:'sync'});assert.ok(resolved.attacks[0].report.trace);assert.equal(projectPvP(resolved,B).reports[0].trace,undefined);assert.equal(projectPvP(resolved,B).reports[0].traceAvailable,true);
+ const legacy=structuredClone(launched);delete legacy.attacks[0].ruleVersion;legacy.now=legacy.attacks[0].arrival_at;const old=processWorld(legacy,B,{type:'sync'});assert.equal(old.attacks[0].report.ruleVersion,1);assert.equal(old.attacks[0].report.trace,undefined);
+});
