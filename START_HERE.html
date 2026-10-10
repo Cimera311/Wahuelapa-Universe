@@ -87,6 +87,7 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 @media(max-width:760px){.report-participants{grid-template-columns:1fr}.report-force-table th,.report-force-table td{padding:8px 5px;font-size:.75rem}}
 
 .combat-log-dialog{width:min(1100px,96vw);max-width:1100px;max-height:92vh;overflow:auto}.battle-round-nav,.battle-pages{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}.battle-round-nav button[aria-pressed="true"]{outline:2px solid var(--cyan,#4cd9e5)}.battle-board{display:grid;grid-template-columns:1fr 1fr;gap:16px}.battle-board section,.battle-units article{background:#102132;border:1px solid #294153;border-radius:12px;padding:16px}.battle-board strong,.battle-units strong,.battle-units small,.battle-shot-table small{display:block}.battle-board progress,.battle-units progress{width:100%;margin:10px 0;accent-color:#4cd9e5}.battle-board small,.battle-units small,.battle-shot-table small{color:#a6bacc}.battle-units{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.battle-destroyed{border-color:#e86f64!important}.battle-destroyed>strong:last-child{color:#e86f64}.battle-shot-table{overflow:auto;margin:16px 0}.battle-shot-table table{width:100%;border-collapse:collapse}.battle-shot-table td,.battle-shot-table th{text-align:left;border-bottom:1px solid #294153;padding:10px}.battle-log-content[aria-busy="true"]{opacity:.6;pointer-events:none}@media(max-width:600px){.battle-board{grid-template-columns:1fr}.combat-log-dialog{padding:14px}.battle-shot-table{font-size:13px}.battle-round-nav button{padding:8px}}
+.battle-round-summary{min-width:0;margin:16px 0}.battle-exchange,.battle-impact-summary{background:#102132;border:1px solid #294153;border-radius:10px;padding:12px;margin:8px 0;overflow-wrap:anywhere}.battle-round-summary strong,.battle-round-summary small{display:block}.battle-round-summary strong small{display:inline;color:#a6bacc;font-weight:400;font-size:.8em}.battle-round-summary p{margin:6px 0}.battle-impact-summary>small{color:#a6bacc}.battle-loss{color:#ff9389}.report-round-exchange{margin:8px 0}.report-round-exchange>button{width:100%;text-align:left;min-height:44px}.battle-raw-details>summary{cursor:pointer;padding:12px 0}.report-round-content[aria-busy="true"]{opacity:.7}@media(max-width:600px){.battle-round-summary{font-size:14px}.battle-exchange,.battle-impact-summary{padding:10px}.battle-round-summary h3{font-size:17px}}
 </style></head><body><div id="app"></div><div id="toast" role="status" aria-live="polite"></div><script type="module">const RES = ['metal','crystal','fuel'];
 const LABEL = {metal:'Metall',crystal:'Kristall',fuel:'Treibstoff'};
 const ICON = {metal:'◈',crystal:'◆',fuel:'▰'};
@@ -593,7 +594,7 @@ function reportDetail(r,state,galaxy){
   if(p.reason)return header+'<p>'+reportEscape(p.reason)+'</p>';
   const side=reportSide(r,state),before=p[(side||'attacker')+'Before'],after=p[(side||'attacker')+'After'],loss=before&&after?reportNumber(Object.values(reportLosses(before,after)).reduce((a,n)=>a+n,0)):'Nicht gespeichert';
   const survivors=p.attackerAfter?Object.values(p.attackerAfter).some(n=>n>0):null;
-  return header+'<div class="report-metrics"><div><small>'+(side?'Eigene Verluste':'Verluste Angreifer')+'</small><strong>'+loss+'</strong></div><div><small>Beute des Angreifers</small><strong>'+reportEscape(reportCargo(p.loot))+'</strong></div><div><small>Kampfrunden</small><strong>'+(p.rounds?.length??'Nicht gespeichert')+'</strong></div></div>'+reportForces(p.attackerBefore,p.attackerAfter,'Angreifer · Flotte')+reportForces(p.defenderBefore,p.defenderAfter,'Verteidiger · Flotte und orbitale Verteidigung')+'<p>'+actionIcon('debris')+'Vom Angreifer geborgene Trümmer: '+reportEscape(reportCargo(p.salvage))+'</p><p>'+actionIcon('debris')+'Verbleibende Trümmer am Ziel: '+reportEscape(reportCargo(p.debrisLeft))+'</p>'+(p.defenseRepair?'<p>Reparaturmaterial des Verteidigers: '+reportEscape(reportCargo(p.defenseRepair))+'</p>':'')+(survivors===false?'<p>Keine Angreiferschiffe überlebt · kein Rückflug.</p>':survivors&&p.returnAt?'<p>Geplante Heimkehr der Angreiferflotte: '+reportEscape(reportDate(p.returnAt))+'</p>':'')+(p.traceAvailable?'<button data-action="battle-log" data-mission="'+reportEscape(r.missionId||p.id)+'">Vollständiges Kampfprotokoll öffnen</button>':'<p class="fine">Historischer Bericht: Einzelne Schüsse und Hüllenzustände wurden damals nicht gespeichert.</p>')+'<details class="report-rounds"><summary>Kampfrunden im Detail</summary><p>Verbleibende Einheiten nach jeder Runde:</p><ol>'+(p.rounds||[]).map(q=>'<li>Runde '+reportNumber(q.round)+': Angreifer '+reportNumber(q.attacker)+' · Verteidiger '+reportNumber(q.defender)+'</li>').join('')+'</ol></details>';
+  return header+'<div class="report-metrics"><div><small>'+(side?'Eigene Verluste':'Verluste Angreifer')+'</small><strong>'+loss+'</strong></div><div><small>Beute des Angreifers</small><strong>'+reportEscape(reportCargo(p.loot))+'</strong></div><div><small>Kampfrunden</small><strong>'+(p.rounds?.length??'Nicht gespeichert')+'</strong></div></div>'+reportForces(p.attackerBefore,p.attackerAfter,'Angreifer · Flotte')+reportForces(p.defenderBefore,p.defenderAfter,'Verteidiger · Flotte und orbitale Verteidigung')+'<p>'+actionIcon('debris')+'Vom Angreifer geborgene Trümmer: '+reportEscape(reportCargo(p.salvage))+'</p><p>'+actionIcon('debris')+'Verbleibende Trümmer am Ziel: '+reportEscape(reportCargo(p.debrisLeft))+'</p>'+(p.defenseRepair?'<p>Reparaturmaterial des Verteidigers: '+reportEscape(reportCargo(p.defenseRepair))+'</p>':'')+(survivors===false?'<p>Keine Angreiferschiffe überlebt · kein Rückflug.</p>':survivors&&p.returnAt?'<p>Geplante Heimkehr der Angreiferflotte: '+reportEscape(reportDate(p.returnAt))+'</p>':'')+(p.traceAvailable?'<div class="report-skirmishes"><h4>Schlagabtausch je Runde</h4>'+p.rounds.map(q=>'<div class="report-round-exchange"><button data-action="battle-summary" data-mission="'+reportEscape(r.missionId||p.id)+'" data-round="'+q.round+'" aria-expanded="false">Runde '+q.round+' · Wer schoss auf wen?</button><div class="report-round-content" hidden></div></div>').join('')+'</div><button data-action="battle-log" data-mission="'+reportEscape(r.missionId||p.id)+'">Vollständiges Kampfprotokoll öffnen</button>':'<p class="fine">Historischer Bericht: Einzelne Schüsse und Hüllenzustände wurden damals nicht gespeichert.</p>')+'<details class="report-rounds"><summary>Kampfrunden im Detail</summary><p>Verbleibende Einheiten nach jeder Runde:</p><ol>'+(p.rounds||[]).map(q=>'<li>Runde '+reportNumber(q.round)+': Angreifer '+reportNumber(q.attacker)+' · Verteidiger '+reportNumber(q.defender)+'</li>').join('')+'</ol></details>';
  }
  return participants+(r.body?'<p>'+reportEscape(r.body)+'</p>':'')+(p.fleet?'<p>'+(r.kind==='return'?'Zurückgekehrte Angreiferflotte':r.kind==='attack'?'Eingesetzte Angreiferflotte':'Flotte')+': '+reportEscape(reportFleet(p.fleet))+'</p>':'')+(p.cargo?'<p>'+(r.kind==='return'?'Zurückgebrachte Ladung':'Ladung')+': '+reportEscape(reportCargo(p.cargo))+'</p>':'');
 }
@@ -617,6 +618,48 @@ function reportsPage(data,filters,state,galaxy,{busy=false,error='',selected=new
 }
 
 
+const number=n=>Number(n||0).toLocaleString('de-DE',{maximumFractionDigits:2});
+const side=s=>s==='attacker'?'Angreifer':'Verteidiger';
+
+// Read every page before aggregating. Never infer outcomes from a partial page.
+async function loadBattleRound(read,mission,round){
+ const first=await read(mission,round,0),shots=[...first.shots],impacts=[...first.impacts];
+ const total=Math.max(first.shotTotal,first.impactTotal),limit=first.limit||200;
+ for(let offset=limit;offset<total;offset+=limit){const page=await read(mission,round,offset);shots.push(...page.shots);impacts.push(...page.impacts);}
+ if(shots.length!==first.shotTotal||impacts.length!==first.impactTotal)throw Error('Die Runde konnte nicht vollständig geladen werden.');
+ return {...first,shots,impacts};
+}
+
+function summarizeRound(header,page){
+ const units=new Map(header.initial.map(u=>[u.id,u])),pairs=new Map(),contributors=new Map();
+ for(const shot of page.shots){
+  const shooter=units.get(shot.shooter),target=units.get(shot.target);
+  if(!shooter||!target)throw Error('Einheit im Kampfprotokoll fehlt.');
+  const key=JSON.stringify([shooter.side,shooter.key,target.side,target.key]);
+  if(!pairs.has(key))pairs.set(key,{shooter,target,shots:0,damage:0});
+  const pair=pairs.get(key);pair.shots++;pair.damage+=shot.damage;
+  if(!contributors.has(shot.target))contributors.set(shot.target,new Map());
+  contributors.get(shot.target).set(shooter.key,shooter.name);
+ }
+ const outcomes=new Map();
+ for(const hit of page.impacts){
+  const target=units.get(hit.target),sources=[...(contributors.get(hit.target)||new Map())].sort(([a],[b])=>a.localeCompare(b));
+  if(!target||!sources.length)throw Error('Treffer im Kampfprotokoll nicht zuordenbar.');
+  const key=JSON.stringify([target.side,target.key,sources.map(([key])=>key)]);
+  if(!outcomes.has(key))outcomes.set(key,{target,sources:sources.map(([,name])=>name),shield:0,hull:0,overkill:0,destroyed:0,surviving:0,hpAfter:0});
+  const row=outcomes.get(key);row.shield+=hit.shieldDamage;row.hull+=hit.hullDamage;row.overkill+=hit.overkill;
+  row.destroyed+=Number(hit.destroyed);row.surviving+=Number(!hit.destroyed);row.hpAfter+=hit.hpAfter;
+ }
+ return {pairs:[...pairs.values()],outcomes:[...outcomes.values()]};
+}
+
+function roundSummaryView(header,page){
+ const {pairs,outcomes}=summarizeRound(header,page);
+ const label=u=>reportEscape(u.name)+' <small>'+side(u.side)+'</small>';
+ return '<section class="battle-round-summary"><h3>Runde '+page.round+' · Schlagabtausch</h3><p class="fine">Beide Seiten feuern gleichzeitig. Verluste gelten am Rundenende.</p>'+pairs.map(p=>'<article class="battle-exchange"><strong>'+label(p.shooter)+' → '+label(p.target)+'</strong><p>'+number(p.shots)+' Schüsse · '+number(p.damage)+' berechneter Schaden</p></article>').join('')+'<h4>Was wurde beschädigt oder zerstört?</h4>'+outcomes.map(o=>'<article class="battle-impact-summary"><strong>'+label(o.target)+' · getroffen von '+reportEscape(o.sources.join(' + '))+'</strong><p>'+number(o.shield)+' Schild + '+number(o.hull)+' Hülle beschädigt</p><p class="'+(o.destroyed?'battle-loss':'')+'">'+(o.destroyed?'💥 '+number(o.destroyed)+' zerstört':'Keine Zerstörung')+(o.surviving?' · '+number(o.surviving)+' getroffene Einheiten überleben mit insgesamt '+number(o.hpAfter)+' Hülle':'')+'</p>'+(o.overkill?'<small>'+number(o.overkill)+' Überschaden · nicht auf andere Ziele übertragen</small>':'')+(o.sources.length>1?'<small>Gemeinsames Trefferergebnis; kein einzelner Klasse zugeschriebener Abschuss.</small>':'')+'</article>').join('')+(!pairs.length?'<p>Keine Schüsse in dieser Runde.</p>':'')+'</section>';
+}
+
+
 const battleNumber=n=>Number(n||0).toLocaleString('de-DE',{maximumFractionDigits:2});
 function battleLogView(header,page=null,{round=0,offset=0}={}){
  const units=new Map(header.initial.map(u=>[u.id,u]));
@@ -634,9 +677,11 @@ function battleLogView(header,page=null,{round=0,offset=0}={}){
   total=Math.max(page.shotTotal,page.impactTotal);
   body='<h3>Runde '+round+' · Gleichzeitig verrechneter Schaden</h3><p>Alle zu Rundenbeginn lebenden Einheiten schießen. Die Zeilenreihenfolge ist keine zeitliche Trefferfolge. Überzähliger Schaden wird nicht auf andere Ziele verteilt.</p><div class="battle-units">'+page.impacts.map(hit=>{const u=units.get(hit.target);return '<article class="'+(hit.destroyed?'battle-destroyed':'')+'"><strong>'+reportEscape(label(hit.target))+'</strong><p>'+battleNumber(hit.damage)+' Schaden erhalten</p><small>Schild absorbiert: '+battleNumber(hit.shieldDamage)+' · Hülle verloren: '+battleNumber(hit.hullDamage)+' · Überschaden: '+battleNumber(hit.overkill)+'</small><p>HP '+battleNumber(hit.hpBefore)+' → '+battleNumber(hit.hpAfter)+' · Schild '+battleNumber(hit.shieldBefore)+' → '+battleNumber(hit.shieldAfter)+'</p><progress max="'+(u?.maxHp||1)+'" value="'+hit.hpAfter+'" aria-label="Verbleibende Hülle"></progress>'+(hit.destroyed?'<strong>Zerstört am Rundenende</strong>':'')+'</article>';}).join('')+'</div><h3>Einzelne Schüsse · '+page.shotTotal+' insgesamt</h3><div class="battle-shot-table"><table><thead><tr><th>Schütze → Ziel</th><th>Berechnung</th><th>Zielwahl</th></tr></thead><tbody>'+page.shots.map(s=>'<tr><td>'+reportEscape(label(s.shooter))+'<br>→ '+reportEscape(label(s.target))+'<small>Schuss '+s.shot+'</small></td><td>'+battleNumber(s.base)+' × '+battleNumber(1+s.bonus)+' = <strong>'+battleNumber(s.damage)+'</strong></td><td>'+reportEscape(reason[s.reason]||s.reason)+'</td></tr>').join('')+'</tbody></table></div>';
  }
+ body=(page?.summaryHTML||'')+'<details class="battle-raw-details"><summary>'+(round>0?'Einzelne Treffer und Schüsse anzeigen':'Einzelne Schiffe anzeigen')+'</summary>'+body+'</details>';
  const pages=total>200?'<div class="battle-pages">'+control('← Vorherige Seite',round,Math.max(0,offset-200),offset===0)+'<span>Einträge '+(offset+1)+'–'+Math.min(total,offset+200)+' / '+total+'</span>'+control('Nächste Seite →',round,offset+200,offset+200>=total)+'</div>':'';
  return '<h2>Kampfprotokoll · Regelversion '+header.ruleVersion+'</h2><p>'+reportEscape(header.from)+' → '+reportEscape(header.to)+'</p><p>Bonusziele zuerst; danach Kriegsschiffe, Verteidigung und zivile Schiffe. Frachter und zivile Schiffe sind geschützt, solange auf ihrer Seite Kriegsschiffe leben.</p><div class="battle-round-nav">'+nav+'</div>'+board+pages+body+pages+'<details><summary>Forschung und Reproduzierbarkeit</summary><p>Seed: <code>'+reportEscape(header.seed)+'</code></p>'+['attacker','defender'].map(side=>'<p>'+(side==='attacker'?'Angreifer':'Verteidiger')+': Waffen '+(header.tech[side].weapons||0)+' · Schilde '+(header.tech[side].shields||0)+' · Panzerung '+(header.tech[side].armor||0)+' · Schildbereitschaft '+battleNumber(100*header.shieldFactors[side])+' %</p>').join('')+'</details><details><summary>Überlebende je Runde</summary><table><thead><tr><th>Runde</th><th>Angreifer</th><th>Verteidiger</th></tr></thead><tbody>'+summaries+'</tbody></table></details>';
 }
+
 
 
 function attackProgress(m,now){
@@ -703,6 +748,17 @@ function pvpEstimate(state,galaxy,to,fleet){
 }
 
 
+
+const battleSummaries=new Map();let battleSummaryAccount=null;
+function restoreBattleSummaries(){
+ const account=cloud?.user?.id;if(account!==battleSummaryAccount){battleSummaries.clear();battleSummaryAccount=account;}
+ for(const b of document.querySelectorAll('[data-action="battle-summary"]')){
+  const entry=battleSummaries.get(b.dataset.mission+':'+b.dataset.round);if(!entry)continue;
+  const container=b.nextElementSibling;container.hidden=!entry.open;b.setAttribute('aria-expanded',String(entry.open));b.disabled=entry.busy;
+  if(entry.html)container.innerHTML=entry.html;else container.textContent=entry.error||'Schlagabtausch wird vollständig geladen …';
+  container.setAttribute('aria-busy',String(entry.busy));
+ }
+}
 
 
 
@@ -940,13 +996,31 @@ document.addEventListener('input',captureReportFilterDraft);document.addEventLis
 
 // Detail logs are read separately and never replace the authoritative game state.
 document.addEventListener('click',async e=>{
+ const b=e.target.closest('[data-action="battle-summary"]');if(!b||!cloud?.user||b.disabled)return;
+ restoreBattleSummaries();const key=b.dataset.mission+':'+b.dataset.round,entry=battleSummaries.get(key)||{open:false,busy:false};
+ battleSummaries.set(key,entry);entry.open=!entry.open;
+ if(!entry.open||entry.html){restoreBattleSummaries();return;}
+ const account=cloud.user.id;entry.busy=true;entry.error='';restoreBattleSummaries();
+ try{
+  const header=await cloud.battleLog(b.dataset.mission);
+  const page=await loadBattleRound((...args)=>cloud.battleLog(...args),b.dataset.mission,Number(b.dataset.round));
+  if(account!==cloud?.user?.id)return;
+  entry.html=roundSummaryView(header,page);
+ }catch(error){entry.error=(error.message||'Schlagabtausch konnte nicht geladen werden.')+' Zum Wiederholen schließen und erneut öffnen.';}
+ finally{entry.busy=false;if(account===cloud?.user?.id)restoreBattleSummaries();}
+});
+document.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action="battle-log"]');if(!b||!cloud?.user)return;
  document.querySelector('dialog')?.remove();
  const account=cloud.user.id,d=document.createElement('dialog');d.className='combat-log-dialog';d.innerHTML='<form method="dialog"><button class="close plain" aria-label="Schließen">×</button></form><div class="battle-log-content">Kampfprotokoll wird geladen …</div>';document.body.append(d);d.showModal();
- let header=null,request=0;
+ let header=null,request=0;const completeRounds=new Map();
  async function show(round=0,offset=0){
   const seq=++request,container=d.querySelector('.battle-log-content');container.setAttribute('aria-busy','true');
-  try{header??=await cloud.battleLog(b.dataset.mission);const page=round>0?await cloud.battleLog(b.dataset.mission,round,offset):null;
+  try{header??=await cloud.battleLog(b.dataset.mission);let page=null;
+   if(round>0){
+    if(!completeRounds.has(round))completeRounds.set(round,await loadBattleRound((...args)=>cloud.battleLog(...args),b.dataset.mission,round));
+    const full=completeRounds.get(round);page={...full,shots:full.shots.slice(offset,offset+200),impacts:full.impacts.slice(offset,offset+200),summaryHTML:roundSummaryView(header,full)};
+   }
    if(seq!==request||!d.isConnected||account!==cloud?.user?.id)return;
    container.innerHTML=battleLogView(header,page,{round,offset});container.scrollTop=0;
   }catch(error){if(seq===request&&d.isConnected&&account===cloud?.user?.id){container.replaceChildren();const p=document.createElement('p');p.textContent=['PGRST202','42883'].includes(error.code)?'Für vollständige Protokolle fehlt noch die Supabase-Erweiterung combat-logs.sql.':error.message||'Kampfprotokoll konnte nicht geladen werden.';const retry=document.createElement('button');retry.textContent='Erneut laden';retry.addEventListener('click',()=>void show(round,offset));container.append(p,retry);}}

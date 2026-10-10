@@ -1,4 +1,15 @@
 import {battleLogView} from './combat-ui.js';
+import {loadBattleRound,roundSummaryView} from './combat-summary.js';
+const battleSummaries=new Map();let battleSummaryAccount=null;
+function restoreBattleSummaries(){
+ const account=cloud?.user?.id;if(account!==battleSummaryAccount){battleSummaries.clear();battleSummaryAccount=account;}
+ for(const b of document.querySelectorAll('[data-action="battle-summary"]')){
+  const entry=battleSummaries.get(b.dataset.mission+':'+b.dataset.round);if(!entry)continue;
+  const container=b.nextElementSibling;container.hidden=!entry.open;b.setAttribute('aria-expanded',String(entry.open));b.disabled=entry.busy;
+  if(entry.html)container.innerHTML=entry.html;else container.textContent=entry.error||'Schlagabtausch wird vollständig geladen …';
+  container.setAttribute('aria-busy',String(entry.busy));
+ }
+}
 import {resourceIcon,actionIcon,unitIcon} from './ui-assets.js';
 import {GALAXY_SYSTEMS,galaxyFlight} from './galaxy.js';
 import {RES,LABEL,ICON,BUILDINGS,TECHS,SHIPS,TARGETS,vector,isFreighter,planetImagePath,canFlyInterstellar} from './config.js';
@@ -237,13 +248,31 @@ document.addEventListener('input',captureReportFilterDraft);document.addEventLis
 
 // Detail logs are read separately and never replace the authoritative game state.
 document.addEventListener('click',async e=>{
+ const b=e.target.closest('[data-action="battle-summary"]');if(!b||!cloud?.user||b.disabled)return;
+ restoreBattleSummaries();const key=b.dataset.mission+':'+b.dataset.round,entry=battleSummaries.get(key)||{open:false,busy:false};
+ battleSummaries.set(key,entry);entry.open=!entry.open;
+ if(!entry.open||entry.html){restoreBattleSummaries();return;}
+ const account=cloud.user.id;entry.busy=true;entry.error='';restoreBattleSummaries();
+ try{
+  const header=await cloud.battleLog(b.dataset.mission);
+  const page=await loadBattleRound((...args)=>cloud.battleLog(...args),b.dataset.mission,Number(b.dataset.round));
+  if(account!==cloud?.user?.id)return;
+  entry.html=roundSummaryView(header,page);
+ }catch(error){entry.error=(error.message||'Schlagabtausch konnte nicht geladen werden.')+' Zum Wiederholen schließen und erneut öffnen.';}
+ finally{entry.busy=false;if(account===cloud?.user?.id)restoreBattleSummaries();}
+});
+document.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action="battle-log"]');if(!b||!cloud?.user)return;
  document.querySelector('dialog')?.remove();
  const account=cloud.user.id,d=document.createElement('dialog');d.className='combat-log-dialog';d.innerHTML='<form method="dialog"><button class="close plain" aria-label="Schließen">×</button></form><div class="battle-log-content">Kampfprotokoll wird geladen …</div>';document.body.append(d);d.showModal();
- let header=null,request=0;
+ let header=null,request=0;const completeRounds=new Map();
  async function show(round=0,offset=0){
   const seq=++request,container=d.querySelector('.battle-log-content');container.setAttribute('aria-busy','true');
-  try{header??=await cloud.battleLog(b.dataset.mission);const page=round>0?await cloud.battleLog(b.dataset.mission,round,offset):null;
+  try{header??=await cloud.battleLog(b.dataset.mission);let page=null;
+   if(round>0){
+    if(!completeRounds.has(round))completeRounds.set(round,await loadBattleRound((...args)=>cloud.battleLog(...args),b.dataset.mission,round));
+    const full=completeRounds.get(round);page={...full,shots:full.shots.slice(offset,offset+200),impacts:full.impacts.slice(offset,offset+200),summaryHTML:roundSummaryView(header,full)};
+   }
    if(seq!==request||!d.isConnected||account!==cloud?.user?.id)return;
    container.innerHTML=battleLogView(header,page,{round,offset});container.scrollTop=0;
   }catch(error){if(seq===request&&d.isConnected&&account===cloud?.user?.id){container.replaceChildren();const p=document.createElement('p');p.textContent=['PGRST202','42883'].includes(error.code)?'Für vollständige Protokolle fehlt noch die Supabase-Erweiterung combat-logs.sql.':error.message||'Kampfprotokoll konnte nicht geladen werden.';const retry=document.createElement('button');retry.textContent='Erneut laden';retry.addEventListener('click',()=>void show(round,offset));container.append(p,retry);}}
