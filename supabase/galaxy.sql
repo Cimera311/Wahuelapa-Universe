@@ -63,7 +63,7 @@ begin
 end $$;
 create or replace function public.imperium_galaxy_sync(p_expected bigint,p_kind text default null,p_from text default null,p_to text default null)
 returns jsonb language plpgsql security definer set search_path='' as $$
-declare uid uuid:=auth.uid(); s jsonb; v_revision bigint; m record; destination record; origin jsonb; idx integer; ship text; available integer; dist numeric; seconds integer; fuel integer; cargo integer; level integer; start jsonb; colony jsonb; changed boolean:=false; report_title text; seq bigint;
+declare uid uuid:=auth.uid(); s jsonb; v_revision bigint; m record; destination record; origin jsonb; idx integer; ship text; available integer; dist numeric; seconds numeric; fuel integer; cargo integer; level integer; start jsonb; colony jsonb; changed boolean:=false; report_title text; seq bigint;
 begin
  if uid is null then raise exception 'AUTH_REQUIRED'; end if;
  select g.state,g.revision into s,v_revision from public.game_saves g where g.user_id=uid for update;
@@ -111,8 +111,8 @@ begin
    if (select count(*) from public.galaxy_planets where owner_id=uid)>=greatest(0,public.imperium_rank_int(s->'tech'->'colonization',6)-3) then raise exception 'COLONY_LIMIT';end if;
   end if;
   level:=public.imperium_rank_int(s->'tech'->'ramjet',5);
-  dist:=greatest(1,sqrt(power(case when origin->>'id' like 'g-%' then (origin->>'x')::numeric else (start->>'x')::numeric end-(destination.meta->>'x')::numeric,2)+power(case when origin->>'id' like 'g-%' then (origin->>'y')::numeric else (start->>'y')::numeric end-(destination.meta->>'y')::numeric,2))/40+destination.slot*.15);
-  seconds:=ceil((60+dist*25)/(1+level*.12));fuel:=ceil(dist*(case when p_kind='scan' then 6 else 18 end)/(1+level*.12));
+  dist:=greatest(1,sqrt(power(case when origin->>'id' like 'g-%' then (origin->>'x')::numeric else (start->>'x')::numeric end-(destination.meta->>'x')::numeric,2)+power(case when origin->>'id' like 'g-%' then (origin->>'y')::numeric else (start->>'y')::numeric end-(destination.meta->>'y')::numeric,2))/40+abs(destination.slot-case when origin->>'id' like 'g-%' then coalesce((origin->>'slot')::integer,0) else 0 end)*.15);
+  seconds:=greatest(60000,ceil((120+dist*45)*1000/(1+level*.12)))/1000;fuel:=ceil(dist*(case when p_kind='scan' then 3 else 18 end)/(1+level*.12))*(case when p_kind='scan' then 2 else 1 end);
   cargo:=case when p_kind='colony' then 100 else 0 end;
   if (origin->'resources'->>'fuel')::numeric<fuel+cargo or (p_kind='colony' and ((origin->'resources'->>'metal')::numeric<350 or (origin->'resources'->>'crystal')::numeric<250)) then raise exception 'RESOURCES_REQUIRED';end if;
   s:=jsonb_set(s,array['planets',idx::text,'ships',ship],to_jsonb(available-1));

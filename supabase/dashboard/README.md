@@ -26,7 +26,7 @@ npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --fo
 
 ## Werft und Energie
 
-Dieses Bundle basiert auf `main` Commit `b836881c25d60d930b14d6dc062c33328eaff0d2` plus den Werftänderungen. Der separate Flugzeiten-PR #9 ist nicht enthalten.
+Dieses Bundle basiert auf `main` Commit `f78648abdc7a45dc661f10e632d17f5c61b8d2e4` (gemergter Flugzeiten-PR #9) plus den Werftänderungen. Für das bereits installierte Gesamtupdate stattdessen PR #11 mergen: Dort sind alle Werftänderungen und Partnerschaften enthalten. Dieses Einzelbundle nicht über die bereits installierte Gesamt-Game-command kopieren.
 
 - Neue Schiffs- und Verteidigungsaufträge: normale Bauzeit × `0.92^(Werftstufe - 1)` ab Stufe 1, auf volle Millisekunden aufgerundet.
 - Dauerverbrauch der Werft: `ceil(10 × Stufe^1.5)`; Stufe 0 verbraucht 0. Der planetare Faktor gilt für alle vorhandenen Verbraucher (Minen und Werft), auch bei leerer Werft.
@@ -38,5 +38,13 @@ Dieses Bundle basiert auf `main` Commit `b836881c25d60d930b14d6dc062c33328eaff0d
 **Reihenfolge:** zuerst dieses Bundle in der vorhandenen Funktion `swift-handler` deployen, danach den Website-PR mergen. Keine neue SQL-Migration nötig. Bestehende starke Werften können dadurch eine Energieunterversorgung bekommen. Die Website zeigt den lokalen Dauerbedarf, Bedarf der nächsten Gebäudestufe, Werftleistung und geschätzte Restzeit.
 
 Die generierte JavaScript-Datei wird für den Dashboard-Editor als `.ts` gespeichert. Nach dem Bündeln die erste Zeile `// @ts-nocheck` voranstellen, da das Bundle die JavaScript-Module enthält; der originale TypeScript-Einstieg wird separat mit `deno check` geprüft.
+
+Falls Deno den Bundler nicht herunterladen kann, erzeugt esbuild ein kompatibles ESM-Bundle:
+
+```sh
+npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --format=esm --platform=neutral --target=es2022 --external:npm:@supabase/supabase-js@2.117.2 --banner:js='// @ts-nocheck — Generated dashboard bundle; edit source modules instead.' --outfile=supabase/dashboard/game-command.ts
+```
+
+Für die Umstellung der Flugzeiten siehe [FLUGZEITEN_DEPLOYMENT.md](FLUGZEITEN_DEPLOYMENT.md).
 
 Offizielle Anleitung: https://supabase.com/docs/guides/functions/quickstart-dashboard

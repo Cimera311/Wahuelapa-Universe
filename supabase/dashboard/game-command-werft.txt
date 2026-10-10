@@ -67,13 +67,29 @@ function vector(values) {
 function costAt(item, level) {
   return vector(item.cost.map((v) => Math.ceil(v * Math.pow(1.6, level))));
 }
-var ROUTE_ECONOMY = { time: 1.25, fuel: 0.75 };
+var ROUTE_ECONOMY = { time: 1, fuel: 0.75 };
 function shipFlightEngine(s, key, remote = false) {
   return remote && key === "falke" && (s.tech.assaultDrive || 0) >= 1 ? "ramjet" : SHIPS[key]?.engine || "drive";
 }
 function canFlyInterstellar(s, key) {
   const engine = shipFlightEngine(s, key, true);
   return (key === "falke" ? (s.tech.assaultDrive || 0) >= 1 : !!SHIPS[key]?.engine) && (s.tech[engine] || 0) >= 1;
+}
+
+// src/flight.js
+var GALAXY_FLIGHT_RULE_VERSION = 2;
+function sharedDistance(from, to, start) {
+  if (from.system && from.system === to.system) return Math.max(1, Math.abs((from.slot || from.distance || 0) - (to.slot || to.distance || 0)) * 0.15);
+  const a = from.system ? from : { ...start, slot: 0 }, b = to.system ? to : { ...start, slot: 0 };
+  if (![a.x, a.y, b.x, b.y].every(Number.isFinite)) throw Error("Der pers\xF6nliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.");
+  return Math.max(1, Math.hypot(a.x - b.x, a.y - b.y) / 40 + Math.abs((a.slot || 0) - (b.slot || 0)) * 0.15);
+}
+function sharedFlight(s, from, to, count = 1, ship = "transport", start = s.galaxy) {
+  const def = SHIPS[ship];
+  if (!def || def.speed <= 0) throw Error("Unbekanntes oder unbewegliches Schiff.");
+  const distance = sharedDistance(from, to, start), remote = (from.system || "tutorial") !== (to.system || "tutorial");
+  const engine = shipFlightEngine(s, ship, remote), factor = 1 + (s.tech[engine] || 0) * 0.12;
+  return { distance, ms: Math.max(6e4, Math.ceil((120 + distance * 45) * 1e3 / (def.speed * factor))), fuel: Math.ceil(def.fuel * distance * count / factor) };
 }
 
 // src/combat.js
@@ -113,20 +129,19 @@ function attackFlight(s, from, to, fleet) {
   const origin = from.system ? from : { ...s.galaxy, slot: 0 };
   if (![origin.x, origin.y, origin.slot, to.x, to.y, to.slot].every(Number.isFinite)) throw Error("Der pers\xF6nliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.");
   if (!from.system && (s.tech.ramjet || 0) < 1) throw Error("F\xFCr Angriffe aus dem Heimatsystem fehlen Staustrahltriebwerke Stufe 1.");
-  const dist = Math.max(1, Math.hypot(origin.x - to.x, origin.y - to.y) / 40 + Math.abs(origin.slot - to.slot) * 0.15);
+  const dist = sharedDistance(from, to, s.galaxy);
   let ms2 = 0, fuel = 0, slowest = "";
   for (const [key, count] of Object.entries(fleet)) {
-    const sh = SHIPS[key], remote = from.system !== to.system;
+    const remote = from.system !== to.system;
     const engine = shipFlightEngine(s, key, remote);
     if (remote && !canFlyInterstellar(s, key)) throw Error(key === "falke" ? "F\xFCr interstellare Fl\xFCge fehlt ein geeigneter Antrieb: Falke-Galaxieantrieb 1 und Staustrahltriebwerke 1 erforderlich." : "F\xFCr interstellare Fl\xFCge fehlt ein geeigneter Antrieb.");
     if (remote && (s.tech[engine] || 0) < 1) throw Error("F\xFCr interstellare Fl\xFCge fehlt die passende Triebwerksforschung.");
-    const factor = 1 + 0.12 * (s.tech[engine] || 0);
-    const time = Math.max(3e5, Math.ceil((600 + dist * 120) * 1e3 / (sh.speed * factor)));
-    if (time > ms2) {
-      ms2 = time;
+    const f = sharedFlight(s, from, to, count, key);
+    if (f.ms > ms2) {
+      ms2 = f.ms;
       slowest = key;
     }
-    fuel += Math.ceil(sh.fuel * 2 * dist * count / factor);
+    fuel += f.fuel * 2;
   }
   return { distance: dist, ms: ms2, fuel, slowest };
 }
@@ -399,6 +414,10 @@ function cargoCapacity(s, n = 1, ship = "transport") {
   return Math.floor((SHIPS[ship]?.cargo || 0) * (1 + s.tech.logistics * 0.15)) * n;
 }
 function flightInfo(s, from, to, n = 1, probe = false, ship = "transport") {
+  if (from.system || to.system) {
+    const f = sharedFlight(s, from, to, n, probe ? "probe" : ship);
+    return { ...f, fuel: f.fuel * 2 };
+  }
   const def = SHIPS[probe ? "probe" : ship];
   if (!def) throw Error("Unbekanntes Schiff.");
   const remote = (from.system || "tutorial") !== (to.system || "tutorial");
@@ -868,13 +887,10 @@ function validateSave(input) {
 }
 
 // src/galaxy.js
-function galaxyDistance(start, system, slot = 1) {
-  return Math.max(1, Math.hypot(start.x - system.x, start.y - system.y) / 40 + slot * 0.15);
-}
 function galaxyFlight(s, from, target, start, ship = "longProbe") {
-  const origin = from.system ? { x: from.x, y: from.y } : start;
-  const distance = galaxyDistance(origin, target, target.slot || 1), level = s.tech.ramjet || 0;
-  return { distance, ms: Math.ceil((60 + distance * 25) / (1 + level * 0.12)) * 1e3, fuel: Math.ceil(distance * (ship === "longProbe" ? 6 : 18) / (1 + level * 0.12)) };
+  const destination = { ...target, system: target.system || target.id || "galaxy", slot: target.slot || 1 };
+  const f = sharedFlight(s, from, destination, 1, ship, start);
+  return { ...f, fuel: f.fuel * (ship === "longProbe" ? 2 : 1) };
 }
 
 // src/server-world.js
@@ -1102,7 +1118,7 @@ function projectPvP(w, uid) {
     enabled: w.settings.enabled,
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
-    features: { shipyardEnergy: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
+    features: { shipyardEnergy: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true, flightRules: GALAXY_FLIGHT_RULE_VERSION },
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,
     colonies: w.planets.filter((p) => p.owner_id && !p.reserved).map((p) => ({ id: p.id, protectedUntil: p.protection_ended ? 0 : (p.colonized_at || w.now) + COLONY_PROTECTION })),

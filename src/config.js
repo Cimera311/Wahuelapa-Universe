@@ -57,7 +57,7 @@ export const TARGETS = [
 ];
 export function vector(values){return Object.fromEntries(RES.map((k,i)=>[k,values[i]]));}
 export function costAt(item,level){return vector(item.cost.map(v=>Math.ceil(v*Math.pow(1.6,level))));}
-export const ROUTE_ECONOMY={time:1.25,fuel:.75};
+export const ROUTE_ECONOMY={time:1,fuel:.75};
 
 // Cosmetic selection only: preserve tutorial art and keep shared planet variants stable across accounts.
 export function planetImagePath(p){

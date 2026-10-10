@@ -1,4 +1,5 @@
 import {RES,SHIPS,vector,shipFlightEngine,canFlyInterstellar} from './config.js';
+import {sharedDistance,sharedFlight} from './flight.js';
 export const COMBAT={
  probe:{hp:30,shield:0,attack:0,shots:1},longProbe:{hp:60,shield:10,attack:0,shots:1},
  colony:{hp:250,shield:30,attack:0,shots:1},starColony:{hp:500,shield:80,attack:0,shots:1},
@@ -27,16 +28,15 @@ export function attackFlight(s,from,to,fleet){
  const origin=from.system?from:{...s.galaxy,slot:0};
  if(![origin.x,origin.y,origin.slot,to.x,to.y,to.slot].every(Number.isFinite))throw Error('Der persönliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.');
  if(!from.system&&(s.tech.ramjet||0)<1)throw Error('Für Angriffe aus dem Heimatsystem fehlen Staustrahltriebwerke Stufe 1.');
- const dist=Math.max(1,Math.hypot(origin.x-to.x,origin.y-to.y)/40+Math.abs(origin.slot-to.slot)*.15);
+ const dist=sharedDistance(from,to,s.galaxy);
  let ms=0,fuel=0,slowest='';
  for(const [key,count] of Object.entries(fleet)){
-  const sh=SHIPS[key],remote=from.system!==to.system;
+  const remote=from.system!==to.system;
   const engine=shipFlightEngine(s,key,remote);
   if(remote&&!canFlyInterstellar(s,key))throw Error(key==='falke'?'Für interstellare Flüge fehlt ein geeigneter Antrieb: Falke-Galaxieantrieb 1 und Staustrahltriebwerke 1 erforderlich.':'Für interstellare Flüge fehlt ein geeigneter Antrieb.');
   if(remote&&(s.tech[engine]||0)<1)throw Error('Für interstellare Flüge fehlt die passende Triebwerksforschung.');
-  const factor=1+.12*(s.tech[engine]||0);
-  const time=Math.max(300000,Math.ceil((600+dist*120)*1000/(sh.speed*factor)));
-  if(time>ms){ms=time;slowest=key;}fuel+=Math.ceil(sh.fuel*2*dist*count/factor);
+  const f=sharedFlight(s,from,to,count,key);
+  if(f.ms>ms){ms=f.ms;slowest=key;}fuel+=f.fuel*2;
  }
  return {distance:dist,ms,fuel,slowest};
 }
