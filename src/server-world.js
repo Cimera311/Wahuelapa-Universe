@@ -153,7 +153,7 @@ export function processWorld(snapshot,uid,request){
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,features:{cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,features:{shipyardEnergy:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},homeAttacks:true,protectionMs:COLONY_PROTECTION,
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,arrival:m.arrival_at,returnAt:m.return_at})),
  incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),
