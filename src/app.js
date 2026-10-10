@@ -1,3 +1,4 @@
+import {battleLogView} from './combat-ui.js';
 import {resourceIcon,actionIcon,unitIcon} from './ui-assets.js';
 import {GALAXY_SYSTEMS,galaxyFlight} from './galaxy.js';
 import {RES,LABEL,ICON,BUILDINGS,TECHS,SHIPS,TARGETS,vector,isFreighter,planetImagePath,canFlyInterstellar} from './config.js';
@@ -203,7 +204,7 @@ document.addEventListener('submit',async e=>{
 
 document.addEventListener('click',e=>{const b=e.target.closest('[data-action="cancel-ship"]');if(!b||b.disabled||readOnly||cloudBlocked)return;command({type:'cancel-ship',planet:b.dataset.planet,order:{id:b.dataset.orderId?Number(b.dataset.orderId):undefined,key:b.dataset.key,count:Number(b.dataset.count),start:Number(b.dataset.start),end:Number(b.dataset.end)}});});
 
-function clearReportData(){reportFormDraft=null;reportRequest++;reportData={items:[],total:0};reportCache=[];reportSelected.clear();reportOpened.clear();reportBusy=false;reportError='';reportDurable=false;reportAccount=null;Object.assign(reportFilters,{archived:false,kind:'',outcome:'',search:'',days:'',mission:null});}
+function clearReportData(){document.querySelector('.combat-log-dialog')?.remove();reportFormDraft=null;reportRequest++;reportData={items:[],total:0};reportCache=[];reportSelected.clear();reportOpened.clear();reportBusy=false;reportError='';reportDurable=false;reportAccount=null;Object.assign(reportFilters,{archived:false,kind:'',outcome:'',search:'',days:'',mission:null});}
 async function refreshReports(more=false){
  if(!state||(more&&reportBusy))return;const account=cloud?.user?.id||'guest';if(reportAccount!==account){const initial={...reportFilters};clearReportData();Object.assign(reportFilters,initial);reportAccount=account;}
  const request=++reportRequest,filters={...reportFilters};reportBusy=true;
@@ -233,3 +234,21 @@ document.addEventListener('click',async e=>{
 function captureReportUI(){for(const d of document.querySelectorAll('details[data-report-id],details[data-ui-key]')){const key=d.dataset.reportId||d.dataset.uiKey;if(d.open)reportOpened.add(key);else reportOpened.delete(key);}}
 function captureReportFilterDraft(e){const form=e.target.closest?.('#report-filters');if(!form)return;const data=new FormData(form);reportFormDraft=Object.fromEntries(['search','kind','outcome','days'].map(k=>[k,String(data.get(k)||'')]));}
 document.addEventListener('input',captureReportFilterDraft);document.addEventListener('change',captureReportFilterDraft);
+
+// Detail logs are read separately and never replace the authoritative game state.
+document.addEventListener('click',async e=>{
+ const b=e.target.closest('[data-action="battle-log"]');if(!b||!cloud?.user)return;
+ document.querySelector('dialog')?.remove();
+ const account=cloud.user.id,d=document.createElement('dialog');d.className='combat-log-dialog';d.innerHTML='<form method="dialog"><button class="close plain" aria-label="Schließen">×</button></form><div class="battle-log-content">Kampfprotokoll wird geladen …</div>';document.body.append(d);d.showModal();
+ let header=null,request=0;
+ async function show(round=0,offset=0){
+  const seq=++request,container=d.querySelector('.battle-log-content');container.setAttribute('aria-busy','true');
+  try{header??=await cloud.battleLog(b.dataset.mission);const page=round>0?await cloud.battleLog(b.dataset.mission,round,offset):null;
+   if(seq!==request||!d.isConnected||account!==cloud?.user?.id)return;
+   container.innerHTML=battleLogView(header,page,{round,offset});container.scrollTop=0;
+  }catch(error){if(seq===request&&d.isConnected&&account===cloud?.user?.id){container.replaceChildren();const p=document.createElement('p');p.textContent=['PGRST202','42883'].includes(error.code)?'Für vollständige Protokolle fehlt noch die Supabase-Erweiterung combat-logs.sql.':error.message||'Kampfprotokoll konnte nicht geladen werden.';const retry=document.createElement('button');retry.textContent='Erneut laden';retry.addEventListener('click',()=>void show(round,offset));container.append(p,retry);}}
+  finally{if(seq===request)container.removeAttribute('aria-busy');}
+ }
+ d.addEventListener('click',event=>{const q=event.target.closest('[data-battle-round]');if(q&&!q.disabled)void show(Number(q.dataset.battleRound),Number(q.dataset.battleOffset));});
+ await show();
+});
