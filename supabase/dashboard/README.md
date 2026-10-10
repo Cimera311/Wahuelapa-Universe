@@ -26,7 +26,7 @@ npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --fo
 
 ## Werft und Energie
 
-Dieses gemeinsame Bundle basiert auf `main` Commit `b836881c25d60d930b14d6dc062c33328eaff0d2` und enthält die Flugzeiten aus #9, Werft/Energie aus #10 sowie Partnerschaften, direkte Tauschgeschäfte und Unterstützungsschiffe aus dem anschließenden PR. Die Datei `game-command-werft.txt` ist nur noch ein identischer Kompatibilitätsname; für das Gesamtupdate `game-command-gesamt.txt` verwenden.
+Dieses gemeinsame Bundle ist mit `main` Commit `f78648abdc7a45dc661f10e632d17f5c61b8d2e4` (gemergter PR #9) abgeglichen und enthält die Flugzeiten aus #9, Werft/Energie aus #10 sowie Partnerschaften, direkte Tauschgeschäfte und Unterstützungsschiffe aus dem anschließenden PR. Die Datei `game-command-werft.txt` ist nur noch ein identischer Kompatibilitätsname; für das Gesamtupdate `game-command-gesamt.txt` verwenden.
 
 - Neue Schiffs- und Verteidigungsaufträge: normale Bauzeit × `0.92^(Werftstufe - 1)` ab Stufe 1, auf volle Millisekunden aufgerundet.
 - Dauerverbrauch der Werft: `ceil(10 × Stufe^1.5)`; Stufe 0 verbraucht 0. Der planetare Faktor gilt für alle vorhandenen Verbraucher (Minen und Werft), auch bei leerer Werft.
@@ -46,7 +46,7 @@ Offizielle Anleitung: https://supabase.com/docs/guides/functions/quickstart-dash
 1. Bestehende Migrationen für PvP, Berichte und Kampfprotokolle müssen installiert sein: `pvp.sql`, `reports.sql`, `combat-logs.sql`, `combat-log-pagination.sql`. Vorhandene Migrationen nicht unnötig erneut ausführen.
 2. **Einmal `supabase/partnerships.sql` im SQL-Editor ausführen.** Sie erweitert das atomare Snapshot/Commit-Verfahren, speichert Partnerschaften und Partnerflotten, zählt gebundene Schiffe für ihren Besitzer und gibt beteiligten Unterstützern Zugriff auf ihre Kampfberichte. Sie kann wiederholt werden und setzt keine Partnerschaften zurück. Immer nach den anderen genannten Migrationen installieren; diese danach nicht erneut überschreiben.
 3. Inhalt von **`game-command-gesamt.txt`** in der vorhandenen Funktion **`swift-handler`** ersetzen und deployen. Funktionsname und Auth-Einstellungen beibehalten.
-4. Den **gemeinsamen Partnerschaften-PR** mergen. Er enthält bereits #9 und #10; diese nicht zusätzlich mergen. Die offenen Einzel-PRs können danach geschlossen werden.
+4. Den **gemeinsamen Partnerschaften-PR** mergen. PR #9 ist bereits gemergt. Der gemeinsame PR enthält auch #10; #10 nicht zusätzlich mergen und anschließend als ersetzt schließen.
 
 Das öffentliche Handels-/Auktionshaus bleibt TODO. Implementiert sind direkte Tauschgeschäfte zwischen bestätigten Partnern. Offene Tauschangebote gelten eine Stunde und blockieren vorher noch keine Waren oder Frachter; Verfügbarkeit wird bei Annahme erneut geprüft. Erst die Annahme bindet beide Ladungen und startet die Lieferflotte atomar. Beim Rückflug erhält der Verkäufer seine Gegenleistung. Auch ein späterer Entzug des Lieferrechts bricht einen bezahlten Tausch nicht ab.
 
