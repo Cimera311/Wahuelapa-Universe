@@ -2,7 +2,7 @@ import {reportEscape} from './reports-ui.js';
 const battleNumber=n=>Number(n||0).toLocaleString('de-DE',{maximumFractionDigits:2});
 export function battleLogView(header,page=null,{round=0,offset=0}={}){
  const units=new Map(header.initial.map(u=>[u.id,u]));
- const label=id=>{const u=units.get(id);return (u?.name||u?.key||'Einheit')+' · '+id;};
+ const label=id=>{const u=units.get(id);return (u?.name||u?.key||'Einheit')+' · '+id+(u?.commander?' · '+u.commander:'');};
  const control=(text,r,o=0,disabled=false)=>'<button data-battle-round="'+r+'" data-battle-offset="'+o+'" '+(disabled?'disabled':'')+' aria-pressed="'+(r===round&&o===offset)+'">'+text+'</button>';
  const nav=control('Start',0)+header.rounds.map(q=>control('Runde '+q.round,q.round)).join('')+control('Ende',-1);
  const reason={bonus:'Passendes Bonusziel',military:'Kriegsschiff hat Vorrang',defense:'Orbitale Verteidigung hat Vorrang',civil:'Keine Kriegsschiffe oder Verteidigungen übrig'};
