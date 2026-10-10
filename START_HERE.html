@@ -149,7 +149,7 @@ const TARGETS = [
 ];
 function vector(values){return Object.fromEntries(RES.map((k,i)=>[k,values[i]]));}
 function costAt(item,level){return vector(item.cost.map(v=>Math.ceil(v*Math.pow(1.6,level))));}
-const ROUTE_ECONOMY={time:1.25,fuel:.75};
+const ROUTE_ECONOMY={time:1,fuel:.75};
 
 // Cosmetic selection only: preserve tutorial art and keep shared planet variants stable across accounts.
 function planetImagePath(p){
@@ -166,6 +166,23 @@ function planetImagePath(p){
 function shipFlightEngine(s,key,remote=false){return remote&&key==='falke'&&(s.tech.assaultDrive||0)>=1?'ramjet':SHIPS[key]?.engine||'drive';}
 function canFlyInterstellar(s,key){const engine=shipFlightEngine(s,key,true);return (key==='falke'?(s.tech.assaultDrive||0)>=1:!!SHIPS[key]?.engine)&&(s.tech[engine]||0)>=1;}
 
+
+const GALAXY_FLIGHT_RULE_VERSION=2;
+// Every private planet shares the account's galaxy entrance at slot zero.
+function sharedDistance(from,to,start){
+ if(from.system&&from.system===to.system)return Math.max(1,Math.abs((from.slot||from.distance||0)-(to.slot||to.distance||0))*.15);
+ const a=from.system?from:{...start,slot:0},b=to.system?to:{...start,slot:0};
+ if(![a.x,a.y,b.x,b.y].every(Number.isFinite))throw Error('Der persönliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.');
+ return Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)/40+Math.abs((a.slot||0)-(b.slot||0))*.15);
+}
+function sharedFlight(s,from,to,count=1,ship='transport',start=s.galaxy){
+ const def=SHIPS[ship];if(!def||def.speed<=0)throw Error('Unbekanntes oder unbewegliches Schiff.');
+ const distance=sharedDistance(from,to,start),remote=(from.system||'tutorial')!==(to.system||'tutorial');
+ const engine=shipFlightEngine(s,ship,remote),factor=1+(s.tech[engine]||0)*.12;
+ return {distance,ms:Math.max(60000,Math.ceil((120+distance*45)*1000/(def.speed*factor))),fuel:Math.ceil(def.fuel*distance*count/factor)};
+}
+
+
 // Public navigation only. Ownership is public; planet properties are supplied by the server after surveying.
 const GALAXY_SYSTEMS=[
  {id:'helion',name:'Helion',x:520,y:400},{id:'orion',name:'Orion',x:380,y:250},
@@ -174,11 +191,11 @@ const GALAXY_SYSTEMS=[
  {id:'umbra',name:'Umbra',x:760,y:650},{id:'nyx',name:'Nyx',x:520,y:720},
  {id:'solace',name:'Solace',x:870,y:730},{id:'nova',name:'Nova',x:330,y:700}
 ];
-function galaxyDistance(start,system,slot=1){return Math.max(1,Math.hypot(start.x-system.x,start.y-system.y)/40+slot*.15);}
+function galaxyDistance(start,system,slot=1){return sharedDistance({system:'origin',...start},{system:system.id||'destination',...system,slot},start);}
 function galaxyFlight(s,from,target,start,ship='longProbe'){
- const origin=from.system?{x:from.x,y:from.y}:start;
- const distance=galaxyDistance(origin,target,target.slot||1),level=s.tech.ramjet||0;
- return {distance,ms:Math.ceil((60+distance*25)/(1+level*.12))*1000,fuel:Math.ceil(distance*(ship==='longProbe'?6:18)/(1+level*.12))};
+ const destination={...target,system:target.system||target.id||'galaxy',slot:target.slot||1};
+ const f=sharedFlight(s,from,destination,1,ship,start);
+ return {...f,fuel:f.fuel*(ship==='longProbe'?2:1)};
 }
 function validateGalaxy(data){
  if(!data||!Array.isArray(data.systems)||data.systems.length!==10||!Array.isArray(data.planets)||!Array.isArray(data.missions)||!data.start)throw Error('Ungültige Galaxie-Antwort.');
@@ -190,6 +207,7 @@ function validateGalaxy(data){
  if(data.players!==undefined){if(!Array.isArray(data.players)||data.players.length>1000)throw Error('Ungültige Spielerübersicht.');const seen=new Set();for(const p of data.players){if(typeof p.id!=='string'||!/^[a-f0-9]{32}$/.test(p.id)||seen.has(p.id)||typeof p.name!=='string'||p.name.length>30||typeof p.commander!=='string'||p.commander.length>30||!finite(p.x)||!finite(p.y)||p.x<0||p.x>1000||p.y<0||p.y>1000||typeof p.is_me!=='boolean'||Object.keys(p).some(k=>!['id','name','commander','x','y','is_me'].includes(k)))throw Error('Ungültige Spielerdaten.');seen.add(p.id);}}
  return data;
 }
+
 
 
 const COMBAT={
@@ -220,16 +238,15 @@ function attackFlight(s,from,to,fleet){
  const origin=from.system?from:{...s.galaxy,slot:0};
  if(![origin.x,origin.y,origin.slot,to.x,to.y,to.slot].every(Number.isFinite))throw Error('Der persönliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.');
  if(!from.system&&(s.tech.ramjet||0)<1)throw Error('Für Angriffe aus dem Heimatsystem fehlen Staustrahltriebwerke Stufe 1.');
- const dist=Math.max(1,Math.hypot(origin.x-to.x,origin.y-to.y)/40+Math.abs(origin.slot-to.slot)*.15);
+ const dist=sharedDistance(from,to,s.galaxy);
  let ms=0,fuel=0,slowest='';
  for(const [key,count] of Object.entries(fleet)){
-  const sh=SHIPS[key],remote=from.system!==to.system;
+  const remote=from.system!==to.system;
   const engine=shipFlightEngine(s,key,remote);
   if(remote&&!canFlyInterstellar(s,key))throw Error(key==='falke'?'Für interstellare Flüge fehlt ein geeigneter Antrieb: Falke-Galaxieantrieb 1 und Staustrahltriebwerke 1 erforderlich.':'Für interstellare Flüge fehlt ein geeigneter Antrieb.');
   if(remote&&(s.tech[engine]||0)<1)throw Error('Für interstellare Flüge fehlt die passende Triebwerksforschung.');
-  const factor=1+.12*(s.tech[engine]||0);
-  const time=Math.max(300000,Math.ceil((600+dist*120)*1000/(sh.speed*factor)));
-  if(time>ms){ms=time;slowest=key;}fuel+=Math.ceil(sh.fuel*2*dist*count/factor);
+  const f=sharedFlight(s,from,to,count,key);
+  if(f.ms>ms){ms=f.ms;slowest=key;}fuel+=f.fuel*2;
  }
  return {distance:dist,ms,fuel,slowest};
 }
@@ -310,6 +327,7 @@ function loadPlunder(stock,depot,bunker,capacity,debris,victory,budget=stock){
 
 
 
+
 function planet(id,name,meta={}){
  return {id,name,coord:meta.coord||'1:1:4',kind:meta.kind||'Heimatwelt',mult:meta.mult||[1,1,1],color:meta.color||'#53add3',ocean:meta.ocean??true,energy:meta.energy||1,distance:meta.distance||0,reserves:vector([0,0,0]),resources:vector([0,0,0]),depot:vector([0,0,0]),buildings:Object.fromEntries(Object.keys(BUILDINGS).map(k=>[k,0])),ships:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,0])),build:null,shipjob:null};
 }
@@ -344,7 +362,7 @@ function shipRefund(job){
 }
 function shipInfo(s,p,key,count=1){const sh=SHIPS[key];if(!sh)throw Error('Unbekanntes Schiff.');const gross=vector(sh.cost.map(v=>v*count)),salvage=vector(RES.map(k=>sh.category==='defense'?Math.min(gross[k],p.defenseSalvage?.[k]||0):0));return {cost:vector(RES.map(k=>gross[k]-salvage[k])),salvage,ms:sh.time*count*1000,reason:sh.slots&&defenseSlots(p)+sh.slots*count>(p.buildings.orbital||0)*4?'Nicht genügend freie Plätze auf der Orbitalplattform.':p.buildings.shipyard<(sh.shipyard||1)?`Benötigt Schiffswerft Stufe ${sh.shipyard||1}.`:s.tech[sh.tech]<(sh.techLevel||1)?`Benötigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel||1}.`:(s.tech[sh.engine||'drive']||0)<(sh.engineLevel||0)?`Benötigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.`:''};}
 function cargoCapacity(s,n=1,ship='transport'){return Math.floor((SHIPS[ship]?.cargo||0)*(1+s.tech.logistics*.15))*n;}
-function flightInfo(s,from,to,n=1,probe=false,ship='transport'){const def=SHIPS[probe?'probe':ship];if(!def)throw Error('Unbekanntes Schiff.');const remote=(from.system||'tutorial')!==(to.system||'tutorial');const engine=shipFlightEngine(s,probe?'probe':ship,remote);const anchor=s.galaxy||{x:500,y:960};const a=from.system?from:anchor,b=to.system?to:anchor;const dist=remote?Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)/40):Math.max(1,Math.abs((from.distance||0)-(to.distance||0)));return {ms:Math.ceil((10+dist*8)*1000/((1+(s.tech[engine]||0)*.12+(probe?s.tech.scout*.1:0))*def.speed)),fuel:Math.ceil(def.fuel*2*dist*n/(1+(s.tech[engine]||0)*.12))};}
+function flightInfo(s,from,to,n=1,probe=false,ship='transport'){if(from.system||to.system){const f=sharedFlight(s,from,to,n,probe?'probe':ship);return {...f,fuel:f.fuel*2};}const def=SHIPS[probe?'probe':ship];if(!def)throw Error('Unbekanntes Schiff.');const remote=(from.system||'tutorial')!==(to.system||'tutorial');const engine=shipFlightEngine(s,probe?'probe':ship,remote);const anchor=s.galaxy||{x:500,y:960};const a=from.system?from:anchor,b=to.system?to:anchor;const dist=remote?Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)/40):Math.max(1,Math.abs((from.distance||0)-(to.distance||0)));return {ms:Math.ceil((10+dist*8)*1000/((1+(s.tech[engine]||0)*.12+(probe?s.tech.scout*.1:0))*def.speed)),fuel:Math.ceil(def.fuel*2*dist*n/(1+(s.tech[engine]||0)*.12))};}
 // Fleet fuel is prepaid for a complete itinerary; cargo never includes engine fuel.
 function legInfo(s,from,to,n=1,ship='transport'){const f=flightInfo(s,from,to,n,ship==='probe',ship);return {...f,fuel:Math.ceil(f.fuel/2)};}
 function routeLegInfo(s,from,to,n=1,ship='transport'){const f=legInfo(s,from,to,n,ship);return {ms:Math.ceil(f.ms*ROUTE_ECONOMY.time),fuel:Math.ceil(f.fuel*ROUTE_ECONOMY.fuel)};}

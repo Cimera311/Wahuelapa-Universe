@@ -20,4 +20,12 @@ npx --yes deno@2.9.6 bundle --platform deno --external 'npm:@supabase/supabase-j
 
 Die generierte JavaScript-Datei wird für den Dashboard-Editor als `.ts` gespeichert. Nach dem Bündeln die erste Zeile `// @ts-nocheck` voranstellen, da das Bundle die JavaScript-Module enthält; der originale TypeScript-Einstieg wird separat mit `deno check` geprüft.
 
+Falls Deno den Bundler nicht herunterladen kann, erzeugt esbuild ein kompatibles ESM-Bundle:
+
+```sh
+npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --format=esm --platform=neutral --target=es2022 --external:npm:@supabase/supabase-js@2.117.2 --banner:js='// @ts-nocheck — Generated dashboard bundle; edit source modules instead.' --outfile=supabase/dashboard/game-command.ts
+```
+
+Für die Umstellung der Flugzeiten siehe [FLUGZEITEN_DEPLOYMENT.md](FLUGZEITEN_DEPLOYMENT.md).
+
 Offizielle Anleitung: https://supabase.com/docs/guides/functions/quickstart-dashboard
