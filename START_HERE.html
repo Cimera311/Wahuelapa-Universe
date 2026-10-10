@@ -87,6 +87,8 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 @media(max-width:760px){.report-participants{grid-template-columns:1fr}.report-force-table th,.report-force-table td{padding:8px 5px;font-size:.75rem}}
 
 .combat-log-dialog{width:min(1100px,96vw);max-width:1100px;max-height:92vh;overflow:auto}.battle-round-nav,.battle-pages{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}.battle-round-nav button[aria-pressed="true"]{outline:2px solid var(--cyan,#4cd9e5)}.battle-board{display:grid;grid-template-columns:1fr 1fr;gap:16px}.battle-board section,.battle-units article{background:#102132;border:1px solid #294153;border-radius:12px;padding:16px}.battle-board strong,.battle-units strong,.battle-units small,.battle-shot-table small{display:block}.battle-board progress,.battle-units progress{width:100%;margin:10px 0;accent-color:#4cd9e5}.battle-board small,.battle-units small,.battle-shot-table small{color:#a6bacc}.battle-units{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.battle-destroyed{border-color:#e86f64!important}.battle-destroyed>strong:last-child{color:#e86f64}.battle-shot-table{overflow:auto;margin:16px 0}.battle-shot-table table{width:100%;border-collapse:collapse}.battle-shot-table td,.battle-shot-table th{text-align:left;border-bottom:1px solid #294153;padding:10px}.battle-log-content[aria-busy="true"]{opacity:.6;pointer-events:none}@media(max-width:600px){.battle-board{grid-template-columns:1fr}.combat-log-dialog{padding:14px}.battle-shot-table{font-size:13px}.battle-round-nav button{padding:8px}}
+
+.pvp-selection{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0}.pvp-selection span{font-size:.85rem;color:var(--muted)}
 </style></head><body><div id="app"></div><div id="toast" role="status" aria-live="polite"></div><script type="module">const RES = ['metal','crystal','fuel'];
 const LABEL = {metal:'Metall',crystal:'Kristall',fuel:'Treibstoff'};
 const ICON = {metal:'◈',crystal:'◆',fuel:'▰'};
@@ -209,7 +211,7 @@ function combatStats(key,tech={}){
 }
 function attackFleet(fleet){
  if(!fleet||typeof fleet!=='object'||Array.isArray(fleet))throw Error('Ungültige Angriffsflotte.');
- const entries=Object.entries(fleet);if(!entries.length||entries.some(([k,n])=>!['military','freighter'].includes(SHIPS[k]?.category)||!Number.isSafeInteger(n)||n<1)||entries.reduce((a,[,n])=>a+n,0)>100||!entries.some(([k])=>SHIPS[k].category==='military'))throw Error('Wähle 1–100 Schiffe und mindestens ein Kriegsschiff.');
+ const entries=Object.entries(fleet);if(!entries.length||entries.some(([k,n])=>!['military','freighter'].includes(SHIPS[k]?.category)||!Number.isSafeInteger(n)||n<1)||!entries.some(([k])=>SHIPS[k].category==='military'))throw Error('Wähle mindestens ein Kriegsschiff und verfügbare Schiffe in ganzen Zahlen.');
  return {...fleet};
 }
 function attackFlight(s,from,to,fleet){
@@ -688,7 +690,7 @@ function pvpView(state,pvp,galaxy,busy=false,draft={},view={}){
  const hasColony=state.planets.some(q=>q.system&&(galaxy?.planets||[]).some(t=>t.id===q.id&&t.owner==='mine'&&!t.reserved));
  const canStart=!!p.system||(hasColony&&pvp.homeAttacks===true);
  const unavailable=!galaxy?'Angriffsziele werden geladen …':!p.system&&hasColony&&!pvp.homeAttacks?'Angriffe aus dem Heimatsystem benötigen noch das Spielserver-Update.':!canStart?'Für Angriffe aus dem Heimatsystem benötigst du mindestens eine eigene besiedelte Galaxiekolonie.':'Es gibt derzeit keine fremden besiedelten Galaxiekolonien als Angriffsziele.';
- const form=targets.length&&canStart?'<form id="pvp-attack-form"><label>Zielkolonie<select name="to">'+targets.map(t=>'<option value="'+t.id+'" '+(t.id===draft.to?'selected':'')+'>'+pvpEscape(label(t))+(protection(t.id)>now?' · Gründungsschutz':'')+'</option>').join('')+'</select></label><div class="pvp-manifest">'+choices.map(([k,s])=>'<label><span class="pvp-choice-label">'+unitIcon(k)+pvpEscape(s.name)+' · verfügbar '+p.ships[k]+'</span><input name="'+k+'" type="number" min="0" max="'+Math.min(100,p.ships[k])+'" value="'+(draft[k]||0)+'" step="1"></label>').join('')+'</div><p id="pvp-estimate" class="fine">Flotte wählen: Das langsamste Schiff bestimmt die Flugzeit.</p><p class="fine">'+(p.system?'Mit einem Angriff endet der Gründungsschutz deiner Startkolonie.':'Start aus dem geschützten Heimatsystem: Nur Schiffe mit Galaxieantrieb können mitfliegen. Die Entfernung wird von deinem persönlichen Startplatz gemessen. Dein Angriff beendet den Gründungsschutz deiner Galaxiekolonien.')+' Maximal 25 % der plünderbaren Vorräte; innerhalb von 24 Stunden gilt zusätzlich ein gemeinsames Beutebudget je Zielkolonie.</p><button '+(!pvp.enabled||busy?'disabled':'')+'>Angriff losschicken</button></form>':'<p>'+unavailable+'</p>';
+ const form=targets.length&&canStart?'<form id="pvp-attack-form"><label>Zielkolonie<select name="to">'+targets.map(t=>'<option value="'+t.id+'" '+(t.id===draft.to?'selected':'')+'>'+pvpEscape(label(t))+(protection(t.id)>now?' · Gründungsschutz':'')+'</option>').join('')+'</select></label><div class="pvp-selection"><button type="button" data-action="pvp-select-all">Alle</button><button type="button" data-action="pvp-select-none">Keine</button><span id="pvp-selected-count" role="status">Ausgewählt: '+Object.entries(draft).filter(([k])=>SHIPS[k]).reduce((n,[,v])=>n+(Number(v)||0),0)+' Schiffe</span></div><div class="pvp-manifest">'+choices.map(([k,s])=>'<label><span class="pvp-choice-label">'+unitIcon(k)+pvpEscape(s.name)+' · verfügbar '+p.ships[k]+'</span><input name="'+k+'" type="number" min="0" max="'+p.ships[k]+'" value="'+(draft[k]||0)+'" step="1"></label>').join('')+'</div><p id="pvp-estimate" class="fine">Flotte wählen: Das langsamste Schiff bestimmt die Flugzeit.</p><p class="fine">'+(p.system?'Mit einem Angriff endet der Gründungsschutz deiner Startkolonie.':'Start aus dem geschützten Heimatsystem: Nur Schiffe mit Galaxieantrieb können mitfliegen. Die Entfernung wird von deinem persönlichen Startplatz gemessen. Dein Angriff beendet den Gründungsschutz deiner Galaxiekolonien.')+' Maximal 25 % der plünderbaren Vorräte; innerhalb von 24 Stunden gilt zusätzlich ein gemeinsames Beutebudget je Zielkolonie.</p><button '+(!pvp.enabled||busy?'disabled':'')+'>Angriff losschicken</button></form>':'<p>'+unavailable+'</p>';
  const outgoing=pvp.outgoing.map(m=>attackCard(m,state,pvp,galaxy,now,view.reports||[],view.opened||new Set())).join('')||'<p class="muted">Keine Angriffsflotte unterwegs.</p>';
  const number=(v=0)=>Math.floor(v).toLocaleString('de-DE');
  const reports=reportRows(fallbackReports(state,pvp).filter(r=>r.kind==='battle').slice(0,5),state,galaxy,{opened:view.opened||new Set()})+'<button data-action="reports-open">Berichtsübersicht öffnen →</button>';
@@ -894,6 +896,7 @@ document.addEventListener('click',async e=>{
 });
 function updatePvPEstimate(form){
  const data=new FormData(form);for(const [k,v] of data)pvpDraft[k]=k==='to'?v:Number(v);
+ const counter=form.querySelector('#pvp-selected-count');if(counter)counter.textContent='Ausgewählt: '+Object.keys(SHIPS).reduce((n,k)=>n+(Number(data.get(k))||0),0).toLocaleString('de-DE')+' Schiffe';
  const fleet=Object.fromEntries(Object.keys(SHIPS).filter(k=>Number(data.get(k))>0).map(k=>[k,Number(data.get(k))]));
  try{document.getElementById('pvp-estimate').textContent=pvpEstimate(state,galaxyData,data.get('to'),fleet);}catch(e){document.getElementById('pvp-estimate').textContent=e.message;}
 }
@@ -955,4 +958,6 @@ document.addEventListener('click',async e=>{
  d.addEventListener('click',event=>{const q=event.target.closest('[data-battle-round]');if(q&&!q.disabled)void show(Number(q.dataset.battleRound),Number(q.dataset.battleOffset));});
  await show();
 });
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action="pvp-select-all"],[data-action="pvp-select-none"]');if(!b)return;const form=b.closest('#pvp-attack-form');if(!form)return;for(const input of form.querySelectorAll('.pvp-manifest input'))input.value=b.dataset.action==='pvp-select-all'?input.max:0;updatePvPEstimate(form);});
 </script></body></html>

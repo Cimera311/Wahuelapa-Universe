@@ -191,6 +191,7 @@ document.addEventListener('click',async e=>{
 });
 function updatePvPEstimate(form){
  const data=new FormData(form);for(const [k,v] of data)pvpDraft[k]=k==='to'?v:Number(v);
+ const counter=form.querySelector('#pvp-selected-count');if(counter)counter.textContent='Ausgewählt: '+Object.keys(SHIPS).reduce((n,k)=>n+(Number(data.get(k))||0),0).toLocaleString('de-DE')+' Schiffe';
  const fleet=Object.fromEntries(Object.keys(SHIPS).filter(k=>Number(data.get(k))>0).map(k=>[k,Number(data.get(k))]));
  try{document.getElementById('pvp-estimate').textContent=pvpEstimate(state,galaxyData,data.get('to'),fleet);}catch(e){document.getElementById('pvp-estimate').textContent=e.message;}
 }
@@ -252,3 +253,5 @@ document.addEventListener('click',async e=>{
  d.addEventListener('click',event=>{const q=event.target.closest('[data-battle-round]');if(q&&!q.disabled)void show(Number(q.dataset.battleRound),Number(q.dataset.battleOffset));});
  await show();
 });
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action="pvp-select-all"],[data-action="pvp-select-none"]');if(!b)return;const form=b.closest('#pvp-attack-form');if(!form)return;for(const input of form.querySelectorAll('.pvp-manifest input'))input.value=b.dataset.action==='pvp-select-all'?input.max:0;updatePvPEstimate(form);});

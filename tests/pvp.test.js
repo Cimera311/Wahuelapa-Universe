@@ -169,3 +169,13 @@ test('New attacks pin v2, legacy launches stay v1, and full traces never enter s
  const resolved=processWorld({...structuredClone(launched),now:launched.attacks[0].arrival_at},B,{type:'sync'});assert.ok(resolved.attacks[0].report.trace);assert.equal(projectPvP(resolved,B).reports[0].trace,undefined);assert.equal(projectPvP(resolved,B).reports[0].traceAvailable,true);
  const legacy=structuredClone(launched);delete legacy.attacks[0].ruleVersion;legacy.now=legacy.attacks[0].arrival_at;const old=processWorld(legacy,B,{type:'sync'});assert.equal(old.attacks[0].report.ruleVersion,1);assert.equal(old.attacks[0].report.trace,undefined);
 });
+test('Attacks can send all 110 selected ships and still enforce availability',()=>{
+ const w=fixture(),p=w.saves[0].state.planets[1];Object.assign(p.ships,{falke:100,titan:4,karawane:6});p.resources.fuel=100000;
+ const request=attack();request.action.fleet={falke:100,titan:4,karawane:6};
+ const next=processWorld(w,A,request);assert.deepEqual(next.attacks[0].fleet,request.action.fleet);
+ assert.equal(next.saves[0].state.planets[1].ships.falke,0);
+ request.action.fleet.falke=101;assert.throws(()=>processWorld(w,A,request),/Schiffe/);
+ const ui=pvpView(w.saves[0].state,{...projectPvP(prepareWorld(w),A),incoming:[],outgoing:[],reports:[]},{planets:w.planets.map(q=>({...q.meta,owner:q.owner_id===A?'mine':'foreign',ownerName:'Commander'}))},w.now);
+ assert.match(ui,/data-action="pvp-select-all"/);assert.match(ui,/data-action="pvp-select-none"/);
+ assert.match(ui,/name="falke" type="number" min="0" max="100"/);
+});

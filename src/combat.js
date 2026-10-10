@@ -19,7 +19,7 @@ export function combatStats(key,tech={}){
 }
 export function attackFleet(fleet){
  if(!fleet||typeof fleet!=='object'||Array.isArray(fleet))throw Error('Ungültige Angriffsflotte.');
- const entries=Object.entries(fleet);if(!entries.length||entries.some(([k,n])=>!['military','freighter'].includes(SHIPS[k]?.category)||!Number.isSafeInteger(n)||n<1)||entries.reduce((a,[,n])=>a+n,0)>100||!entries.some(([k])=>SHIPS[k].category==='military'))throw Error('Wähle 1–100 Schiffe und mindestens ein Kriegsschiff.');
+ const entries=Object.entries(fleet);if(!entries.length||entries.some(([k,n])=>!['military','freighter'].includes(SHIPS[k]?.category)||!Number.isSafeInteger(n)||n<1)||!entries.some(([k])=>SHIPS[k].category==='military'))throw Error('Wähle mindestens ein Kriegsschiff und verfügbare Schiffe in ganzen Zahlen.');
  return {...fleet};
 }
 export function attackFlight(s,from,to,fleet){

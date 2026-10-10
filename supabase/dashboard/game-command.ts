@@ -930,7 +930,7 @@ function attackFleet(fleet) {
   if (!entries.length || entries.some(([k, n]) => ![
     "military",
     "freighter"
-  ].includes(SHIPS[k]?.category) || !Number.isSafeInteger(n) || n < 1) || entries.reduce((a, [, n]) => a + n, 0) > 100 || !entries.some(([k]) => SHIPS[k].category === "military")) throw Error("W\xE4hle 1\u2013100 Schiffe und mindestens ein Kriegsschiff.");
+  ].includes(SHIPS[k]?.category) || !Number.isSafeInteger(n) || n < 1) || !entries.some(([k]) => SHIPS[k].category === "military")) throw Error("W\xE4hle mindestens ein Kriegsschiff und verf\xFCgbare Schiffe in ganzen Zahlen.");
   return {
     ...fleet
   };
