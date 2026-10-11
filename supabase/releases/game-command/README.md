@@ -20,6 +20,8 @@ Ab `2026-10-11.02` bleiben nicht abladbare Ressourcen an Bord. Die [Deployment- 
 
 Ab `2026-10-11.03` können Partnerflotten auch von privaten Planeten starten. [Deployment und Rollback](../../dashboard/PARTNER_ORIGINS_DEPLOYMENT.md) beschreiben die Voraussetzung für einen Rückwechsel auf ältere Herkunftsprüfungen.
 
+Ab `2026-10-11.04` speichert die Werft ihre bezahlten Folgeaufträge. [Deployment und Rollback](../../dashboard/SHIP_QUEUE_DEPLOYMENT.md) erklären die neuen Warteschlangen und warum sie vor einem Rückwechsel abgearbeitet oder erstattet werden müssen. Keine neue SQL-Migration.
+
 ## Neue Version erstellen
 
 Änderungen gehören in die ursprünglichen Module, nicht in ein archiviertes Bundle. Nach dem Bündeln zuerst beide Dashboard-TXT-Dateien bytegleich aktualisieren und anschließend archivieren:

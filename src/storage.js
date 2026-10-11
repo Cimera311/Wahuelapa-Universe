@@ -1,4 +1,5 @@
 import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,isFreighter} from './config.js';
+import {SHIP_QUEUE_LIMIT} from './engine.js';
 export const SAVE_KEY='imperium-v1';
 const isNum=(x,max=1e12)=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=max;
 const integer=(x,max)=>isNum(x,max)&&Number.isInteger(x);
@@ -17,12 +18,24 @@ export function validateSave(input){
  const cargo=c=>c&&RES.every(k=>isNum(c[k]));
  const job=(j,defs)=>j===null||(j&&Object.hasOwn(defs,j.key)&&isNum(j.start,8.64e15)&&isNum(j.end,8.64e15)&&j.start<=s.time&&j.end>=s.time&&j.end>j.start);
  for(const p of s.planets){if(p.id.startsWith('g-'))check(typeof p.system==='string'&&/^g-[a-z]+-p(?:[1-9]|10)$/.test(p.id)&&isNum(p.x,1200)&&isNum(p.y,1200)&&integer(p.slot,10)&&p.slot>0);check(text(p.name,40)&&text(p.coord,30)&&text(p.kind,40)&&/^#[0-9a-f]{6}$/i.test(p.color)&&typeof p.ocean==='boolean'&&isNum(p.energy,10)&&p.energy>0&&isNum(p.distance,100));check(Array.isArray(p.mult)&&p.mult.length===3&&p.mult.every(x=>isNum(x,10)));p.reserves??={metal:0,crystal:0,fuel:0};check(cargo(p.reserves)&&cargo(p.resources)&&cargo(p.depot));for(const k of ['orbital','bunker'])if(p.buildings&&!Object.hasOwn(p.buildings,k))p.buildings[k]=0;check(p.buildings&&Object.keys(BUILDINGS).every(k=>integer(p.buildings[k],30)));if(p.ships)for(const k of Object.keys(SHIPS))if(!['probe','transport','colony'].includes(k)&&!Object.hasOwn(p.ships,k))p.ships[k]=0;check(p.ships&&Object.keys(SHIPS).every(k=>integer(p.ships[k],Number.MAX_SAFE_INTEGER)));check(job(p.build,BUILDINGS)&&(!p.build||p.build.level===p.buildings[p.build.key]+1));check(job(p.shipjob,SHIPS)&&(!p.shipjob||integer(p.shipjob.count,Number.MAX_SAFE_INTEGER)&&p.shipjob.count>0));}
- for(const p of s.planets)if(p.shipjob){const j=p.shipjob;if(j.workTotal!==undefined||j.workRemaining!==undefined){check(isNum(j.workTotal,8.64e15)&&j.workTotal>0&&isNum(j.workRemaining,j.workTotal)&&typeof j.paused==='boolean');if(j.orderEnd!==undefined)check(isNum(j.orderEnd,8.64e15)&&j.orderEnd>j.start);}if(j.id!==undefined)check(integer(j.id,s.seq)&&j.id>0);if(j.payment!==undefined)check(j.payment&&cargo(j.payment.resources)&&cargo(j.payment.salvage)&&RES.every(k=>Number.isSafeInteger(j.payment.resources[k])&&Number.isSafeInteger(j.payment.salvage[k]))&&j.payment.salvage.fuel===0&&(SHIPS[j.key].category==='defense'||RES.every(k=>j.payment.salvage[k]===0)));}
+ const shipIds=[];
+ for(const p of s.planets){
+  p.shipqueue??=[];check(Array.isArray(p.shipqueue)&&p.shipqueue.length+(p.shipjob?1:0)<=SHIP_QUEUE_LIMIT&&(!p.shipqueue.length||!!p.shipjob));
+  for(const j of [p.shipjob,...p.shipqueue].filter(Boolean)){
+   check(job(j,SHIPS)&&integer(j.count,Number.MAX_SAFE_INTEGER)&&j.count>0);
+   const waiting=j!==p.shipjob;
+   if(j.workTotal!==undefined||j.workRemaining!==undefined){check(isNum(j.workTotal,8.64e15)&&j.workTotal>0&&isNum(j.workRemaining,j.workTotal)&&typeof j.paused==='boolean');if(j.orderEnd!==undefined)check(isNum(j.orderEnd,8.64e15)&&j.orderEnd>j.start);}
+   if(waiting)check(j.workRemaining===j.workTotal&&j.payment!==undefined&&j.id!==undefined);
+   if(j.id!==undefined){check(integer(j.id,s.seq)&&j.id>0);shipIds.push(j.id);}
+   if(j.payment!==undefined)check(j.payment&&cargo(j.payment.resources)&&cargo(j.payment.salvage)&&RES.every((k,i)=>Number.isSafeInteger(j.payment.resources[k])&&Number.isSafeInteger(j.payment.salvage[k])&&j.payment.resources[k]+j.payment.salvage[k]===SHIPS[j.key].cost[i]*j.count)&&j.payment.salvage.fuel===0&&(SHIPS[j.key].category==='defense'||RES.every(k=>j.payment.salvage[k]===0)));
+  }
+ }
+ check(new Set(shipIds).size===shipIds.length);
  check(job(s.research,TECHS)&&(!s.research||s.research.level===s.tech[s.research.key]+1&&ids.includes(s.research.planet)));
  check(Array.isArray(s.discovered)&&s.discovered.length<=3&&new Set(s.discovered).size===s.discovered.length&&s.discovered.every(id=>TARGETS.some(t=>t.id===id)));
  check(Array.isArray(s.missions)&&s.missions.length<=100);
  const fleetOK=(f,military=false)=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length>0&&Object.entries(f).every(([k,n])=>(isFreighter(k)||military&&['military','civil'].includes(SHIPS[k]?.category))&&integer(n,Number.MAX_SAFE_INTEGER)&&n>0);
- const eventIds=[];
+ const eventIds=[...shipIds];
  const order=o=>o&&RES.every(k=>o[k]==='max'||integer(o[k],1e12));
  for(const m of s.missions){
   check(integer(m.id,s.seq)&&m.id>0&&ids.includes(m.from)&&['probe','colony','transport','deliver','collect','station','route'].includes(m.type)&&Object.hasOwn(SHIPS,m.ship)&&integer(m.count,Number.MAX_SAFE_INTEGER)&&m.count>0&&cargo(m.cargo)&&['outbound','return'].includes(m.phase)&&isNum(m.start,8.64e15)&&m.start<=s.time&&isNum(m.due,8.64e15)&&m.due>=s.time&&isNum(m.duration,86400000)&&m.duration>0);

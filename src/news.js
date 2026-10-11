@@ -1,4 +1,9 @@
 export const GAME_NEWS=[
+ {date:'11.10.2026',title:'Deine Werft baut weiter',status:'Werft-Update',items:[
+ 'Schiffs- und Verteidigungsaufträge lassen sich in eine planetare Warteschlange einreihen. Nach jedem fertigen Bauauftrag startet der nächste automatisch – auch während deiner Abwesenheit.',
+ 'Die Bauwarteschlange zeigt den laufenden Auftrag, Fortschritt, Restzeit und die nächsten Starts bei aktueller Energieversorgung. Die kompakten Schiffszeilen behalten ihre Mengenwahl, Kosten und Details.',
+ 'Rohstoffe werden beim Einreihen bezahlt. Abbrechen oder Entfernen erstattet die jeweilige Zahlung; Überschüsse bleiben im Lieferdepot. Wartende Verteidigungen reservieren bereits ihre Orbitalplätze.'
+ ]},
  {date:'11.10.2026',title:'Ein Treffpunkt für alle Commander',status:'Community',items:[
  'Chat und Wünsche sind oben neben den News erreichbar. Der Universum-Chat verbindet alle angemeldeten Commander und aktualisiert sich automatisch, solange sein Fenster geöffnet ist.',
  'Im Wünsche-Bereich kannst du Ideen veröffentlichen und andere Vorschläge unterstützen. Admins können Wünsche als offen, geplant oder umgesetzt markieren.',
