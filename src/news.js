@@ -1,4 +1,9 @@
 export const GAME_NEWS=[
+ {date:'11.10.2026',title:'Ein Treffpunkt für alle Commander',status:'Community',items:[
+ 'Chat und Wünsche sind oben neben den News erreichbar. Der Universum-Chat verbindet alle angemeldeten Commander und aktualisiert sich automatisch, solange sein Fenster geöffnet ist.',
+ 'Im Wünsche-Bereich kannst du Ideen veröffentlichen und andere Vorschläge unterstützen. Admins können Wünsche als offen, geplant oder umgesetzt markieren.',
+ 'Beiträge werden gemeinsam auf dem Server gespeichert. Eigene Beiträge lassen sich ausblenden; Entwürfe bleiben bei einem Sendeproblem im geöffneten Fenster erhalten.'
+ ]},
  {date:'11.10.2026',title:'Kürzere Wege durch deine Flotte',status:'Navigation 0.5.4',items:[
  'Mobil führen drei Symbolflächen zu deinen Flottenbereichen: Hangar mit Übersicht und Werft, PvP mit Angriff, Verteidigung und Partnern sowie Handel mit Aufträgen, Routen und Berichten.',
  'Die Unterpunkte erscheinen direkt unter der gewählten Gruppe. Beim Wechsel merkt sich jede Gruppe ihre zuletzt geöffnete Ansicht während der Sitzung.',
