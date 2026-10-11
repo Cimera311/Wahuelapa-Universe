@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {ui,input,tick} from './helpers/game-ui.js';
+import {shipInfo} from '../src/engine.js';
+import {vector} from '../src/config.js';
+function ready(t){const u=ui(t),s=u.api.state(),p=s.planets[0];p.buildings.shipyard=6;p.buildings.solar=20;p.resources=vector([1e6,1e6,1e6]);u.api.show('hangar');u.doc.querySelector('[data-action="ship-category"][data-category="military"]').click();return {...u,p,s};}
+test('collapsed shipyard exposes every build control, icon-only costs and keyboard-accessible details',t=>{
+ const {doc}=ready(t),card=doc.querySelector('[data-ship-card="falke"]'),row=card.querySelector('.ship-build-row');
+ assert.ok(row.querySelector('img'));assert.match(row.querySelector('h2').textContent,/Falke/);assert.equal(row.querySelectorAll('.ship-resource').length,3);
+ assert.doesNotMatch(row.querySelector('[data-ship-cost]').textContent,/Metall|Kristall|Treibstoff/);assert.match(row.querySelector('.ship-resource').getAttribute('aria-label'),/Metall/);
+ assert.match(row.querySelector('[data-ship-time]').textContent,/Sek/);assert.equal(row.querySelector('[data-ship-count]').value,'1');assert.equal(row.querySelector('[data-action="ship"]').disabled,false);
+ const toggle=row.querySelector('[data-ship-toggle]'),details=card.querySelector('.ship-extra');assert.equal(details.hidden,true);assert.equal(toggle.getAttribute('aria-controls'),details.id);toggle.click();assert.equal(details.hidden,false);assert.equal(toggle.getAttribute('aria-expanded'),'true');assert.match(details.textContent,/Voraussetzungen/);assert.match(details.textContent,/Tempo/);toggle.click();assert.equal(details.hidden,true);
+});
+test('shipyard recalculates totals and affordability for the whole selected order, including tick updates',t=>{
+ const {doc,w,api,p,s}=ready(t),card=doc.querySelector('[data-ship-card="falke"]'),count=card.querySelector('[data-ship-count]');
+ input(w,count,'10');const expected=shipInfo(s,p,'falke',10);assert.equal(card.querySelector('.ship-resource span').textContent,Math.floor(expected.cost.metal).toLocaleString('de-DE'));assert.match(card.querySelector('[data-ship-time]').textContent,/gesamt/);
+ p.resources.metal=500;api.tick();assert.equal(card.querySelector('[data-action="ship"]').disabled,true);assert.match(card.querySelector('[data-ship-reason]').textContent,/Ressourcen/);
+ input(w,count,'1');assert.equal(card.querySelector('[data-action="ship"]').disabled,false);
+ for(const invalid of ['0','1.5','-1','',String(Number.MAX_SAFE_INTEGER+1)]){input(w,count,invalid);assert.equal(card.querySelector('[data-action="ship"]').disabled,true);api.tick();assert.equal(card.querySelector('[data-action="ship"]').disabled,true);}
+ input(w,count,'1');card.querySelector('[data-ship-adjust="-1"]').click();assert.equal(count.value,'1');card.querySelector('[data-ship-adjust="1"]').click();assert.equal(count.value,'2');
+});
+test('ship counts and detail state survive rerender but remain separate per planet',t=>{
+ const {doc,w,api}=ready(t);let card=doc.querySelector('[data-ship-card="falke"]');input(w,card.querySelector('[data-ship-count]'),'12');card.querySelector('[data-ship-toggle]').click();api.render();card=doc.querySelector('[data-ship-card="falke"]');assert.equal(card.querySelector('[data-ship-count]').value,'12');assert.equal(card.querySelector('.ship-extra').hidden,false);
+ doc.querySelector('#planet-select').value='ferrum';doc.querySelector('#planet-select').dispatchEvent(new w.Event('change',{bubbles:true}));card=doc.querySelector('[data-ship-card="falke"]');assert.equal(card.querySelector('[data-ship-count]').value,'1');assert.equal(card.querySelector('.ship-extra').hidden,true);
+});
+test('building from a collapsed row submits the selected quantity and busy rows stay disabled',async t=>{
+ const {doc,w,api,p}=ready(t);const card=doc.querySelector('[data-ship-card="falke"]');input(w,card.querySelector('[data-ship-count]'),'3');card.querySelector('[data-action="ship"]').click();await tick();assert.equal(api.state().planets[0].shipjob.count,3);assert.equal(api.state().planets[0].shipjob.key,'falke');assert.ok([...doc.querySelectorAll('[data-action="ship"]')].every(b=>b.disabled));assert.equal(doc.querySelector('[data-ship-card="falke"] [data-ship-count]').value,'1');
+});
+test('defense totals include salvage and orbital limits, and power shortages remain visible',t=>{
+ const {doc,w,api,p}=ready(t);p.buildings.orbital=1;p.defenseSalvage=vector([100,100,100]);p.buildings.solar=0;p.buildings.fusion=0;p.buildings.tidal=0;doc.querySelector('[data-action="ship-category"][data-category="defense"]').click();const card=doc.querySelector('[data-ship-card="flak"]');assert.ok(card);assert.match(card.querySelector('[data-ship-time]').textContent,/Pausiert ohne Strom/);input(w,card.querySelector('[data-ship-count]'),'999');assert.equal(card.querySelector('[data-action="ship"]').disabled,true);assert.match(card.querySelector('[data-ship-reason]').textContent,/Orbitalplattform/);
+});
