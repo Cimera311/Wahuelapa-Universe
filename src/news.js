@@ -1,4 +1,9 @@
 export const GAME_NEWS=[
+ {date:'11.10.2026',title:'Kompakte Werft mit direktem Schiffbau',status:'Werft-Update 0.5.2',items:[
+ 'Bild, Schiffname, Ressourcen als Symbol und Menge, Bauzeit, Mengenwahl und Bauen bleiben auch eingeklappt sichtbar – mobil und am Desktop.',
+ 'Beschreibung, Laderaum, Tempo, Verbrauch und Voraussetzungen lassen sich je Schiff aufklappen.',
+ 'Kosten und Bauzeit reagieren auf die gewählte Anzahl. Die Ressourcen- und Orbitalplatzprüfung berücksichtigt die gesamte Bestellung.'
+ ]},
  {date:'11.10.2026',title:'Flottenversand bei unterschiedlichen Serverständen',status:'Korrektur 0.5.1',items:[
  'Liefern, Abholen und Stationieren mit einem Schiffstyp senden wieder beide unterstützten Anfrageformate. Damit funktionieren diese Aufträge auch während eines noch ausstehenden Backend-Updates.',
  'Gemischte Flotten prüfen vor dem Versand die Serverunterstützung. Ein veralteter Server führt zu einem klaren Hinweis statt einer irreführenden Schiffsfehlermeldung.',
