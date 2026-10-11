@@ -1,5 +1,5 @@
 import {RES,SHIPS,vector,canFlyInterstellar,shipFlightEngine} from './config.js';
-import {getPlanet,settle,fleetCapacity} from './engine.js';
+import {getPlanet,settle,fleetCapacity,unloadCargo,cargoPresent,nextCargoSpaceEvent} from './engine.js';
 import {sharedFlight} from './flight.js';
 import {takeHulls,putHulls} from './combat.js';
 const socialZero=()=>vector([0,0,0]);
@@ -9,7 +9,6 @@ const socialGrant=(w,owner,friend,right)=>w.partners.some(p=>p.status==='accepte
 const socialCargo=c=>{if(!c||typeof c!=='object'||RES.some(k=>!Number.isSafeInteger(c[k])||c[k]<0||c[k]>1e12))throw Error('Rohstoffe müssen positive ganze Mengen sein.');return Object.fromEntries(RES.map(k=>[k,c[k]]));};
 const socialSum=c=>RES.reduce((n,k)=>n+c[k],0);
 function socialPay(p,c){settle(p);if(RES.some(k=>p.resources[k]<c[k]))throw Error('Lokale Ressourcen reichen nicht.');for(const k of RES)p.resources[k]-=c[k];settle(p);}
-function socialDeliver(p,c){for(const k of RES)p.depot[k]+=c[k];settle(p);}
 function socialPlanet(w,owner,id){const meta=w.planets.find(p=>p.id===id&&p.owner_id===owner&&!p.reserved);const p=getPlanet(socialState(w,owner),id);if(!meta||!p.system)throw Error('Wähle eine besiedelte gemeinsame Galaxiekolonie.');return p;}
 export function socialFlight(s,from,to,fleet,kind){
  const entries=Object.entries(fleet||{});if(!entries.length||entries.some(([k,n])=>!Number.isSafeInteger(n)||n<1||SHIPS[k]?.category!==(kind==='support'?'military':'freighter')))throw Error('Wähle verfügbare '+(kind==='support'?'Kriegsschiffe':'Frachter')+' in ganzen Zahlen.');
@@ -61,16 +60,17 @@ export function socialAction(w,uid,a,id){
  }
  throw Error('Unbekannte Partneraktion.');
 }
-export function socialEvents(w){return w.socialMissions.filter(m=>['outbound','returning'].includes(m.status)).map(m=>({time:m.due,id:m.id,kind:'social',mission:m,order:m.status==='outbound'?1:3}));}
+export function socialEvents(w){return w.socialMissions.filter(m=>['outbound','returning'].includes(m.status)).flatMap(m=>{if(!m.awaitingUnload)return [{time:m.due,id:m.id,kind:'social',mission:m,order:m.status==='outbound'?1:3}];const p=socialPlanet(w,m.status==='returning'?m.owner:m.host,m.status==='returning'?m.from:m.to);const time=nextCargoSpaceEvent(socialState(w,m.status==='returning'?m.owner:m.host),p);return Number.isFinite(time)?[{time,id:m.id,kind:'social',mission:m,order:1}]:[];});}
 export function arriveSocial(w,m,time){
  const s=socialState(w,m.owner),from=socialPlanet(w,m.owner,m.from);
- if(m.status==='returning'){for(const [k,n] of Object.entries(m.fleet))from.ships[k]+=n;putHulls(from,m.hulls);from.shieldUntil=Math.max(from.shieldUntil||0,m.shieldUntil||0);socialDeliver(from,m.cargo);m.status='returned';socialLog(s,time,'Partnerflotte zurückgekehrt','Schiffe und Ladung auf '+from.name+' eingetroffen.');return;}
+ if(m.status==='returning'){unloadCargo(from,m.cargo);if(cargoPresent(m.cargo)){m.awaitingUnload=true;m.due=time;return;}delete m.awaitingUnload;for(const [k,n] of Object.entries(m.fleet))from.ships[k]+=n;putHulls(from,m.hulls);from.shieldUntil=Math.max(from.shieldUntil||0,m.shieldUntil||0);m.status='returned';socialLog(s,time,'Partnerflotte zurückgekehrt','Schiffe und Ladung auf '+from.name+' eingetroffen.');return;}
  const to=socialPlanet(w,m.host,m.to),host=socialState(w,m.host);
  if(m.kind==='support'){if(!socialGrant(w,m.host,m.owner,'defense')){m.status='returning';m.due=time+m.duration;return;}m.status='stationed';socialLog(s,time,'Verteidigungsflotte stationiert',to.name+' wird von deinen Schiffen unterstützt.');socialLog(host,time,'Verstärkung eingetroffen',s.name+' unterstützt '+to.name+'.');return;}
  if(m.kind==='delivery'&&!socialGrant(w,m.host,m.owner,'delivery')){m.status='returning';m.due=time+m.duration;return;}
- socialDeliver(to,m.cargo);m.cargo=m.kind==='trade'?{...m.payment}:socialZero();m.payment=socialZero();m.status='returning';m.due=time+m.duration;socialLog(host,time,'Partnerlieferung angekommen',s.name+' hat Ressourcen auf '+to.name+' abgeladen.');
+ unloadCargo(to,m.cargo);if(m.kind==='trade'&&cargoPresent(m.cargo)){m.awaitingUnload=true;m.due=time;return;}delete m.awaitingUnload;if(m.kind==='trade')m.cargo={...m.payment};m.payment=socialZero();m.status='returning';m.due=time+m.duration;socialLog(host,time,'Partnerlieferung angekommen',s.name+' hat Ressourcen auf '+to.name+' abgeladen.');
 }
-export function socialDefense(w,host,id,time){return w.socialMissions.filter(m=>m.host===host&&m.to===id&&m.kind==='support'&&m.status==='stationed').map(m=>({id:m.id,owner:m.owner,commander:socialState(w,m.owner).name,fleet:m.fleet,tech:socialState(w,m.owner).tech,hulls:m.hulls,shieldFactor:m.shieldUntil?Math.max(0,Math.min(1,1-(m.shieldUntil-time)/300000)):1}));}
+export function settleSocialCargo(w,time){for(const m of w.socialMissions)if(m.awaitingUnload&&['outbound','returning'].includes(m.status))arriveSocial(w,m,time);}
+export function socialDefense(w,host,id,time){return w.socialMissions.filter(m=>m.host===host&&m.to===id&&m.kind==='support'&&m.status==='stationed'||m.awaitingUnload&&m.status==='returning'&&m.owner===host&&m.from===id).map(m=>({id:m.id,owner:m.owner,commander:socialState(w,m.owner).name,fleet:m.fleet,tech:socialState(w,m.owner).tech,hulls:m.hulls,shieldFactor:m.shieldUntil?Math.max(0,Math.min(1,1-(m.shieldUntil-time)/300000)):1}));}
 export function socialProjection(w,uid){
  if(w.socialVersion!==1)return null;
  const name=id=>socialState(w,id).name;

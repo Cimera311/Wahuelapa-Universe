@@ -5,6 +5,7 @@ import {PGlite} from '@electric-sql/pglite';
 import {runServerCommand} from '../src/server-service.js';
 import {fixture,A,B,T} from './helpers/pvp-fixture.js';
 import {vector} from '../src/config.js';
+import {capacity} from '../src/engine.js';
 
 test('Partnership database persistence, atomic delivery, private reports and fleet scoring',async t=>{
  const db=new PGlite();t.after(()=>db.close());await db.exec("create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create role anon;create role authenticated;create role service_role;");
@@ -28,6 +29,14 @@ test('Partnership database persistence, atomic delivery, private reports and fle
  });
  await t.test('Accepted direct exchange persists payment and completes for offline users',async()=>{
   const offered=await call(A,{op:'trade-offer',from:'g-helion-p1',to:'g-orion-p1',fleet:{karawane:1},cargo:vector([1000,0,0]),payment:vector([0,500,0])});const accepted=await call(B,{op:'trade-accept',id:offered.pvp.social.trades[0].id});const m=accepted.pvp.social.missions.find(m=>m.kind==='trade');assert.equal(accepted.state.planets[1].resources.crystal,9500);now=m.due+m.duration;const done=await runServerCommand(rpc,A,{type:'sync'});assert.equal(done.state.planets[1].resources.crystal,10500);const buyer=await runServerCommand(rpc,B,{type:'sync'});assert.equal(buyer.state.planets[1].resources.metal,11000);
+ });
+ await t.test('Waiting cargo persists through SQL snapshots and releases ships exactly once after warehouse completion',async()=>{
+  const fill=async(id)=>{const row=(await db.query('select state from public.game_saves where user_id=$1',[id])).rows[0];row.state.planets[1].resources.metal=capacity(row.state.planets[1]);await db.query('update public.game_saves set state=$2 where user_id=$1',[id,JSON.stringify(row.state)]);};
+  await fill(B);const launched=await call(A,{op:'deliver',from:'g-helion-p1',to:'g-orion-p1',fleet:{karawane:1},cargo:vector([500,0,0])});const m=launched.pvp.social.missions.find(m=>m.kind==='delivery');await fill(A);now=m.due+m.duration;
+  const waiting=await runServerCommand(rpc,A,{type:'sync'}),held=waiting.pvp.social.missions.find(x=>x.id===m.id);assert.equal(held.awaitingUnload,true);assert.equal(held.cargo.metal,500);assert.equal(waiting.state.planets[1].depot.metal,0);assert.equal(waiting.state.planets[1].ships.karawane,3);
+  const repeated=await runServerCommand(rpc,A,{type:'sync'});assert.equal(repeated.pvp.social.missions.find(x=>x.id===m.id).cargo.metal,500);assert.equal(repeated.state.planets[1].ships.karawane,3);
+  const building=await runServerCommand(rpc,A,{type:'command',requestId:'60000000-0000-0000-0000-000000000001',action:{type:'build',planet:'g-helion-p1',key:'warehouse'}});now=building.state.planets[1].build.end;
+  const done=await runServerCommand(rpc,A,{type:'sync'});assert.ok(!done.pvp.social.missions.some(x=>x.id===m.id));assert.equal(done.state.planets[1].ships.karawane,4);assert.equal(done.state.planets[1].depot.metal,0);assert.equal((await runServerCommand(rpc,A,{type:'sync'})).state.planets[1].ships.karawane,4);
  });
  await t.test('Support owner receives private persistent battle reports and trace access; strangers do not',async()=>{
   const C='00000000-0000-0000-0000-000000000003';await db.query('insert into auth.users values($1)',[C]);await db.query('insert into public.game_saves(user_id,state) values($1,$2)',[C,JSON.stringify(seed.saves[0].state)]);

@@ -50,3 +50,7 @@ test('Own partner and attack fleets use mission cards without adding foreign fle
  assert.doesNotMatch(overview.textContent,/Foreign/);
  assert.match(overview.querySelector('.fleet-travel-card').textContent,/Rückflug/);
 });
+
+test('Waiting freighters show bound ships and remaining cargo without a flight countdown',t=>{
+ const {doc,api}=ui(t),s=api.state();s.missions.push({id:900,type:'transport',ship:'transport',count:1,from:s.planets[0].id,to:s.planets[1].id,phase:'return',awaitingUnload:s.planets[0].id,cargo:{metal:123,crystal:0,fuel:0},start:s.time-60000,due:s.time,duration:60000});api.show('hangar');doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();const card=doc.querySelector('.fleet-travel-card');assert.match(card.textContent,/Wartet auf Lagerplatz/);assert.match(card.textContent,/123/);assert.match(card.textContent,/Restladung bleibt an Bord/);assert.equal(card.querySelector('[data-due]'),null);assert.equal(card.querySelector('[role="progressbar"]').hidden,true);
+});
