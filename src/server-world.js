@@ -1,6 +1,6 @@
-import {socialAction,socialEvents,arriveSocial,socialDefense,socialProjection} from './social-world.js';
+import {socialAction,settleSocialCargo,socialEvents,arriveSocial,socialDefense,socialProjection} from './social-world.js';
 import {RES,attackSlots,BUILDINGS,SHIPS,vector} from './config.js';
-import {newGame,getPlanet,advance,act,capacity,settle,fleetCapacity} from './engine.js';
+import {newGame,getPlanet,advance,act,capacity,settle,fleetCapacity,unloadCargo,cargoPresent,nextCargoSpaceEvent} from './engine.js';
 import {validateSave} from './storage.js';
 import {galaxyFlight} from './galaxy.js';
 import {GALAXY_FLIGHT_RULE_VERSION} from './flight.js';
@@ -47,15 +47,18 @@ function resolveAttack(w,m,time){
   m.report={outcome:'cancelled',at:time,reason:'Das Ziel ist nicht mehr angreifbar.'};log(a,time,'Angriff abgebrochen',m.report.reason);return;
  }
  const d=row.state,p=getPlanet(d,m.to),defense={fleet:{...p.ships},tech:{...d.tech},hulls:p.hulls,shieldFactor:shieldFactor(p.shieldUntil,time)};
- const pausedRoutes=d.missions.filter(r=>r.type==='route'&&r.paused&&r.home===m.to);
- const parked=pausedRoutes.map(r=>({id:'route:'+r.id,owner:m.defender_id,commander:d.name+' · '+r.name,fleet:{...r.fleet||{[r.ship]:r.count}},hulls:r.hulls,tech:{...d.tech},shieldFactor:shieldFactor(r.shieldUntil,time)}));
+ const pausedRoutes=d.missions.filter(r=>r.awaitingUnload===m.to||r.type==='route'&&r.paused&&r.home===m.to);
+ const parked=pausedRoutes.map(r=>({id:'route:'+r.id,owner:m.defender_id,commander:d.name+' · '+(r.name||'Wartet auf Lagerplatz'),fleet:{...r.fleet||{[r.ship]:r.count}},hulls:r.hulls,tech:{...d.tech},shieldFactor:shieldFactor(r.shieldUntil,time)}));
+ const dockedRaids=w.attacks.filter(r=>r.awaitingUnload&&r.status==='returning'&&r.attacker_id===m.defender_id&&r.from===m.to);
+ parked.push(...dockedRaids.map(r=>({id:'raid:'+r.id,owner:m.defender_id,commander:d.name+' · Rückkehrende Angriffsflotte',fleet:r.survivors,hulls:r.return_hulls,tech:r.combat.tech,shieldFactor:shieldFactor(r.shieldUntil,time)})));
  const supporting=socialDefense(w,m.defender_id,m.to,time);if(supporting.length||parked.length)defense.groups=[{id:'host',owner:m.defender_id,commander:d.name,...defense},...parked,...supporting];
  const result=resolveBattle({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,m.ruleVersion||1);
  const before={...p.ships},homeResult=result.defenderGroups?.find(g=>g.id==='host')||result.defender;
- for(const r of pausedRoutes){const after=result.defenderGroups.find(g=>g.id==='route:'+r.id);r.fleet=after.fleet;r.hulls=after.hulls;r.shieldUntil=time+300000;if(!Object.keys(r.fleet).length){d.missions=d.missions.filter(x=>x.id!==r.id);log(d,time,'Pausierte Routenflotte zerstört',r.name);}else{[r.ship,r.count]=Object.entries(r.fleet)[0];}}
+ for(const r of pausedRoutes){const after=result.defenderGroups.find(g=>g.id==='route:'+r.id);r.fleet=after.fleet;r.hulls=after.hulls;let room=fleetCapacity(d,r.fleet);for(const k of RES){r.cargo[k]=Math.min(r.cargo[k],room);room-=r.cargo[k];}r.shieldUntil=time+300000;if(!Object.keys(r.fleet).length){d.missions=d.missions.filter(x=>x.id!==r.id);log(d,time,'Gebundene Flotte zerstört',r.name||'Restladung wartet auf Lagerplatz');}else{[r.ship,r.count]=Object.entries(r.fleet)[0];}}
+ for(const r of dockedRaids){const after=result.defenderGroups.find(g=>g.id==='raid:'+r.id);r.survivors=after.fleet;r.return_hulls=after.hulls;r.shieldUntil=time+300000;let room=fleetCapacity({tech:r.combat.tech},r.survivors);for(const k of RES){r.cargo[k]=Math.min(r.cargo[k],room);room-=r.cargo[k];}if(!Object.keys(r.survivors).length){r.status='returned';delete r.awaitingUnload;}}
  const hostBefore=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,before[k]+parked.reduce((n,g)=>n+(g.fleet[k]||0),0)]));
- const hostAfter=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,(homeResult.fleet[k]||0)+pausedRoutes.reduce((n,r)=>n+(r.fleet[k]||0),0)]));
- const supportReports=[];for(const group of supporting){const after=result.defenderGroups.find(g=>g.id===group.id),mission=w.socialMissions.find(x=>x.id===group.id);mission.fleet=after.fleet;mission.hulls=after.hulls;mission.shieldUntil=time+300000;if(!Object.keys(after.fleet).length)mission.status='lost';supportReports.push({owner:group.owner,commander:group.commander,before:group.fleet,after:after.fleet});log(stateOf(w,group.owner),time,'PvP-Kampfbericht','Deine Unterstützung auf '+p.name+' hat mitverteidigt. Übrig: '+fleetText(after.fleet));}
+ const hostAfter=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,(homeResult.fleet[k]||0)+pausedRoutes.reduce((n,r)=>n+(r.fleet[k]||0),0)+dockedRaids.reduce((n,r)=>n+(r.survivors[k]||0),0)]));
+ const supportReports=[];for(const group of supporting){const after=result.defenderGroups.find(g=>g.id===group.id),mission=w.socialMissions.find(x=>x.id===group.id);mission.fleet=after.fleet;mission.hulls=after.hulls;let cargoRoom=fleetCapacity(stateOf(w,mission.owner),mission.fleet);for(const k of RES){mission.cargo[k]=Math.min(mission.cargo[k],cargoRoom);cargoRoom-=mission.cargo[k];}mission.shieldUntil=time+300000;if(!Object.keys(after.fleet).length){mission.status='lost';delete mission.awaitingUnload;}supportReports.push({owner:group.owner,commander:group.commander,before:group.fleet,after:after.fleet});log(stateOf(w,group.owner),time,'PvP-Kampfbericht','Deine Unterstützung auf '+p.name+' hat mitverteidigt. Übrig: '+fleetText(after.fleet));}
  for(const key of Object.keys(SHIPS))p.ships[key]=homeResult.fleet[key]||0;
  p.hulls=homeResult.hulls;p.shieldUntil=time+300000;
  p.defenseSalvage??=zero();for(const k of RES)p.defenseSalvage[k]+=result.defenseRepair[k];
@@ -74,13 +77,13 @@ function resolveAttack(w,m,time){
  log(a,time,'PvP-Kampfbericht',body);log(d,time,'PvP-Kampfbericht',body);
 }
 function returnAttack(w,m,time){
- const s=stateOf(w,m.attacker_id),p=getPlanet(s,m.from);
- for(const [k,n] of Object.entries(m.survivors||{}))p.ships[k]+=n;
+ const s=stateOf(w,m.attacker_id),p=getPlanet(s,m.from);unloadCargo(p,m.cargo||zero());
+ if(cargoPresent(m.cargo||zero())){if(!m.awaitingUnload)log(s,time,'Angriffsflotte wartet auf Lagerplatz','Restladung bleibt an Bord; Schiffe und Angriffsplatz bleiben gebunden.');m.awaitingUnload=true;return;}
+ delete m.awaitingUnload;for(const [k,n] of Object.entries(m.survivors||{}))p.ships[k]+=n;
  putHulls(p,m.return_hulls);p.shieldUntil=Math.max(p.shieldUntil||0,m.shieldUntil||0);
- for(const k of RES)p.depot[k]+=(m.cargo?.[k]||0);settle(p);
- log(s,time,'Angriffsflotte zurückgekehrt',fleetText(m.survivors||{})+' · Ladung wurde eingelagert.');
- m.status='returned';
+ log(s,time,'Angriffsflotte zurückgekehrt',fleetText(m.survivors||{})+' · Ladung wurde eingelagert.');m.status='returned';
 }
+function settleRaidCargo(w,time){for(const m of w.attacks)if(m.awaitingUnload&&m.status==='returning')returnAttack(w,m,time);}
 // Every externally shared event is processed in time order, with the existing engine
 // advancing research, construction and local fleets up to that exact cutoff first.
 export function advanceWorld(w){
@@ -91,7 +94,7 @@ export function advanceWorld(w){
    if(m.kind==='scan'&&!w.surveys.some(q=>q.user_id===m.user_id&&q.planet_id===m.planet_id))events.push({time:m.arrival_at,id:m.id,kind:'survey',mission:m,order:0});
    events.push({time:m.finish_at,id:m.id,kind:'galaxy',mission:m,order:1});
   }
-  for(const m of w.attacks)if(m.status==='outbound')events.push({time:m.arrival_at,id:m.id,kind:'battle',mission:m,order:2});else if(m.status==='returning')events.push({time:m.return_at,id:m.id,kind:'return',mission:m,order:3});
+  for(const m of w.attacks)if(m.status==='outbound')events.push({time:m.arrival_at,id:m.id,kind:'battle',mission:m,order:2});else if(m.status==='returning'){const p=getPlanet(stateOf(w,m.attacker_id),m.from);if(!m.awaitingUnload)events.push({time:m.return_at,id:m.id,kind:'return',mission:m,order:3});else {const time=nextCargoSpaceEvent(stateOf(w,m.attacker_id),p);if(Number.isFinite(time))events.push({time,id:m.id,kind:'return',mission:m,order:3});}}
   events.sort((a,b)=>a.time-b.time||a.order-b.order||a.id.localeCompare(b.id));
   const e=events[0];if(!e||e.time>w.now)break;
   if(++guard>10000)throw Error('Zu viele fällige Ereignisse.');
@@ -101,8 +104,10 @@ export function advanceWorld(w){
   if(e.kind==='battle')resolveAttack(w,e.mission,e.time);
   if(e.kind==='social')arriveSocial(w,e.mission,e.time);
   if(e.kind==='return')returnAttack(w,e.mission,e.time);
+  settleSocialCargo(w,e.time);settleRaidCargo(w,e.time);
  }
  for(const row of w.saves)advance(row.state,w.now);
+ settleSocialCargo(w,w.now);settleRaidCargo(w,w.now);
  return w;
 }
 function launchGalaxy(w,uid,action,id){
@@ -160,13 +165,14 @@ export function processWorld(snapshot,uid,request){
  else if(type==='set-pvp'){if(!w.admins.includes(uid))throw Error('Nur Administratoren dürfen PvP umschalten.');if(typeof request.enabled!=='boolean')throw Error('Ungültiger PvP-Status.');w.settings.enabled=request.enabled;}
  else if(type==='rename'){const name=String(request.name||'').trim();if(!name||name.length>30)throw Error('Name muss 1–30 Zeichen lang sein.');s.systemName=name;}
  else if(!['new','sync'].includes(type))throw Error('Unbekannte Anfrage.');
+ settleSocialCargo(w,w.now);settleRaidCargo(w,w.now);
  for(const row of w.saves)row.state=validateSave(row.state);
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{cargoRetention:true,attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
- outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,arrival:m.arrival_at,returnAt:m.return_at})),
+ outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,awaitingUnload:!!m.awaitingUnload,cargo:{...m.cargo||zero()},arrival:m.arrival_at,returnAt:m.return_at})),
  incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),
  reports:w.attacks.filter(m=>(m.attacker_id===uid||m.defender_id===uid||m.report?.supporting?.some(g=>g.owner===uid))&&m.report).sort((a,b)=>b.arrival_at-a.arrival_at).slice(0,30).map(m=>{const support=m.report.supporting?.filter(g=>g.owner===uid),isAttacker=m.attacker_id===uid;return {id:m.id,from:m.from,to:m.to,returnAt:m.return_at,...Object.fromEntries(Object.entries(m.report).filter(([key])=>key!=='trace')),ownSide:isAttacker?'attacker':'defender',isSupport:!!support?.length,attackerName:stateOf(w,m.attacker_id).name,defenderName:stateOf(w,m.defender_id).name,ownBefore:support?.length?Object.fromEntries(Object.keys(SHIPS).map(k=>[k,support.reduce((n,g)=>n+(g.before[k]||0),0)])):isAttacker?m.report.attackerBefore:m.report.hostBefore||m.report.defenderBefore,ownAfter:support?.length?Object.fromEntries(Object.keys(SHIPS).map(k=>[k,support.reduce((n,g)=>n+(g.after[k]||0),0)])):isAttacker?m.report.attackerAfter:m.report.hostAfter||m.report.defenderAfter};})};
 }

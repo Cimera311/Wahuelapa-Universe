@@ -16,6 +16,8 @@ Vor einem größeren Versionssprung müssen Website, Datenbank und gespeicherte 
 
 Für die ersten Stände gelten die jeweils zugehörigen damaligen Migrationsanleitungen im Quell-Commit. Ab `2026-10-10.04` werden außerdem die Partnerschafts-Migration und bestehende PvP-/Berichts-/Kampfprotokoll-Migrationen benötigt. Ab `2026-10-11.01` gilt zusätzlich die Anleitung [FLOTTEN_UPDATE_DEPLOYMENT.md](../../dashboard/FLOTTEN_UPDATE_DEPLOYMENT.md) mit `fleet-planning.sql`. Ein alter Stand unterstützt neu eingeführte Aktionen oder gespeicherte Flottenformate unter Umständen nicht.
 
+Ab `2026-10-11.02` bleiben nicht abladbare Ressourcen an Bord. Die [Deployment- und Rollback-Hinweise](../../dashboard/CARGO_RETENTION_DEPLOYMENT.md) erklären die neuen Wartezustände und deren Grenzen beim Rückwechsel auf ältere Save-Validatoren. Es ist keine zusätzliche SQL-Migration erforderlich.
+
 ## Neue Version erstellen
 
 Änderungen gehören in die ursprünglichen Module, nicht in ein archiviertes Bundle. Nach dem Bündeln zuerst beide Dashboard-TXT-Dateien bytegleich aktualisieren und anschließend archivieren:

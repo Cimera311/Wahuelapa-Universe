@@ -5,6 +5,13 @@ export const GAME_NEWS=[
  'Am Desktop ersetzt eine kompakte Menüleiste die großen Kacheln. Flotten öffnen zunächst die Gesamtübersicht; Werftwerte erscheinen nur noch in der Werft.',
  'Angriffswarnungen bleiben in allen Bereichen sichtbar und führen direkt zur Verteidigung. Kampfberichte sind weiterhin aus den Einsatzansichten erreichbar.'
  ]},
+ {date:'11.10.2026',title:'Restladung bleibt im Frachter',status:'Transport-Update',items:[
+ 'Lieferungen laden nur bis zur Lagergrenze ab. Nicht abladbare Ressourcen kehren im Frachter zum Startplaneten zurück.',
+ 'Handelsrouten nehmen Restladung zum nächsten Stopp mit. Sie belegt Laderaum und begrenzt das weitere Beladen.',
+ 'Ist beim endgültigen Abladen auch das Startlager voll, warten Flotte und Restladung dort gebunden auf Platz. Das gilt auch für Abholflüge und heimkehrende Angriffsflotten.',
+ 'Partnerlieferungen behalten ebenfalls Restladung. Ein direkter Tausch wartet am Partnerlager auf vollständiges Abladen, bevor die reservierte Gegenleistung zurückfliegt.',
+ 'Bestehende Depotbestände und Baukostenerstattungen bleiben erhalten; neue Flottenlieferungen erzeugen kein Lieferdepot mehr.'
+ ]},
  {date:'11.10.2026',title:'Deine gesamte Flotte im Überblick',status:'Flottenübersicht 0.5.3',items:[
  'Die Gesamtübersicht lässt sich zwischen Nach Schiff und Nach Planet umschalten. So siehst du die Orbitbestände aller eigenen Planeten und wo deine Schiffe liegen.',
  'Kategorien für Transport, Kampf, Sonden & Kolonie und Verteidigung helfen beim Filtern. Am Desktop stehen die Karten nebeneinander, mobil lassen sich ihre Details aufklappen.',
