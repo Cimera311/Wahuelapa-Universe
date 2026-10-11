@@ -1,5 +1,6 @@
 export const GAME_NEWS=[
  {date:'11.10.2026',title:'Deine Werft baut weiter',status:'Werft-Update',items:[
+ 'Deine Werft erhält einen Auftragsplatz je Werftstufe, maximal 20 einschließlich des laufenden Auftrags. Bereits bezahlte Aufträge aus der bisherigen Warteschlange bleiben erhalten.',
  'Schiffs- und Verteidigungsaufträge lassen sich in eine planetare Warteschlange einreihen. Nach jedem fertigen Bauauftrag startet der nächste automatisch – auch während deiner Abwesenheit.',
  'Die Bauwarteschlange zeigt den laufenden Auftrag, Fortschritt, Restzeit und die nächsten Starts bei aktueller Energieversorgung. Die kompakten Schiffszeilen behalten ihre Mengenwahl, Kosten und Details.',
  'Rohstoffe werden beim Einreihen bezahlt. Abbrechen oder Entfernen erstattet die jeweilige Zahlung; Überschüsse bleiben im Lieferdepot. Wartende Verteidigungen reservieren bereits ihre Orbitalplätze.'

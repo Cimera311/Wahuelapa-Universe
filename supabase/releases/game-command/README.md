@@ -22,6 +22,8 @@ Ab `2026-10-11.03` können Partnerflotten auch von privaten Planeten starten. [D
 
 Ab `2026-10-11.04` speichert die Werft ihre bezahlten Folgeaufträge. [Deployment und Rollback](../../dashboard/SHIP_QUEUE_DEPLOYMENT.md) erklären die neuen Warteschlangen und warum sie vor einem Rückwechsel abgearbeitet oder erstattet werden müssen. Keine neue SQL-Migration.
 
+Ab `2026-10-11.05` richtet sich die Zahl neuer Werftaufträge nach der Werftstufe, maximal 20. Bereits bezahlte Aufträge bis zur früheren Grenze von 50 bleiben gültig. [Deployment-Hinweise](../../dashboard/SHIP_QUEUE_LEVELS_DEPLOYMENT.md).
+
 ## Neue Version erstellen
 
 Änderungen gehören in die ursprünglichen Module, nicht in ein archiviertes Bundle. Nach dem Bündeln zuerst beide Dashboard-TXT-Dateien bytegleich aktualisieren und anschließend archivieren:

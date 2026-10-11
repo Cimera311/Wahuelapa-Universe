@@ -1,5 +1,5 @@
 import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,isFreighter} from './config.js';
-import {SHIP_QUEUE_LIMIT} from './engine.js';
+import {SHIP_QUEUE_LEGACY_LIMIT} from './engine.js';
 export const SAVE_KEY='imperium-v1';
 const isNum=(x,max=1e12)=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=max;
 const integer=(x,max)=>isNum(x,max)&&Number.isInteger(x);
@@ -20,7 +20,7 @@ export function validateSave(input){
  for(const p of s.planets){if(p.id.startsWith('g-'))check(typeof p.system==='string'&&/^g-[a-z]+-p(?:[1-9]|10)$/.test(p.id)&&isNum(p.x,1200)&&isNum(p.y,1200)&&integer(p.slot,10)&&p.slot>0);check(text(p.name,40)&&text(p.coord,30)&&text(p.kind,40)&&/^#[0-9a-f]{6}$/i.test(p.color)&&typeof p.ocean==='boolean'&&isNum(p.energy,10)&&p.energy>0&&isNum(p.distance,100));check(Array.isArray(p.mult)&&p.mult.length===3&&p.mult.every(x=>isNum(x,10)));p.reserves??={metal:0,crystal:0,fuel:0};check(cargo(p.reserves)&&cargo(p.resources)&&cargo(p.depot));for(const k of ['orbital','bunker'])if(p.buildings&&!Object.hasOwn(p.buildings,k))p.buildings[k]=0;check(p.buildings&&Object.keys(BUILDINGS).every(k=>integer(p.buildings[k],30)));if(p.ships)for(const k of Object.keys(SHIPS))if(!['probe','transport','colony'].includes(k)&&!Object.hasOwn(p.ships,k))p.ships[k]=0;check(p.ships&&Object.keys(SHIPS).every(k=>integer(p.ships[k],Number.MAX_SAFE_INTEGER)));check(job(p.build,BUILDINGS)&&(!p.build||p.build.level===p.buildings[p.build.key]+1));check(job(p.shipjob,SHIPS)&&(!p.shipjob||integer(p.shipjob.count,Number.MAX_SAFE_INTEGER)&&p.shipjob.count>0));}
  const shipIds=[];
  for(const p of s.planets){
-  p.shipqueue??=[];check(Array.isArray(p.shipqueue)&&p.shipqueue.length+(p.shipjob?1:0)<=SHIP_QUEUE_LIMIT&&(!p.shipqueue.length||!!p.shipjob));
+  p.shipqueue??=[];check(Array.isArray(p.shipqueue)&&p.shipqueue.length+(p.shipjob?1:0)<=SHIP_QUEUE_LEGACY_LIMIT&&(!p.shipqueue.length||!!p.shipjob));
   for(const j of [p.shipjob,...p.shipqueue].filter(Boolean)){
    check(job(j,SHIPS)&&integer(j.count,Number.MAX_SAFE_INTEGER)&&j.count>0);
    const waiting=j!==p.shipjob;
