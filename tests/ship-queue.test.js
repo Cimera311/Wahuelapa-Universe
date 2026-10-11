@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {newGame,act,advance,shipInfo,shipOrders,defenseSlots,SHIP_QUEUE_LIMIT} from '../src/engine.js';
+import {newGame,act,advance,shipInfo,shipOrders,defenseSlots,SHIP_QUEUE_LIMIT,SHIP_QUEUE_LEGACY_LIMIT,shipQueueCapacity,shipQueueFullReason} from '../src/engine.js';
 import {validateSave,parseSave} from '../src/storage.js';
 import {SHIPS,TECHS,vector} from '../src/config.js';
 import {processWorld,projectPvP} from '../src/server-world.js';
@@ -49,7 +49,7 @@ test('Queue validation rejects duplicate identities, partial waiting work and fo
  const s=add(add(ready()),'transport');for(const mutate of [p=>p.shipqueue[0].id=p.shipjob.id,p=>p.shipqueue[0].workRemaining--,p=>p.shipqueue[0].payment.resources.metal++,p=>p.shipjob=null,p=>p.shipqueue={}]){const bad=structuredClone(s);mutate(bad.planets[0]);assert.throws(()=>validateSave(bad));}
 });
 test('Queue and payment limits reject atomically instead of generating unreadable saves',()=>{
- let s=ready();for(let i=0;i<SHIP_QUEUE_LIMIT;i++)s=add(s,'probe');assert.equal(shipOrders(s.planets[0]).length,SHIP_QUEUE_LIMIT);validateSave(s);const before=structuredClone(s);assert.throws(()=>add(s,'probe'),/voll/);assert.deepEqual(s,before);assert.throws(()=>add(ready(),'falke',Number.MAX_SAFE_INTEGER),/groß/);
+ let s=ready();s.planets[0].buildings.shipyard=30;for(let i=0;i<SHIP_QUEUE_LIMIT;i++)s=add(s,'probe');assert.equal(shipOrders(s.planets[0]).length,SHIP_QUEUE_LIMIT);validateSave(s);const before=structuredClone(s);assert.throws(()=>add(s,'probe'),/Auftragsplätze belegt/);assert.deepEqual(s,before);assert.throws(()=>add(ready(),'falke',Number.MAX_SAFE_INTEGER),/groß/);
 });
 test('Authoritative and generated dashboard commands support queues, cancel identities and own planets',async()=>{
  const code=readFileSync('supabase/dashboard/game-command.ts','utf8').replace(/^import .*?;$/gm,'');const bundled=await import('data:text/javascript;base64,'+Buffer.from('const Deno={serve(){}};\n'+code+'\nexport {processWorld,projectPvP};').toString('base64'));
@@ -57,6 +57,19 @@ test('Authoritative and generated dashboard commands support queues, cancel iden
   let w={now:T,settings:{enabled:false},admins:[],saves:[{user_id:uid,revision:1,state:ready()}],starts:[],planets:[],missions:[],attacks:[],surveys:[]};
   for(const key of ['falke','transport'])w=engine.processWorld(w,uid,{type:'command',action:{type:'ship',key,count:1}});
   assert.equal(engine.projectPvP(w,uid).features.shipQueue,true);const p=w.saves[0].state.planets[0];assert.equal(p.shipqueue.length,1);assert.throws(()=>engine.processWorld(w,uid,{type:'command',action:{...cancel(p.shipqueue[0]),planet:'g-orion-p1'}}),/Planet nicht gefunden/);
-  w=engine.processWorld(w,uid,{type:'command',action:cancel(p.shipjob)});assert.equal(w.saves[0].state.planets[0].shipjob.key,'transport');
+  w=engine.processWorld(w,uid,{type:'command',action:cancel(p.shipjob)});assert.equal(w.saves[0].state.planets[0].shipjob.key,'transport');w.saves[0].state.planets[0].buildings.shipyard=1;assert.throws(()=>engine.processWorld(w,uid,{type:'command',action:{type:'ship',key:'probe',count:1}}),/Werftstufe 2/);
  }
+});
+
+test('Queue slots follow the shipyard level, include the active job and stop growing at 20',()=>{
+ for(const level of [0,1,2,5,10,20,30]){let s=ready();s.planets[0].buildings.shipyard=level;const slots=Math.min(level,20);assert.equal(shipQueueCapacity(s.planets[0]),slots);for(let i=0;i<slots;i++)s=add(s,'probe');if(level)assert.throws(()=>add(s,'probe'),level<20?new RegExp('Werftstufe '+(level+1)):/Maximale Warteschlangengröße/);else assert.throws(()=>add(s,'probe'),/Schiffswerft Stufe 1/);}
+});
+test('A completed yard upgrade unlocks another slot immediately, including at its exact event time',()=>{
+ let s=ready();s.planets[0].buildings.shipyard=1;s=add(s,'probe');assert.throws(()=>add(s,'probe'),/Werftstufe 2/);s.planets[0].build={key:'shipyard',level:2,start:T,end:T+1000};s=add(s,'probe',1,T+1000);assert.equal(shipOrders(s.planets[0]).length,2);assert.equal(shipQueueCapacity(s.planets[0]),2);
+});
+test('Legacy paid queues above the new capacity keep all jobs, cancellations and offline completion',()=>{
+ let s=add(ready(),'probe'),p=s.planets[0],original=p.shipjob;p.shipqueue=[];
+ for(let i=1;i<SHIP_QUEUE_LEGACY_LIMIT;i++){const j=structuredClone(original);j.id=++s.seq;p.shipqueue.push(j);for(const k of ['metal','crystal','fuel'])p.resources[k]-=j.payment.resources[k];}
+ advance(s,s.time);s=parseSave(JSON.stringify(s));assert.equal(shipOrders(s.planets[0]).length,50);assert.match(shipQueueFullReason(s.planets[0]),/Werftstufe 7/);const paid=s.planets[0].shipqueue[0],metal=s.planets[0].resources.metal;s=act(s,cancel(paid),s.time);assert.equal(shipOrders(s.planets[0]).length,49);assert.equal(s.planets[0].resources.metal,metal+paid.payment.resources.metal);assert.throws(()=>add(s,'probe'),/Auftragsplätze belegt/);
+ const end=s.planets[0].shipqueue.at(-1).end;advance(s,end);assert.equal(s.planets[0].ships.probe,49);assert.equal(shipOrders(s.planets[0]).length,0);s=add(s,'probe');assert.equal(shipOrders(s.planets[0]).length,1);
 });

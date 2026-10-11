@@ -41,7 +41,11 @@ function forecastShipJobs(s){for(const p of s.planets){const j=p.shipjob;if(!j)c
  j.end=s.time+Math.max(1,Math.ceil(j.workRemaining/(ratio||1)));
  let work=j.workRemaining;for(const queued of p.shipqueue||[]){work+=queued.workTotal;queued.paused=ratio===0;queued.end=s.time+Math.max(1,Math.ceil(work/(ratio||1)));}
 }}
-export const SHIP_QUEUE_LIMIT=50;
+export const SHIP_QUEUE_LIMIT=20;
+// Saves from 2026-10-11.04 may contain 50 already-paid orders; keep every one.
+export const SHIP_QUEUE_LEGACY_LIMIT=50;
+export function shipQueueCapacity(p){return Math.min(SHIP_QUEUE_LIMIT,Math.max(0,p.buildings.shipyard));}
+export function shipQueueFullReason(p){return shipOrders(p).length>=shipQueueCapacity(p)?(shipQueueCapacity(p)<SHIP_QUEUE_LIMIT?`Alle Auftragsplätze belegt. Mehr Plätze ab Werftstufe ${shipQueueCapacity(p)+1}.`:`Alle ${SHIP_QUEUE_LIMIT} Auftragsplätze belegt. Maximale Warteschlangengröße erreicht.`):'';}
 export function shipOrders(p){return [p.shipjob,...p.shipqueue||[]].filter(Boolean);}
 function nextShipOrder(p){p.shipjob=(p.shipqueue||[]).shift()||null;}
 function produce(s,ms){for(const p of s.planets){settle(p);const z=stats(s,p);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);if(p.shipjob)p.shipjob.workRemaining=Math.max(0,p.shipjob.workRemaining-ms*z.ratio);}}
@@ -138,7 +142,7 @@ export function act(s,action,now=Date.now()){
  const n=structuredClone(s);advance(n,now);const p=getPlanet(n,action.planet||n.active);
  if(action.type==='build'){const info=buildInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(p.build)throw Error('Auf diesem Planeten läuft bereits ein Bauauftrag.');pay(p,info.cost);p.build={key:action.key,level:p.buildings[action.key]+1,start:n.time,end:n.time+info.ms};}
  else if(action.type==='research'){const info=researchInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(n.research)throw Error('Es läuft bereits eine imperiumsweite Forschung.');pay(p,info.cost);n.research={key:action.key,level:n.tech[action.key]+1,start:n.time,end:n.time+info.ms,planet:p.id};}
- else if(action.type==='ship'){const count=action.count;if(!Number.isSafeInteger(count)||count<1)throw Error('Wähle eine positive ganze Anzahl Schiffe.');const info=shipInfo(n,p,action.key,count);if(info.reason)throw Error(info.reason);if(shipOrders(p).length>=SHIP_QUEUE_LIMIT)throw Error('Die Bauwarteschlange ist voll (50 Aufträge).');if(!Number.isSafeInteger(info.ms)||n.time+info.ms>8.64e15||RES.some(k=>!Number.isSafeInteger(info.cost[k])||info.cost[k]>1e12))throw Error('Dieser Bauauftrag ist zu groß.');if(p.defenseSalvage)for(const k of RES)p.defenseSalvage[k]-=info.salvage[k];pay(p,info.cost);const job={id:++n.seq,key:action.key,count,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{resources:{...info.cost},salvage:{...info.salvage}}};if(p.shipjob){p.shipqueue??=[];p.shipqueue.push(job);}else p.shipjob=job;}
+ else if(action.type==='ship'){const count=action.count;if(!Number.isSafeInteger(count)||count<1)throw Error('Wähle eine positive ganze Anzahl Schiffe.');const info=shipInfo(n,p,action.key,count);if(info.reason)throw Error(info.reason);const full=shipQueueFullReason(p);if(full)throw Error(full);if(!Number.isSafeInteger(info.ms)||n.time+info.ms>8.64e15||RES.some(k=>!Number.isSafeInteger(info.cost[k])||info.cost[k]>1e12))throw Error('Dieser Bauauftrag ist zu groß.');if(p.defenseSalvage)for(const k of RES)p.defenseSalvage[k]-=info.salvage[k];pay(p,info.cost);const job={id:++n.seq,key:action.key,count,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{resources:{...info.cost},salvage:{...info.salvage}}};if(p.shipjob){p.shipqueue??=[];p.shipqueue.push(job);}else p.shipjob=job;}
  else if(action.type==='cancel-ship'){
   const o=action.order,j=o?.id!==undefined?shipOrders(p).find(j=>j.id===o.id):p.shipjob;
   if(!j)throw Error('Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen. Der Bauauftrag hat sich geändert. Bitte die Ansicht aktualisieren.');
