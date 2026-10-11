@@ -1,4 +1,10 @@
 export const GAME_NEWS=[
+ {date:'11.10.2026',title:'Kürzere Wege durch deine Flotte',status:'Navigation 0.5.4',items:[
+ 'Mobil führen drei Symbolflächen zu deinen Flottenbereichen: Hangar mit Übersicht und Werft, PvP mit Angriff, Verteidigung und Partnern sowie Handel mit Aufträgen, Routen und Berichten.',
+ 'Die Unterpunkte erscheinen direkt unter der gewählten Gruppe. Beim Wechsel merkt sich jede Gruppe ihre zuletzt geöffnete Ansicht während der Sitzung.',
+ 'Am Desktop ersetzt eine kompakte Menüleiste die großen Kacheln. Flotten öffnen zunächst die Gesamtübersicht; Werftwerte erscheinen nur noch in der Werft.',
+ 'Angriffswarnungen bleiben in allen Bereichen sichtbar und führen direkt zur Verteidigung. Kampfberichte sind weiterhin aus den Einsatzansichten erreichbar.'
+ ]},
  {date:'11.10.2026',title:'Deine gesamte Flotte im Überblick',status:'Flottenübersicht 0.5.3',items:[
  'Die Gesamtübersicht lässt sich zwischen Nach Schiff und Nach Planet umschalten. So siehst du die Orbitbestände aller eigenen Planeten und wo deine Schiffe liegen.',
  'Kategorien für Transport, Kampf, Sonden & Kolonie und Verteidigung helfen beim Filtern. Am Desktop stehen die Karten nebeneinander, mobil lassen sich ihre Details aufklappen.',
