@@ -19,7 +19,7 @@ var BUILDINGS = {
   tidal: { name: "Gezeitenkraftwerk", icon: "\u2248", cost: [700, 450, 80], time: 30, description: "Liefert 180 Energie je Stufe auf Ozeanwelten.", requires: { tech: "energy", level: 3 }, ocean: true }
 };
 var TECHS = {
-  scout: { name: "Sensortechnik", description: "Stufe 1: Sonden. Weitere Stufen: k\xFCrzere Sondenfl\xFCge und fr\xFChere PvP-Warnungen (90 % bis 10 % der Flugzeit).", cost: [100, 100, 30], time: 10, lab: 1, max: 5 },
+  scout: { name: "Sensortechnik", description: "Stufe 1: Sonden. Weitere Stufen: k\xFCrzere Sondenfl\xFCge und fr\xFChere PvP-Warnungen. Je Stufe sinkt die Zeit bis zur Erkennung um weitere 10 % (abnehmender absoluter Effekt).", cost: [100, 100, 30], time: 10, lab: 1, max: 100 },
   logistics: { name: "Transporttechnik", description: "Frachter freischalten; je Stufe +15 % Laderaum.", cost: [150, 120, 40], time: 12, lab: 1, max: 5, requires: { tech: "scout", level: 1 } },
   colonization: { name: "Kolonisierung", description: "Stufen 1\u20133: die drei Tutorial-Kolonien. Stufen 4\u20136: Pl\xE4tze f\xFCr die k\xFCnftige gemeinsame Galaxie.", cost: [350, 250, 100], time: 16, lab: 2, max: 6, requires: { tech: "scout", level: 1 } },
   drive: { name: "Verbrennungstriebwerke", description: "F\xFCr Sonden, Kolonieschiffe, kleine Transporter, Kurier und Falke: je Stufe +5 % Antriebsleistung; separate Verbrauchsreduktion von 12 % je Stufe. Stufe 3 erm\xF6glicht Staustrahlforschung.", cost: [200, 150, 80], time: 14, lab: 2, max: 10, requires: { tech: "logistics", level: 1 } },
@@ -152,7 +152,7 @@ function attackFlight(s, from, to, fleet) {
   return { distance: dist, ms: ms2, fuel, slowest };
 }
 function warningFraction(sensorLevel) {
-  return Math.max(0.1, Math.min(0.9, 0.9 - 0.16 * sensorLevel));
+  return Math.pow(0.9, Math.max(0, sensorLevel) + 1);
 }
 function takeHulls(p, fleet) {
   const out = {};
