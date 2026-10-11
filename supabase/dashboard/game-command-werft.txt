@@ -22,12 +22,12 @@ var TECHS = {
   scout: { name: "Sensortechnik", description: "Stufe 1: Sonden. Weitere Stufen: k\xFCrzere Sondenfl\xFCge und fr\xFChere PvP-Warnungen (90 % bis 10 % der Flugzeit).", cost: [100, 100, 30], time: 10, lab: 1, max: 5 },
   logistics: { name: "Transporttechnik", description: "Frachter freischalten; je Stufe +15 % Laderaum.", cost: [150, 120, 40], time: 12, lab: 1, max: 5, requires: { tech: "scout", level: 1 } },
   colonization: { name: "Kolonisierung", description: "Stufen 1\u20133: die drei Tutorial-Kolonien. Stufen 4\u20136: Pl\xE4tze f\xFCr die k\xFCnftige gemeinsame Galaxie.", cost: [350, 250, 100], time: 16, lab: 2, max: 6, requires: { tech: "scout", level: 1 } },
-  drive: { name: "Verbrennungstriebwerke", description: "F\xFCr Sonden, Kolonieschiffe, kleine Transporter, Kurier und Falke: je Stufe +12 % Antriebsleistung; k\xFCrzere Fl\xFCge und weniger Verbrauch. Stufe 3 erm\xF6glicht Staustrahlforschung.", cost: [200, 150, 80], time: 14, lab: 2, max: 5, requires: { tech: "logistics", level: 1 } },
-  ramjet: { name: "Staustrahltriebwerke", description: "Stufe 1: W\xE4chter; Stufe 2: Karawane. Je Stufe +12 % Leistung und weniger Verbrauch nur f\xFCr diese Schiffe. Stufe 1 bereitet Fl\xFCge in die k\xFCnftige gemeinsame Galaxie vor; Stufe 3 erm\xF6glicht Impulstriebwerke.", cost: [600, 450, 200], time: 24, lab: 3, max: 5, requires: { tech: "drive", level: 3 } },
-  impulse: { name: "Impulstriebwerke", description: "Stufe 1: Donner; Stufe 2: Atlas. Je Stufe +12 % Leistung und weniger Verbrauch nur f\xFCr diese Schiffe. Stufe 3 erm\xF6glicht Hyperraumtriebwerke.", cost: [1800, 1400, 650], time: 40, lab: 4, max: 5, requires: { tech: "ramjet", level: 3 } },
-  hyperspace: { name: "Hyperraumtriebwerke", description: "Stufe 1: Titan; Stufe 2: Arche. Je Stufe +12 % Leistung und weniger Verbrauch nur f\xFCr diese Schiffe.", cost: [5500, 4200, 2e3], time: 65, lab: 5, max: 5, requires: { tech: "impulse", level: 3 } },
+  drive: { name: "Verbrennungstriebwerke", description: "F\xFCr Sonden, Kolonieschiffe, kleine Transporter, Kurier und Falke: je Stufe +5 % Antriebsleistung; separate Verbrauchsreduktion von 12 % je Stufe. Stufe 3 erm\xF6glicht Staustrahlforschung.", cost: [200, 150, 80], time: 14, lab: 2, max: 10, requires: { tech: "logistics", level: 1 } },
+  ramjet: { name: "Staustrahltriebwerke", description: "Stufe 1: W\xE4chter; Stufe 2: Karawane. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur f\xFCr diese Schiffe. Stufe 1 bereitet Fl\xFCge in die k\xFCnftige gemeinsame Galaxie vor; Stufe 3 erm\xF6glicht Impulstriebwerke.", cost: [600, 450, 200], time: 24, lab: 3, max: 10, requires: { tech: "drive", level: 3 } },
+  impulse: { name: "Impulstriebwerke", description: "Stufe 1: Donner; Stufe 2: Atlas. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur f\xFCr diese Schiffe. Stufe 3 erm\xF6glicht Hyperraumtriebwerke.", cost: [1800, 1400, 650], time: 40, lab: 4, max: 10, requires: { tech: "ramjet", level: 3 } },
+  hyperspace: { name: "Hyperraumtriebwerke", description: "Stufe 1: Titan; Stufe 2: Arche. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur f\xFCr diese Schiffe.", cost: [5500, 4200, 2e3], time: 65, lab: 5, max: 10, requires: { tech: "impulse", level: 3 } },
   engineering: { name: "Bautechnik", description: "Je Stufe 5 % k\xFCrzere neue Bauauftr\xE4ge; Arbeitsroboter.", cost: [250, 200, 40], time: 16, lab: 2, max: 5 },
-  military: { name: "Milit\xE4rtechnik", description: "Schaltet Falke, W\xE4chter, Donner und Titan frei. Schaltet die vier Kriegsschiffklassen und orbitale Verteidigung frei.", cost: [300, 220, 80], time: 18, lab: 2, max: 4, requires: { tech: "engineering", level: 1 } },
+  military: { name: "Milit\xE4rtechnik", description: "Stufen 1\u20134 schalten Kriegsschiffe und Verteidigung frei. Angriffspl\xE4tze: Stufe 1 = 1, Stufe 5 = 2, Stufe 10 = 4 gleichzeitig. Ab Stufe 6 steigen Kosten je Stufe um Faktor 2,4.", cost: [300, 220, 80], time: 18, lab: 2, max: 10, requires: { tech: "engineering", level: 1 } },
   weapons: { asset: "./assets/pvp-resource-v1/research/weapons.webp", name: "Waffentechnik", description: "Je Stufe +8 % Angriffsschaden.", cost: [400, 300, 100], time: 60, lab: 3, max: 5, requires: { tech: "military", level: 1 } },
   shields: { asset: "./assets/pvp-resource-v1/research/shields.webp", name: "Schildtechnik", description: "Je Stufe +8 % Schildst\xE4rke.", cost: [350, 450, 100], time: 60, lab: 3, max: 5, requires: { tech: "military", level: 1 } },
   armor: { asset: "./assets/pvp-resource-v1/research/armor.webp", name: "Panzerung", description: "Je Stufe +8 % H\xFCllenpunkte.", cost: [500, 250, 100], time: 60, lab: 3, max: 5, requires: { tech: "military", level: 1 } },
@@ -65,7 +65,7 @@ function vector(values) {
   return Object.fromEntries(RES.map((k, i) => [k, values[i]]));
 }
 function costAt(item, level) {
-  return vector(item.cost.map((v) => Math.ceil(v * Math.pow(1.6, level))));
+  return vector(item.cost.map((v) => Math.ceil(v * Math.pow(1.6, level) * Math.pow(item === TECHS.military ? 1.5 : 1, Math.max(0, level - 4)))));
 }
 var ROUTE_ECONOMY = { time: 1, fuel: 0.75 };
 function shipFlightEngine(s, key, remote = false) {
@@ -75,9 +75,15 @@ function canFlyInterstellar(s, key) {
   const engine = shipFlightEngine(s, key, true);
   return (key === "falke" ? (s.tech.assaultDrive || 0) >= 1 : !!SHIPS[key]?.engine) && (s.tech[engine] || 0) >= 1;
 }
+function attackSlots(level) {
+  return level >= 10 ? 4 : level >= 5 ? 2 : level >= 1 ? 1 : 0;
+}
 
 // src/flight.js
-var GALAXY_FLIGHT_RULE_VERSION = 2;
+var GALAXY_FLIGHT_RULE_VERSION = 3;
+var ENGINE_SPEED_BONUS = 0.05;
+var ENGINE_FUEL_BONUS = 0.12;
+var FLIGHT_BASE_SCALE = 1.25 / 1.6;
 function sharedDistance(from, to, start) {
   if (from.system && from.system === to.system) return Math.max(1, Math.abs((from.slot || from.distance || 0) - (to.slot || to.distance || 0)) * 0.15);
   const a = from.system ? from : { ...start, slot: 0 }, b = to.system ? to : { ...start, slot: 0 };
@@ -88,8 +94,8 @@ function sharedFlight(s, from, to, count = 1, ship = "transport", start = s.gala
   const def = SHIPS[ship];
   if (!def || def.speed <= 0) throw Error("Unbekanntes oder unbewegliches Schiff.");
   const distance = sharedDistance(from, to, start), remote = (from.system || "tutorial") !== (to.system || "tutorial");
-  const engine = shipFlightEngine(s, ship, remote), factor = 1 + (s.tech[engine] || 0) * 0.12;
-  return { distance, ms: Math.max(6e4, Math.ceil((120 + distance * 45) * 1e3 / (def.speed * factor))), fuel: Math.ceil(def.fuel * distance * count / factor) };
+  const engine = shipFlightEngine(s, ship, remote), factor = 1 + (s.tech[engine] || 0) * ENGINE_SPEED_BONUS, fuelFactor = 1 + (s.tech[engine] || 0) * ENGINE_FUEL_BONUS;
+  return { distance, ms: Math.max(6e4, Math.ceil((120 + distance * 45) * FLIGHT_BASE_SCALE * 1e3 / (def.speed * factor))), fuel: Math.ceil(def.fuel * distance * count / fuelFactor) };
 }
 
 // src/combat.js
@@ -394,7 +400,7 @@ function researchInfo(s, p, key) {
   const t = TECHS[key];
   if (!t) throw Error("Unbekannte Forschung.");
   const l = s.tech[key];
-  return { cost: costAt(t, l), ms: Math.ceil(t.time * Math.pow(1.5, l) / Math.max(1, 1 + (p.buildings.lab - 1) * 0.15) * 1e3), reason: (key === "colonization" && l >= 3 && l < t.max ? need(s, p, { tech: ["ramjet", "impulse", "hyperspace"][l - 3], level: 1 }) : "") || (p.buildings.lab < t.lab ? `Ben\xF6tigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.` : need(s, p, t.requires) || (l >= t.max ? "Maximale Forschungsstufe erreicht." : "")) };
+  return { cost: costAt(t, l), ms: Math.ceil(t.time * Math.pow(1.5, l) * Math.pow(key === "military" ? 1.5 : 1, Math.max(0, l - 4)) / Math.max(1, 1 + (p.buildings.lab - 1) * 0.15) * 1e3), reason: (key === "colonization" && l >= 3 && l < t.max ? need(s, p, { tech: ["ramjet", "impulse", "hyperspace"][l - 3], level: 1 }) : "") || (p.buildings.lab < t.lab ? `Ben\xF6tigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.` : need(s, p, t.requires) || (l >= t.max ? "Maximale Forschungsstufe erreicht." : "")) };
 }
 function pay(p, c) {
   settle(p);
@@ -432,7 +438,7 @@ function flightInfo(s, from, to, n = 1, probe = false, ship = "transport") {
   const anchor = s.galaxy || { x: 500, y: 960 };
   const a = from.system ? from : anchor, b = to.system ? to : anchor;
   const dist = remote ? Math.max(1, Math.hypot(a.x - b.x, a.y - b.y) / 40) : Math.max(1, Math.abs((from.distance || 0) - (to.distance || 0)));
-  return { ms: Math.ceil((10 + dist * 8) * 1e3 / ((1 + (s.tech[engine] || 0) * 0.12 + (probe ? s.tech.scout * 0.1 : 0)) * def.speed)), fuel: Math.ceil(def.fuel * 2 * dist * n / (1 + (s.tech[engine] || 0) * 0.12)) };
+  return { ms: Math.ceil((10 + dist * 8) * FLIGHT_BASE_SCALE * 1e3 / ((1 + (s.tech[engine] || 0) * ENGINE_SPEED_BONUS + (probe ? s.tech.scout * 0.1 : 0)) * def.speed)), fuel: Math.ceil(def.fuel * 2 * dist * n / (1 + (s.tech[engine] || 0) * 0.12)) };
 }
 function legInfo(s, from, to, n = 1, ship = "transport") {
   const f = flightInfo(s, from, to, n, ship === "probe", ship);
@@ -448,6 +454,23 @@ function fleetManifest(m) {
 function checkedFleet(fleet) {
   if (!fleet || typeof fleet !== "object" || Array.isArray(fleet) || !Object.keys(fleet).length || Object.entries(fleet).some(([k, n]) => !isFreighter(k) || !Number.isSafeInteger(n) || n < 1)) throw Error("W\xE4hle verf\xFCgbare Frachter in positiven ganzen Zahlen.");
   return { ...fleet };
+}
+function missionFleet(fleet, military = false) {
+  if (!fleet || typeof fleet !== "object" || Array.isArray(fleet) || !Object.keys(fleet).length || Object.entries(fleet).some(([k, n]) => !(isFreighter(k) || military && ["military", "civil"].includes(SHIPS[k]?.category)) || !Number.isSafeInteger(n) || n < 1)) throw Error("W\xE4hle verf\xFCgbare Schiffe in positiven ganzen Zahlen.");
+  return { ...fleet };
+}
+function fleetLegInfo(s, from, to, fleet) {
+  let ms2 = 0, fuel = 0, slowest = "";
+  for (const [k, n] of Object.entries(missionFleet(fleet, true))) {
+    if ((from.system || "tutorial") !== (to.system || "tutorial") && !canFlyInterstellar(s, k)) throw Error("F\xFCr " + SHIPS[k].name + " fehlt der Galaxieantrieb.");
+    const f = legInfo(s, from, to, n, k);
+    if (f.ms > ms2) {
+      ms2 = f.ms;
+      slowest = k;
+    }
+    fuel += f.fuel;
+  }
+  return { ms: ms2, fuel, slowest, capacity: fleetCapacity(s, fleet) };
 }
 function fleetCapacity(s, fleet) {
   return Object.entries(fleet).reduce((a, [k, n]) => a + cargoCapacity(s, n, k), 0);
@@ -529,39 +552,68 @@ function parkFleet(s, m, id, title) {
   s.missions = s.missions.filter((x) => x.id !== m.id);
   report(s, title, `${Object.entries(fleetManifest(m)).map(([k, n]) => n + " \xD7 " + SHIPS[k].name).join(", ")} im Orbit von ${p.name}. Ladung wurde eingelagert.`);
 }
+function applyRouteEdit(s, m) {
+  if (!m.pending) return;
+  const next = m.pending, p = getPlanet(s, m.home), old = fleetManifest(m);
+  if (Object.entries(next.fleet).some(([k, n]) => p.ships[k] + (old[k] || 0) < n)) return false;
+  for (const [k, n] of Object.entries(old)) p.ships[k] += n;
+  putHulls(p, m.hulls);
+  for (const [k, n] of Object.entries(next.fleet)) p.ships[k] -= n;
+  setFleet(m, next.fleet);
+  m.hulls = takeHulls(p, next.fleet);
+  m.name = next.name;
+  m.stops = structuredClone(next.stops);
+  m.repeat = next.repeat;
+  if (m.paused) {
+    m.index = 0;
+    m.to = m.home;
+    m.from = m.stops.at(-1).planet;
+  }
+  delete m.pending;
+  report(s, "Routen\xE4nderung aktiviert", `${m.name}: Flotte und Stopps am Startplaneten aktualisiert.`);
+  return true;
+}
+function pauseRoute(s, m, reason = "Manuell pausiert") {
+  m.paused = true;
+  m.pauseRequested = false;
+  m.pauseReason = reason;
+  report(s, "Handelsroute pausiert", `${m.name}: ${reason}. Schiffe bleiben an die Route gebunden.`);
+}
+function resumeRoute(s, m) {
+  const p = getPlanet(s, m.home), f = routeInfo(s, m.stops, fleetManifest(m));
+  if (p.resources.fuel - (p.reserves?.fuel || 0) < f.fuel) throw Error("Treibstoff reicht nicht f\xFCr die Runde einschlie\xDFlich Reserve.");
+  pay(p, vector([0, 0, f.fuel]));
+  m.paused = false;
+  m.pauseRequested = false;
+  delete m.pauseReason;
+  stopCargo(s, m, m.stops[0]);
+  leaveRoute(s, m, 1);
+}
 function routeArrival(s, m) {
   if (m.index === 0) {
     deliver(getPlanet(s, m.home), m.cargo);
     m.cargo = vector([0, 0, 0]);
     m.rounds++;
     report(s, "Handelsrunde abgeschlossen", `${m.name}: Runde ${m.rounds} beendet.`);
-    if (m.pending && !m.stopping) {
-      const next = m.pending, p2 = getPlanet(s, m.home), old = fleetManifest(m);
-      if (Object.entries(next.fleet).every(([k, n]) => p2.ships[k] + (old[k] || 0) >= n)) {
-        for (const [k, n] of Object.entries(old)) p2.ships[k] += n;
-        putHulls(p2, m.hulls);
-        for (const [k, n] of Object.entries(next.fleet)) p2.ships[k] -= n;
-        setFleet(m, next.fleet);
-        m.hulls = takeHulls(p2, next.fleet);
-        m.name = next.name;
-        m.stops = structuredClone(next.stops);
-        m.repeat = next.repeat;
-        delete m.pending;
-        report(s, "Routen\xE4nderung aktiviert", `${m.name}: Flotte und Stopps am Startplaneten aktualisiert.`);
-      } else report(s, "Routen\xE4nderung wartet", `${m.name}: Am Startplaneten fehlen Schiffe; bisherige Route bleibt aktiv.`);
+    if (m.pending && !m.stopping && applyRouteEdit(s, m) === false) report(s, "Routen\xE4nderung wartet", `${m.name}: Am Startplaneten fehlen Schiffe; bisherige Route bleibt aktiv.`);
+    if (m.stopping) {
+      parkFleet(s, m, m.home, "Handelsroute beendet");
+      return;
     }
-    if (!m.repeat || m.stopping) {
+    if (m.pauseRequested) {
+      pauseRoute(s, m);
+      return;
+    }
+    if (!m.repeat) {
       parkFleet(s, m, m.home, "Handelsroute beendet");
       return;
     }
     const p = getPlanet(s, m.home), f = routeInfo(s, m.stops, fleetManifest(m));
     if (p.resources.fuel - (p.reserves?.fuel || 0) < f.fuel) {
-      parkFleet(s, m, m.home, "Handelsroute pausiert: Treibstoff fehlt");
+      pauseRoute(s, m, "Treibstoff fehlt");
       return;
     }
-    pay(p, vector([0, 0, f.fuel]));
-    stopCargo(s, m, m.stops[0]);
-    leaveRoute(s, m, 1);
+    resumeRoute(s, m);
   } else {
     stopCargo(s, m, m.stops[m.index]);
     report(s, "Handelsstopp", `${m.name}: ${getPlanet(s, m.to).name} \xB7 Runde ${m.rounds + 1}.`);
@@ -580,7 +632,7 @@ function advance(s, now) {
       if (p.shipjob && !p.shipjob.paused) times.push(p.shipjob.workRemaining === 0 ? s.time : p.shipjob.end);
     }
     if (s.research) times.push(s.research.end);
-    for (const m of s.missions) times.push(m.due);
+    for (const m of s.missions) if (!m.paused) times.push(m.due);
     const next = Math.min(...times);
     if (next > now || !Number.isFinite(next)) break;
     if (++guard > 1e5) {
@@ -612,19 +664,19 @@ function advance(s, now) {
         report(s, "Schiffbau abgeschlossen", `${p.name}: ${j.count} \xD7 ${SHIPS[j.key].name}.`);
       }
     }
-    for (const m of [...s.missions].sort((a, b) => a.id - b.id)) if (m.due <= s.time) {
+    for (const m of [...s.missions].sort((a, b) => a.id - b.id)) if (!m.paused && m.due <= s.time) {
       if (m.type === "route") {
         routeArrival(s, m);
       } else if (m.type === "station") {
         parkFleet(s, m, m.to, "Flotte stationiert");
       } else if (m.type === "collect" && m.phase === "outbound") {
-        loadCargo(s, getPlanet(s, m.to), m.cargo, m.order, m.count, m.ship);
+        loadCargo(s, getPlanet(s, m.to), m.cargo, m.order, m.count, m.ship, m.fleet);
         m.phase = "return";
         m.due = s.time + m.duration;
         report(s, "Material abgeholt", `${getPlanet(s, m.to).name}: Ladung auf dem R\xFCckweg.`);
       } else if (m.phase === "return") {
         if (m.type === "collect") deliver(getPlanet(s, m.from), m.cargo);
-        getPlanet(s, m.from).ships[m.ship] += m.count;
+        for (const [k, n] of Object.entries(fleetManifest(m))) getPlanet(s, m.from).ships[k] += n;
         putHulls(getPlanet(s, m.from), m.hulls);
         getPlanet(s, m.from).shieldUntil = Math.max(getPlanet(s, m.from).shieldUntil || 0, m.shieldUntil || 0);
         s.missions = s.missions.filter((x) => x.id !== m.id);
@@ -656,6 +708,7 @@ function advance(s, now) {
   }
   produce(s, now - s.time);
   s.time = now;
+  for (const m of s.missions) if (m.paused) m.due = now;
   forecastShipJobs(s);
   return s;
 }
@@ -748,17 +801,37 @@ function act(s, action, now = Date.now()) {
       const fleet = checkedFleet(action.fleet), stops = checkedStops(n, action.stops, m.home);
       routeInfo(n, stops, fleet);
       m.pending = { name: String(action.name || "Handelsroute").trim().slice(0, 40) || "Handelsroute", fleet, stops, repeat: !!action.repeat };
-      report(n, "Routen\xE4nderung vorgemerkt", `${m.name}: Aktivierung bei R\xFCckkehr zum Startplaneten.`);
+      if (m.paused) {
+        if (applyRouteEdit(n, m) === false) throw Error("F\xFCr die \xC4nderung fehlen Schiffe am Startplaneten.");
+      } else report(n, "Routen\xE4nderung vorgemerkt", `${m.name}: Aktivierung bei R\xFCckkehr zum Startplaneten.`);
+    }
+  } else if (["pause-route", "resume-route", "cancel-route-pause"].includes(action.type)) {
+    const m = n.missions.find((m2) => m2.id === action.id && m2.type === "route");
+    if (!m || m.stopping) throw Error("Route nicht verf\xFCgbar.");
+    if (action.type === "pause-route") {
+      if (m.paused) throw Error("Route ist bereits pausiert.");
+      m.pauseRequested = true;
+      report(n, "Routenpause vorgemerkt", `${m.name}: Pause nach R\xFCckkehr zum Startplaneten.`);
+    } else if (action.type === "cancel-route-pause") {
+      if (m.paused) throw Error("Route ist bereits pausiert.");
+      m.pauseRequested = false;
+    } else {
+      if (!m.paused) throw Error("Route ist nicht pausiert.");
+      resumeRoute(n, m);
+      report(n, "Route fortgesetzt", m.name);
     }
   } else if (action.type === "stop-route") {
     const m = n.missions.find((m2) => m2.id === action.id && m2.type === "route");
     if (!m) throw Error("Route nicht gefunden.");
-    m.stopping = true;
-    report(n, "Route endet nach dieser Runde", m.name);
+    if (m.paused) parkFleet(n, m, m.home, "Handelsroute beendet");
+    else {
+      m.stopping = true;
+      report(n, "Route endet nach dieser Runde", m.name);
+    }
   } else if (["station", "collect", "route", "deliver"].includes(action.type)) {
     if (n.missions.length >= 100) throw Error("Zu viele Flotten unterwegs.");
-    if (action.type !== "route" && action.type !== "station" && !isFreighter(action.ship || "transport")) throw Error("Liefern, Abholen und Handelsrouten ben\xF6tigen Transporter.");
-    const manifest = action.type === "route" ? checkedFleet(action.fleet || { [action.ship || "transport"]: action.count }) : null;
+    if (!action.fleet && action.type !== "route" && action.type !== "station" && !isFreighter(action.ship || "transport")) throw Error("Liefern, Abholen und Handelsrouten ben\xF6tigen Transporter.");
+    const manifest = action.type === "route" ? checkedFleet(action.fleet || { [action.ship || "transport"]: action.count }) : action.fleet ? missionFleet(action.fleet, action.type === "station") : null;
     const ship = manifest ? Object.keys(manifest)[0] : action.ship || "transport", count = manifest ? manifest[ship] : action.count;
     if (SHIPS[ship]?.category === "defense") throw Error("Orbitale Verteidigung kann nicht verlegt werden.");
     if (!Object.hasOwn(SHIPS, ship) || !Number.isSafeInteger(count) || count < 1 || p.ships[ship] < count) throw Error("Nicht gen\xFCgend verf\xFCgbare Schiffe oder ung\xFCltige Anzahl.");
@@ -780,20 +853,24 @@ function act(s, action, now = Date.now()) {
       stopCargo(n, m, stops[0]);
       leaveRoute(n, m, 1);
     } else {
+      if (manifest) {
+        if (Object.entries(manifest).some(([k, v]) => p.ships[k] < v)) throw Error("Nicht gen\xFCgend verf\xFCgbare Schiffe.");
+        setFleet(m, manifest);
+      }
       const dest = getPlanet(n, action.to);
       if (dest.id === p.id) throw Error("W\xE4hle einen anderen Zielplaneten.");
       if ((p.system || "tutorial") !== (dest.system || "tutorial") && !canFlyInterstellar(n, ship)) throw Error(ship === "falke" ? "Interstellare Falkenfl\xFCge ben\xF6tigen Falke-Galaxieantrieb 1 und Staustrahltriebwerke 1." : "Interstellare Fl\xFCge ben\xF6tigen Staustrahl-, Impuls- oder Hyperraumtriebwerke.");
-      const f = legInfo(n, p, dest, count, ship);
+      const f = manifest ? fleetLegInfo(n, p, dest, manifest) : legInfo(n, p, dest, count, ship);
       const order = action.order || action.cargo || vector([0, 0, 0]);
       if (!validOrder(order)) throw Error("Ladung: ganze Mengen oder Maximum w\xE4hlen.");
-      if (!isFreighter(ship) && RES.some((k) => order[k] !== 0)) throw Error("Material ben\xF6tigt Transporter.");
+      if (!(manifest ? Object.keys(manifest).some(isFreighter) : isFreighter(ship)) && RES.some((k) => order[k] !== 0)) throw Error("Material ben\xF6tigt Transporter.");
       const fuel = f.fuel * (action.type === "station" ? 1 : 2);
       if (p.resources.fuel - (p.reserves?.fuel || 0) < fuel) throw Error("Nicht gen\xFCgend Treibstoff einschlie\xDFlich Reserve.");
       pay(p, vector([0, 0, fuel]));
       if (action.type !== "collect") {
         const exact = RES.reduce((a, k) => a + (order[k] === "max" ? 0 : order[k]), 0);
-        if (exact > cargoCapacity(n, count, ship) || RES.some((k) => order[k] !== "max" && order[k] > Math.floor(Math.max(0, p.resources[k] + p.depot[k] - (p.reserves?.[k] || 0))))) throw Error("Die gew\xE4hlte Ladung passt nicht oder lokale Ressourcen fehlen.");
-        loadCargo(n, p, cargo, order, count, ship);
+        if (exact > (manifest ? fleetCapacity(n, manifest) : cargoCapacity(n, count, ship)) || RES.some((k) => order[k] !== "max" && order[k] > Math.floor(Math.max(0, p.resources[k] + p.depot[k] - (p.reserves?.[k] || 0))))) throw Error("Die gew\xE4hlte Ladung passt nicht oder lokale Ressourcen fehlen.");
+        loadCargo(n, p, cargo, order, count, ship, manifest);
         if (action.type === "deliver" && !RES.some((k) => cargo[k] > 0)) throw Error("W\xE4hle verf\xFCgbare Ladung.");
       } else {
         if (!RES.some((k) => order[k] === "max" || order[k] > 0)) throw Error("W\xE4hle Material zum Abholen.");
@@ -1059,7 +1136,7 @@ function validateSave(input) {
   check(job(s.research, TECHS) && (!s.research || s.research.level === s.tech[s.research.key] + 1 && ids.includes(s.research.planet)));
   check(Array.isArray(s.discovered) && s.discovered.length <= 3 && new Set(s.discovered).size === s.discovered.length && s.discovered.every((id) => TARGETS.some((t) => t.id === id)));
   check(Array.isArray(s.missions) && s.missions.length <= 100);
-  const fleetOK = (f) => f && typeof f === "object" && !Array.isArray(f) && Object.keys(f).length > 0 && Object.entries(f).every(([k, n]) => isFreighter(k) && integer(n, Number.MAX_SAFE_INTEGER) && n > 0);
+  const fleetOK = (f, military = false) => f && typeof f === "object" && !Array.isArray(f) && Object.keys(f).length > 0 && Object.entries(f).every(([k, n]) => (isFreighter(k) || military && ["military", "civil"].includes(SHIPS[k]?.category)) && integer(n, Number.MAX_SAFE_INTEGER) && n > 0);
   const eventIds = [];
   const order = (o) => o && RES.every((k) => o[k] === "max" || integer(o[k], 1e12));
   for (const m of s.missions) {
@@ -1072,14 +1149,16 @@ function validateSave(input) {
       check(m.type === "station" || isFreighter(m.ship));
       if (m.type !== "transport") {
         const total = RES.reduce((a, k) => a + m.cargo[k], 0);
-        const max = m.type === "route" && m.fleet ? Object.entries(m.fleet).reduce((a, [k, n]) => a + Math.floor((SHIPS[k]?.cargo || 0) * (1 + s.tech.logistics * 0.15)) * n, 0) : Math.floor(SHIPS[m.ship].cargo * (1 + s.tech.logistics * 0.15)) * m.count;
+        const max = m.fleet ? Object.entries(m.fleet).reduce((a, [k, n]) => a + Math.floor((SHIPS[k]?.cargo || 0) * (1 + s.tech.logistics * 0.15)) * n, 0) : Math.floor(SHIPS[m.ship].cargo * (1 + s.tech.logistics * 0.15)) * m.count;
         check(total <= max);
       }
     }
     if (m.type === "collect") check(order(m.order));
     if (m.type === "station") check(m.phase === "outbound");
-    if (m.fleet) check(m.type === "route" && fleetOK(m.fleet) && m.fleet[m.ship] === m.count);
+    if (m.fleet) check(["route", "deliver", "collect", "station"].includes(m.type) && fleetOK(m.fleet, m.type === "station") && m.fleet[m.ship] === m.count);
     if (m.pending) check(m.type === "route" && fleetOK(m.pending.fleet) && text(m.pending.name, 40) && m.pending.name.trim().length > 0 && typeof m.pending.repeat === "boolean" && Array.isArray(m.pending.stops) && m.pending.stops.length >= 2 && m.pending.stops.length <= 12 && m.pending.stops[0].planet === m.home && m.pending.stops.every((stop, i) => ids.includes(stop.planet) && stop.planet !== m.pending.stops[(i + 1) % m.pending.stops.length].planet && order(stop.load) && order(stop.unload)));
+    if (m.paused !== void 0) check(m.type === "route" && typeof m.paused === "boolean" && (!m.paused || m.index === 0 && RES.every((k) => m.cargo[k] === 0)));
+    if (m.pauseRequested !== void 0) check(m.type === "route" && typeof m.pauseRequested === "boolean");
     if (m.type === "route") {
       check(m.phase === "outbound" && text(m.name, 40) && typeof m.repeat === "boolean" && typeof m.stopping === "boolean" && integer(m.rounds, 1e12) && Array.isArray(m.stops) && m.stops.length >= 2 && m.stops.length <= 12 && ids.includes(m.home) && m.stops[0].planet === m.home && integer(m.index, m.stops.length - 1));
       check(m.stops.every((stop, i) => ids.includes(stop.planet) && stop.planet !== m.stops[(i + 1) % m.stops.length].planet && order(stop.load) && order(stop.unload)) && m.to === m.stops[m.index].planet && m.from === m.stops[(m.index + m.stops.length - 1) % m.stops.length].planet);
@@ -1187,10 +1266,26 @@ function resolveAttack(w, m, time) {
     return;
   }
   const d = row.state, p = getPlanet(d, m.to), defense = { fleet: { ...p.ships }, tech: { ...d.tech }, hulls: p.hulls, shieldFactor: shieldFactor(p.shieldUntil, time) };
+  const pausedRoutes = d.missions.filter((r) => r.type === "route" && r.paused && r.home === m.to);
+  const parked = pausedRoutes.map((r) => ({ id: "route:" + r.id, owner: m.defender_id, commander: d.name + " \xB7 " + r.name, fleet: { ...r.fleet || { [r.ship]: r.count } }, hulls: r.hulls, tech: { ...d.tech }, shieldFactor: shieldFactor(r.shieldUntil, time) }));
   const supporting = socialDefense(w, m.defender_id, m.to, time);
-  if (supporting.length) defense.groups = [{ id: "host", owner: m.defender_id, commander: d.name, ...defense }, ...supporting];
+  if (supporting.length || parked.length) defense.groups = [{ id: "host", owner: m.defender_id, commander: d.name, ...defense }, ...parked, ...supporting];
   const result = resolveBattle({ ...m.combat, shieldFactor: shieldFactor(m.shieldUntil, time) }, defense, m.seed || m.id, m.ruleVersion || 1);
   const before = { ...p.ships }, homeResult = result.defenderGroups?.find((g) => g.id === "host") || result.defender;
+  for (const r of pausedRoutes) {
+    const after = result.defenderGroups.find((g) => g.id === "route:" + r.id);
+    r.fleet = after.fleet;
+    r.hulls = after.hulls;
+    r.shieldUntil = time + 3e5;
+    if (!Object.keys(r.fleet).length) {
+      d.missions = d.missions.filter((x) => x.id !== r.id);
+      log(d, time, "Pausierte Routenflotte zerst\xF6rt", r.name);
+    } else {
+      [r.ship, r.count] = Object.entries(r.fleet)[0];
+    }
+  }
+  const hostBefore = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, before[k] + parked.reduce((n, g) => n + (g.fleet[k] || 0), 0)]));
+  const hostAfter = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, (homeResult.fleet[k] || 0) + pausedRoutes.reduce((n, r) => n + (r.fleet[k] || 0), 0)]));
   const supportReports = [];
   for (const group of supporting) {
     const after = result.defenderGroups.find((g) => g.id === group.id), mission = w.socialMissions.find((x) => x.id === group.id);
@@ -1225,7 +1320,7 @@ function resolveAttack(w, m, time) {
   m.cargo = cargo.cargo;
   m.shieldUntil = time + 3e5;
   if (result.trace) result.trace.participants = { attacker: a.name, defender: d.name + (supporting.length ? " mit " + supporting.map((g) => g.commander).join(", ") : "") };
-  m.report = { at: time, outcome: result.outcome, ruleVersion: m.ruleVersion || 1, traceAvailable: !!result.trace, ...result.trace ? { trace: result.trace } : {}, rounds: result.rounds, attackerBefore: m.fleet, attackerAfter: m.survivors, defenderBefore: supporting.length ? Object.fromEntries(Object.keys(SHIPS).map((k) => [k, before[k] + supporting.reduce((n, g) => n + (g.fleet[k] || 0), 0)])) : before, defenderAfter: supporting.length ? result.defender.fleet : { ...p.ships }, ...supporting.length ? { supporting: supportReports, hostBefore: before, hostAfter: { ...p.ships } } : {}, loot: cargo.loot, salvage: cargo.salvage, debrisLeft: { ...target.debris }, defenseRepair: result.defenseRepair };
+  m.report = { at: time, outcome: result.outcome, ruleVersion: m.ruleVersion || 1, traceAvailable: !!result.trace, ...result.trace ? { trace: result.trace } : {}, rounds: result.rounds, attackerBefore: m.fleet, attackerAfter: m.survivors, defenderBefore: Object.fromEntries(Object.keys(SHIPS).map((k) => [k, hostBefore[k] + supporting.reduce((n, g) => n + (g.fleet[k] || 0), 0)])), defenderAfter: Object.fromEntries(Object.keys(SHIPS).map((k) => [k, result.defender.fleet[k] || 0])), hostBefore, hostAfter, ...supporting.length ? { supporting: supportReports } : {}, loot: cargo.loot, salvage: cargo.salvage, debrisLeft: { ...target.debris }, defenseRepair: result.defenseRepair };
   const outcome = result.outcome === "attacker" ? "Angreifer gewinnt" : result.outcome === "defender" ? "Verteidiger gewinnt" : "Unentschieden";
   const body = outcome + " \xB7 " + target.meta.name + " \xB7 " + result.rounds.length + " Runden. Angreifer \xFCbrig: " + fleetText(m.survivors) + ". Beute M/K/T: " + RES.map((k) => cargo.loot[k]).join("/") + ". Tr\xFCmmer geborgen M/K: " + cargo.salvage.metal + "/" + cargo.salvage.crystal + ".";
   log(a, time, "PvP-Kampfbericht", body);
@@ -1296,8 +1391,8 @@ function launchAttack(w, uid, action, id) {
     if (!origin || origin.owner_id !== uid || origin.reserved) throw Error("W\xE4hle eine eigene besiedelte gemeinsame Kolonie als Start.");
   } else if (!colonies.length) throw Error("F\xFCr Angriffe aus dem Heimatsystem ben\xF6tigst du mindestens eine eigene besiedelte Galaxiekolonie.");
   if (!target.protection_ended && w.now < (target.colonized_at || w.now) + COLONY_PROTECTION) throw Error("Diese Kolonie hat noch 1 Stunde Gr\xFCndungsschutz.");
-  if (w.attacks.some((m) => m.attacker_id === uid && m.status !== "returned")) throw Error("Du hast bereits eine Angriffsflotte unterwegs.");
-  if (w.attacks.filter((m) => m.attacker_id === uid && m.defender_id === target.owner_id && m.started_at > w.now - DAY).length >= 2) throw Error("Maximal zwei Angriffe auf denselben Commander innerhalb von 24 Stunden.");
+  const slots = attackSlots(s.tech.military || 0);
+  if (w.attacks.filter((m) => m.attacker_id === uid && m.status !== "returned").length >= slots) throw Error("Alle " + slots + " Angriffspl\xE4tze sind belegt. Milit\xE4rtechnik 1 / 5 / 10 erlaubt 1 / 2 / 4 gleichzeitige Angriffsflotten.");
   const fleet = attackFleet(action.fleet);
   for (const [k, n] of Object.entries(fleet)) if ((from.ships[k] || 0) < n) throw Error("Nicht gen\xFCgend verf\xFCgbare Schiffe.");
   const f = attackFlight(s, from, target.meta, fleet), defender = stateOf(w, target.owner_id), fraction = warningFraction(defender.tech.scout || 0);
@@ -1318,7 +1413,7 @@ function processWorld(snapshot, uid, request) {
   const s = stateOf(w, uid), start = w.starts.find((x) => x.user_id === uid);
   if (start) s.galaxy = { x: start.x, y: start.y };
   if (type === "command") {
-    if (!["build", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "station", "collect", "route", "deliver", "repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
+    if (!["build", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "route", "deliver", "repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
     const updated = act(s, action, w.now);
     w.saves.find((r) => r.user_id === uid).state = updated;
   } else if (type === "social") socialAction(w, uid, action, request.eventId || request.requestId);
@@ -1344,7 +1439,8 @@ function projectPvP(w, uid) {
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
     social: socialProjection(w, uid),
-    features: { partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, shipyardEnergy: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
+    features: { attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
+    attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,
     colonies: w.planets.filter((p) => p.owner_id && !p.reserved).map((p) => ({ id: p.id, protectedUntil: p.protection_ended ? 0 : (p.colonized_at || w.now) + COLONY_PROTECTION })),

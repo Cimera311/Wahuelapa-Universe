@@ -41,7 +41,7 @@ test('scans and colonies use ship-specific shared formula; probe fuel includes r
 
 test('minimum one minute, effective slowest ship, research and count only affect appropriate values',()=>{
  const s=ready(),from=colony(s),to=colony(s,'helion',2);
- assert.equal(sharedFlight(s,from,to,1,'falke').ms,68750);
+ s.tech.drive=5;assert.equal(sharedFlight(s,from,to,1,'falke').ms,68750);
  s.tech.drive=5;assert.equal(flightInfo(s,s.planets[0],{distance:2},1,false,'transport').ms,16250);
  const f=sharedFlight(s,from,to,1,'longProbe');
  s.tech.scout=0;assert.equal(sharedFlight(s,from,to,1,'longProbe').ms,f.ms);

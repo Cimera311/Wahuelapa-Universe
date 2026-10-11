@@ -77,7 +77,7 @@ test('Victim-wide 24h loot budget prevents repeated raids from stacking the 25% 
  let w=processWorld(fixture(),A,attack());w.now=w.attacks[0].return_at;w=processWorld(w,A,{type:'sync'});
  assert.equal(w.attacks[0].report.loot.metal,2500);
  w=processWorld(w,A,{...attack(),requestId:'10000000-0000-0000-0000-000000000002'});w.now=w.attacks[1].return_at;w=processWorld(w,A,{type:'sync'});
- assert.equal(w.attacks[1].report.loot.metal,0);assert.throws(()=>processWorld(w,A,{...attack(),requestId:'10000000-0000-0000-0000-000000000003'}),/zwei Angriffe/);
+ assert.equal(w.attacks[1].report.loot.metal,0);w=processWorld(w,A,{...attack(),requestId:'10000000-0000-0000-0000-000000000003'});assert.equal(w.attacks.length,3);
 });
 test('Damage survives stationing, saving and repair; defense slots prevent overspending and movement',()=>{
  const w=fixture();let s=w.saves[0].state,p=s.planets[1];p.hulls={waechter:[.5]};
@@ -166,7 +166,7 @@ test('Attacks can send all 110 selected ships and still enforce availability',()
  request.action.fleet.falke=101;assert.throws(()=>processWorld(w,A,request),/Schiffe/);
  const ui=pvpView(w.saves[0].state,{...projectPvP(prepareWorld(w),A),incoming:[],outgoing:[],reports:[]},{planets:w.planets.map(q=>({...q.meta,owner:q.owner_id===A?'mine':'foreign',ownerName:'Commander'}))},w.now);
  assert.match(ui,/data-action="pvp-select-all"/);assert.match(ui,/data-action="pvp-select-none"/);
- assert.match(ui,/name="falke" type="number" min="0" max="100"/);
+ assert.match(ui,/name="falke" data-fleet-ship="falke" type="number" min="0" max="100"/);
 });
 
 test('Large shipbuilding and transport fleets preserve save validation and resource rules',()=>{

@@ -1,4 +1,16 @@
-# WaHueLaPa Universe · Prototyp 0.1
+# WaHueLaPa Universe
+
+## Flotten-Update vom 11. Oktober 2026
+
+Dieses Update basiert auf `main` nach PR #13 (`e642a35542d5a0df67dd19439032d98a16c714d7`). Es enthält die bisherigen Flugzeit-, Werft-, Energie- und Partneränderungen sowie:
+
+- Einheitliche Schiffsauswahl und Laderegler, gemischte eigene Transport-/Stationierungsflotten, Partneraufträge aus Flottenmenü und Galaxie.
+- Handelsstopps mit Entladen, Beladen oder beidem; Routenpause am Startplaneten mit weiterhin gebundenen Schiffen.
+- Militärtechnik bis 10: 1 / 2 / 4 gleichzeitige Angriffe ab Stufe 1 / 5 / 10, inklusive Rückflug. Kein Zweierlimit pro Gegner/Tag; das Beutebudget bleibt.
+- Triebwerke bis 10 mit +5 % Geschwindigkeit je Stufe für die zugeordneten Schiffstypen. Stufe-5-Flugzeiten bleiben durch angepasste Grundzeiten erhalten; der Verbrauchsbonus bleibt separat bei 12 %.
+- Öffentliche `news.html` und News-Fenster im Spiel. Werftwarteschlange, öffentlicher Markt und zusätzliches Energiebalancing bleiben TODO.
+
+**Deployment:** zuerst die neue Ranglisten-SQL und das gemeinsame Backend bereitstellen, danach den kumulativen Frontend-PR mergen. Anleitung: [FLOTTEN_UPDATE_DEPLOYMENT.md](supabase/dashboard/FLOTTEN_UPDATE_DEPLOYMENT.md). Die folgenden Prototyp-Abschnitte beschreiben teilweise frühere Entwicklungsstände; für dieses Update gelten die obigen Regeln.
 
 Ein tatsächlich spielbarer deutscher Weltraum-Aufbauprototyp. Hauptplanet ausbauen, Forschung freischalten, mit Sonden drei unterschiedliche Welten erkunden, maximal zwei Kolonien gründen und Materialien mit Transportern liefern. Gastmodus ohne externe Dienste und Laufzeitbibliotheken. Kleine optionale Anmeldung und private Cloud-Spielstände sind vorbereitet; Einrichtung in [CLOUD_SETUP.md](CLOUD_SETUP.md).
 
@@ -54,9 +66,10 @@ Alle Assets sind inline oder relativ. Es gibt keinen fest eingebauten Repository
 
 ## Entwicklung und Prüfung
 
-Node.js 20 oder neuer, keine npm-Installation nötig:
+Node.js 20 oder neuer; DOM- und SQL-Tests verwenden Entwicklungsabhängigkeiten:
 
 ```sh
+npm ci
 npm test
 npm run build
 ```
