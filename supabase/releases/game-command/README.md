@@ -18,6 +18,8 @@ Für die ersten Stände gelten die jeweils zugehörigen damaligen Migrationsanle
 
 Ab `2026-10-11.02` bleiben nicht abladbare Ressourcen an Bord. Die [Deployment- und Rollback-Hinweise](../../dashboard/CARGO_RETENTION_DEPLOYMENT.md) erklären die neuen Wartezustände und deren Grenzen beim Rückwechsel auf ältere Save-Validatoren. Es ist keine zusätzliche SQL-Migration erforderlich.
 
+Ab `2026-10-11.03` können Partnerflotten auch von privaten Planeten starten. [Deployment und Rollback](../../dashboard/PARTNER_ORIGINS_DEPLOYMENT.md) beschreiben die Voraussetzung für einen Rückwechsel auf ältere Herkunftsprüfungen.
+
 ## Neue Version erstellen
 
 Änderungen gehören in die ursprünglichen Module, nicht in ein archiviertes Bundle. Nach dem Bündeln zuerst beide Dashboard-TXT-Dateien bytegleich aktualisieren und anschließend archivieren:

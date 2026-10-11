@@ -1,4 +1,9 @@
 export const GAME_NEWS=[
+ {date:'11.10.2026',title:'Partnerflotten von deiner Heimatwelt',status:'Partner-Update',items:[
+ 'Lieferungen, Verteidigungsflotten und direkte Tauschgeschäfte können von jedem eigenen Planeten starten – auch von Heimatwelt und Tutorialkolonien. Partnerziele bleiben freigegebene Kolonien in der gemeinsamen Galaxie.',
+ 'Rückruf und Rückflug führen zum ursprünglichen Startplaneten. Es gelten weiterhin die passenden Galaxieantriebe, Flugzeiten und Treibstoffkosten; volle Heimatlager lassen Restladung an Bord.',
+ 'Kompakte Partnerkarten zeigen deine Liefer- und Verteidigungsrechte. Eigene Freigaben lassen sich mit Schaltern aufklappen und speichern; Einladungen und zusätzliche Aufträge benötigen weniger Platz.'
+ ]},
  {date:'11.10.2026',title:'Kürzere Wege durch deine Flotte',status:'Navigation 0.5.4',items:[
  'Mobil führen drei Symbolflächen zu deinen Flottenbereichen: Hangar mit Übersicht und Werft, PvP mit Angriff, Verteidigung und Partnern sowie Handel mit Aufträgen, Routen und Berichten.',
  'Die Unterpunkte erscheinen direkt unter der gewählten Gruppe. Beim Wechsel merkt sich jede Gruppe ihre zuletzt geöffnete Ansicht während der Sitzung.',
