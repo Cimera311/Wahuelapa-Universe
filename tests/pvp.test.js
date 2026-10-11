@@ -17,7 +17,7 @@ test('Launch is atomic, uses slowest ship, reserves both-leg fuel and ends origi
 test('Warning stays private until exact research-dependent cutoff',()=>{
  const w=processWorld(fixture(),A,attack()),m=w.attacks[0];w.now=m.warning_at-1;assert.equal(projectPvP(w,B).incoming.length,0);
  w.now=m.warning_at;const warning=projectPvP(w,B).incoming[0];assert.ok(warning);assert.deepEqual(Object.keys(warning).sort(),['arrival','commander','id','to']);
- assert.equal(warningFraction(0),.9);assert.ok(Math.abs(warningFraction(5)-.1)<1e-10);assert.equal(projectPvP(w,'stranger').outgoing.length,0);
+ assert.equal(warningFraction(0),.9);assert.ok(Math.abs(warningFraction(1)-.81)<1e-10);assert.ok(Math.abs(warningFraction(5)-.531441)<1e-10);assert.equal(projectPvP(w,'stranger').outgoing.length,0);
 });
 test('1h protection has an exact boundary; tutorial targets, own targets and unavailable ships reject without mutation',()=>{
  const w=fixture();w.planets[1].colonized_at=T-COLONY_PROTECTION+1;assert.throws(()=>processWorld(w,A,attack()),/Gründungsschutz/);
