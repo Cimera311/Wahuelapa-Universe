@@ -1,4 +1,10 @@
 export const GAME_NEWS=[
+ {date:'11.10.2026',title:'Dein Imperium auf einen Blick',status:'Übersicht-Update 0.5',items:[
+ 'Kompakte Übersicht für Browser und Mobilgerät: kleinere Planetenansicht und aufgeräumte Bauaufträge mit aufklappbaren Details.',
+ 'Produktion pro Stunde zwischen dem gesamten Imperium und der aktiven Welt umschalten. Die tatsächliche Förderleistung berücksichtigt planetare Faktoren und Strommangel.',
+ 'Jede Planetenkarte zeigt Produktion, Rohstoff- und Energiefaktoren, die drei Förderstufen sowie die Werftstufe.',
+ 'Ein abgeschlossenes Tutorial lässt sich ausblenden und über Spielstand & Hilfe wieder anzeigen. Die Anzeigeeinstellung wird je Spielstand und Konto in diesem Browser gespeichert.'
+ ]},
  {date:'11.10.2026',title:'Flottenplanung, Routenpause und Forschung',status:'Flotten-Update 0.4',items:[
  'Einheitliche Schiffsauswahl für Angriffe, Transporte, Partnerflotten und Handelsrouten: ausgewählt / verfügbar, grüne Bestandszahl und Alle-Schaltfläche.',
  'Rohstoffmengen beginnen bei 0. Schnellwahl: 0, +5 % des ausgewählten Flottenladeraums und MAX.',

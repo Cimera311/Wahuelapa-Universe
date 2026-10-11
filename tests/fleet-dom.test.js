@@ -1,21 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import {JSDOM} from 'jsdom';
-import {newGame,act} from '../src/engine.js';
-import {TARGETS,TECHS,vector} from '../src/config.js';
-function ui(t){
- const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url:'https://game.test/',runScripts:'outside-only'}),w=dom.window;t.after(()=>w.close());
- Object.assign(w,{structuredClone,setInterval(){},clearInterval(){},setTimeout(){},clearTimeout(){},scrollTo(){}});w.Element.prototype.scrollIntoView=function(){};w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
- const s=newGame('DOM',Date.now());s.planets.push({...structuredClone(s.planets[0]),...TARGETS[0]});for(const [k,d] of Object.entries(TECHS))s.tech[k]=d.max;for(const p of s.planets){p.buildings.warehouse=10;p.resources=vector([10000,10000,10000]);p.ships.karawane=5;p.ships.atlas=2;p.ships.falke=10;}
- w.localStorage.setItem('imperium-v1',JSON.stringify(s));
- const files=JSON.parse(readFileSync('scripts/build.js','utf8').match(/const files=(\[[^\]]+\])/)[1].replaceAll("'",'"'));
- const source=files.map(f=>readFileSync('src/'+f+'.js','utf8').replace(/^import .*?;\s*$/gm,'').replace(/^export /gm,'')).join('\n').replace(/const CLOUD_CONFIG=\{\s*enabled:true/,'const CLOUD_CONFIG={enabled:false');
- w.eval(source+'\nglobalThis.fleetTest={state:()=>state,show(section){tab="fleet";fleetSection=section;render();},attach(c){cloud=c;cloudBlocked=false;},render};');
- return {w,doc:w.document,api:w.fleetTest};
-}
-function input(w,node,value){node.value=value;node.dispatchEvent(new w.Event('input',{bubbles:true}));}
-const tick=()=>new Promise(r=>setImmediate(r));
+import {act} from '../src/engine.js';
+import {ui,input,tick} from './helpers/game-ui.js';
 test('Real DOM fleet controls clamp counts and add 5% of combined capacity',t=>{
  const {w,doc,api}=ui(t);api.show('orders');let form=doc.getElementById('fleet-order-form');const ship=form.querySelector('[name="fleet-karawane"]');input(w,ship,99);assert.equal(ship.value,'5');input(w,ship,2);const metal=form.elements.namedItem('metal');assert.equal(metal.value,'0');metal.closest('.cargo-control').querySelector('[data-cargo-percent]').click();assert.equal(metal.value,'875');metal.closest('.cargo-control').querySelector('[data-cargo-percent]').click();assert.equal(metal.value,'1750');metal.closest('.cargo-control').querySelector('[data-cargo-set="0"]').click();assert.equal(metal.value,'0');assert.match(form.querySelector('#fleet-estimate').textContent,/Karawane/);
 });

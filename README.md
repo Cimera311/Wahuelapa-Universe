@@ -1,5 +1,11 @@
 # WaHueLaPa Universe
 
+## Übersicht-Update vom 11. Oktober 2026
+
+Kompakte Übersicht mit globaler oder lokaler Produktion, planetaren Rohstoff-/Energiefaktoren und Förder-/Werftstufen. Bauaufträge zeigen aufklappbare Details. Abgeschlossene Tutorials lassen sich ausblenden und über Hilfe wieder öffnen. Die Tutorial-Anzeige wird pro Spielstand und Konto in diesem Browser gespeichert; neue Spielstände und andere Konten bleiben getrennt. Bei alten fortgeschrittenen Spielständen ersetzt freigeschaltete Staustrahlforschung einen bereits aus dem Kurzbericht entfernten Liefernachweis.
+
+**Deployment:** nur den Übersicht-PR mergen und das Spiel neu laden. Keine SQL- oder Edge-Function-Änderung erforderlich. Geprüft mit 213 Tests sowie Chromium bei 1280, 390 und 320 Pixel Breite, einschließlich Tutorial-Abschluss, Neuladen, Wiederöffnung und Produktionsumschaltung.
+
 ## Flotten-Update vom 11. Oktober 2026
 
 Dieses Update basiert auf `main` nach PR #13 (`e642a35542d5a0df67dd19439032d98a16c714d7`). Es enthält die bisherigen Flugzeit-, Werft-, Energie- und Partneränderungen sowie:
