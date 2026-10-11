@@ -1,0 +1,7 @@
+{
+  "version": "2026-10-09.01",
+  "createdAt": "2026-10-09T21:22:36+02:00",
+  "sourceCommit": "451f85c9294c1cdd18f2ab300c515433cb895bfe",
+  "description": "Erstes vollständiges Bundle für den Supabase-Dashboard-Editor",
+  "sha256": "c21ddff989d94249e71de4ef13523dd6290089c889c6110dfd110da2b3af1f26"
+}

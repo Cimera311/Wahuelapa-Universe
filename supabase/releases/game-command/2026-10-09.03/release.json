@@ -1,0 +1,7 @@
+{
+  "version": "2026-10-09.03",
+  "createdAt": "2026-10-09T22:08:31+02:00",
+  "sourceCommit": "6f67630341122844c885ce0061c6272d25fb914c",
+  "description": "Werftaufträge abbrechen und Baukosten erstatten",
+  "sha256": "349b49a4b4ffa3b3ef14366a3eddb279643fb1b2042e6530bb0432ef6a843a0d"
+}
