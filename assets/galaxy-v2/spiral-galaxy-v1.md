@@ -1,0 +1,1 @@
+Spiral galaxy background asset v1. Generated with built-in Imagegen. No labels or controls baked into image. Interactive stars and labels are HTML in the local galaxy-umbra-preview. Original PNG retained. Palette: navy, teal spiral arms, warm core. Preview only; no live integration.
