@@ -40,7 +40,7 @@ export function attackFlight(s,from,to,fleet){
  }
  return {distance:dist,ms,fuel,slowest};
 }
-export function warningFraction(sensorLevel){return Math.max(.1,Math.min(.9,.9-.16*sensorLevel));}
+export function warningFraction(sensorLevel){return Math.pow(.9,Math.max(0,sensorLevel)+1);}
 export function takeHulls(p,fleet){const out={};p.hulls??={};for(const [k,n] of Object.entries(fleet)){const damaged=p.hulls[k]||[];out[k]=damaged.splice(0,n);if(!damaged.length)delete p.hulls[k];}return out;}
 export function putHulls(p,hulls={}){p.hulls??={};for(const [k,hp] of Object.entries(hulls))if(hp.length)p.hulls[k]=[...(p.hulls[k]||[]),...hp];}
 function rng(seed){let n=2166136261;for(const c of seed)n=Math.imul(n^c.charCodeAt(0),16777619)>>>0;return ()=>{n^=n<<13;n^=n>>>17;n^=n<<5;return (n>>>0)/4294967296;};}
