@@ -1,0 +1,69 @@
+{
+  "format": 1,
+  "latest": "2026-10-11.01",
+  "releases": [
+    {
+      "version": "2026-10-09.01",
+      "createdAt": "2026-10-09T21:22:36+02:00",
+      "sourceCommit": "451f85c9294c1cdd18f2ab300c515433cb895bfe",
+      "description": "Erstes vollständiges Bundle für den Supabase-Dashboard-Editor",
+      "sha256": "c21ddff989d94249e71de4ef13523dd6290089c889c6110dfd110da2b3af1f26"
+    },
+    {
+      "version": "2026-10-09.02",
+      "createdAt": "2026-10-09T22:07:35+02:00",
+      "sourceCommit": "b6720391cc9dae7854a08e929c694e3f4037e113",
+      "description": "Heimatsystem-Angriffe, Galaxie-Außenposten und Kolonieschutz",
+      "sha256": "7f14bd353c3c6334866a68d24ad2ebd876821c011908687663a4645581e55bbe"
+    },
+    {
+      "version": "2026-10-09.03",
+      "createdAt": "2026-10-09T22:08:31+02:00",
+      "sourceCommit": "6f67630341122844c885ce0061c6272d25fb914c",
+      "description": "Werftaufträge abbrechen und Baukosten erstatten",
+      "sha256": "349b49a4b4ffa3b3ef14366a3eddb279643fb1b2042e6530bb0432ef6a843a0d"
+    },
+    {
+      "version": "2026-10-09.04",
+      "createdAt": "2026-10-09T22:11:21+02:00",
+      "sourceCommit": "79b74727719be4dff9de261a0389837ecdbab1a3",
+      "description": "Heimatsystem-Angriffe und Schutzregeln zusammenführen",
+      "sha256": "d983d4d7bc5782fde9b4f8295c9734598e48cfc31194677e7d1f4bdd6cc6f6e6"
+    },
+    {
+      "version": "2026-10-10.01",
+      "createdAt": "2026-10-10T09:44:21+02:00",
+      "sourceCommit": "daffad4239321cab43924a750c569931616b6d3a",
+      "description": "Erforschte Falken zwischen Sonnensystemen stationieren",
+      "sha256": "f5922a66afd6f7f702472343feb0d3ceedda35862ba3a787c491d6088c7cb411"
+    },
+    {
+      "version": "2026-10-10.02",
+      "createdAt": "2026-10-10T11:56:19+02:00",
+      "sourceCommit": "ad95e3eb3a56d217a2db1083f62b542267d9bbc5",
+      "description": "Geschützte Zielauswahl und vollständige Kampfprotokolle",
+      "sha256": "52bda2b0c2d6e6f535981548a9837ea269e46341a4f77287ce0bfe94a9c7d762"
+    },
+    {
+      "version": "2026-10-10.03",
+      "createdAt": "2026-10-10T20:01:43+02:00",
+      "sourceCommit": "b836881c25d60d930b14d6dc062c33328eaff0d2",
+      "description": "Feste Schiffsmengenlimits entfernen",
+      "sha256": "87f1c92082d29bc78c2fce3708246ec056d2ec0906ee2967e0c0cd7f32746db8"
+    },
+    {
+      "version": "2026-10-10.04",
+      "createdAt": "2026-10-10T23:35:45+02:00",
+      "sourceCommit": "f3bd15f09cdeff9ff3fffef9cd97ebea615ee104",
+      "description": "Partnerschaften, direkter Tausch, Unterstützung, gemeinsame Flugzeiten und Werft-Energie",
+      "sha256": "fc4e55db9b273e219e333137e76ad529d9885cde41b197f7663ca61a35c2dad8"
+    },
+    {
+      "version": "2026-10-11.01",
+      "createdAt": "2026-10-11T14:12:28+02:00",
+      "sourceCommit": "685fa1043f6da6ae6260718b5e833073d092e938",
+      "description": "Gemischte Flotten, Routenpausen, Forschungsstufen, Antriebe und gleichzeitige Angriffe",
+      "sha256": "cc15c5fb315f9105775f69752f411de603995c6d59e7bdf34d61c076aec3fe67"
+    }
+  ]
+}

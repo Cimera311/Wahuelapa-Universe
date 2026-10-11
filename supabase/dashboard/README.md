@@ -2,6 +2,8 @@
 
 Diese Datei ist TypeScript/JavaScript für eine Edge Function, keine SQL-Datei.
 
+Alle unterschiedlichen Game-command-Stände werden zusätzlich als TS und TXT im [Versionsarchiv](../releases/game-command/README.md) auf GitHub aufbewahrt. Dort stehen Quell-Commits, Prüfsummen und die Anleitung für einen Rollback in `swift-handler`. Neue Backend-Bundles müssen vor Veröffentlichung mit `npm run game-command:archive` archiviert werden; CI prüft dies.
+
 1. Projekt qavlbxbkhahjbpgcmazd öffnen und links **Edge Functions** auswählen.
 2. Die vorhandene Funktion **swift-handler** öffnen (siehe `src/cloud-config.js`, `commandFunction`). Im Code-Editor die bestehende Funktion aktualisieren; keine zweite Funktion anlegen.
 3. Den gesamten Inhalt von `game-command.ts` (am Handy `game-command-gesamt.txt`) in die Editor-Datei `index.ts` kopieren und den Beispielcode vollständig ersetzen.
