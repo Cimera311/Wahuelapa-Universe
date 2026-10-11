@@ -1,5 +1,5 @@
 import {socialAction,socialEvents,arriveSocial,socialDefense,socialProjection} from './social-world.js';
-import {RES,BUILDINGS,SHIPS,vector} from './config.js';
+import {RES,attackSlots,BUILDINGS,SHIPS,vector} from './config.js';
 import {newGame,getPlanet,advance,act,capacity,settle,fleetCapacity} from './engine.js';
 import {validateSave} from './storage.js';
 import {galaxyFlight} from './galaxy.js';
@@ -131,8 +131,8 @@ function launchAttack(w,uid,action,id){
  if(from.system){if(!origin||origin.owner_id!==uid||origin.reserved)throw Error('Wähle eine eigene besiedelte gemeinsame Kolonie als Start.');}
  else if(!colonies.length)throw Error('Für Angriffe aus dem Heimatsystem benötigst du mindestens eine eigene besiedelte Galaxiekolonie.');
  if(!target.protection_ended&&w.now<(target.colonized_at||w.now)+COLONY_PROTECTION)throw Error('Diese Kolonie hat noch 1 Stunde Gründungsschutz.');
- if(w.attacks.some(m=>m.attacker_id===uid&&m.status!=='returned'))throw Error('Du hast bereits eine Angriffsflotte unterwegs.');
- if(w.attacks.filter(m=>m.attacker_id===uid&&m.defender_id===target.owner_id&&m.started_at>w.now-DAY).length>=2)throw Error('Maximal zwei Angriffe auf denselben Commander innerhalb von 24 Stunden.');
+ const slots=attackSlots(s.tech.military||0);if(w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').length>=slots)throw Error('Alle '+slots+' Angriffsplätze sind belegt. Militärtechnik 1 / 5 / 10 erlaubt 1 / 2 / 4 gleichzeitige Angriffsflotten.');
+
  const fleet=attackFleet(action.fleet);
  for(const [k,n] of Object.entries(fleet))if((from.ships[k]||0)<n)throw Error('Nicht genügend verfügbare Schiffe.');
  const f=attackFlight(s,from,target.meta,fleet),defender=stateOf(w,target.owner_id),fraction=warningFraction(defender.tech.scout||0);
@@ -152,7 +152,7 @@ export function processWorld(snapshot,uid,request){
  const s=stateOf(w,uid),start=w.starts.find(x=>x.user_id===uid);
  if(start)s.galaxy={x:start.x,y:start.y};
  if(type==='command'){
-  if(!['build','research','ship','probe','colony','transport','reserve','edit-route','cancel-route-edit','stop-route','station','collect','route','deliver','repair','cancel-ship'].includes(action.type))throw Error('Unbekannte Spielaktion.');
+  if(!['build','research','ship','probe','colony','transport','reserve','edit-route','cancel-route-edit','stop-route','pause-route','resume-route','cancel-route-pause','station','collect','route','deliver','repair','cancel-ship'].includes(action.type))throw Error('Unbekannte Spielaktion.');
   const updated=act(s,action,w.now);w.saves.find(r=>r.user_id===uid).state=updated;
  }else if(type==='social')socialAction(w,uid,action,request.eventId||request.requestId);
  else if(type==='galaxy')launchGalaxy(w,uid,action,request.eventId||request.requestId);
@@ -164,7 +164,7 @@ export function processWorld(snapshot,uid,request){
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,arrival:m.arrival_at,returnAt:m.return_at})),
  incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),

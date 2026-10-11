@@ -22,7 +22,7 @@ Stand: 11.10.2026. Diese Punkte sind vorgemerkt und noch nicht zur Umsetzung fre
 
 
 
-## Implementiert, gemeinsames Deployment ausstehend
+## Bereits veröffentlicht (#9–#13)
 
 - [x] Partnerschaften per Einladung und Zustimmung; getrennte Liefer- und Verteidigungsrechte je Gastgeber.
 - [x] Partnerlieferungen mit eigenen Frachtern und normaler Hin-/Rückflugzeit.

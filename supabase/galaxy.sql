@@ -96,7 +96,7 @@ begin
  if p_kind is not null then
   if p_kind not in ('scan','colony') then raise exception 'INVALID_MISSION';end if;
   if (select count(*) from public.galaxy_missions where user_id=uid and not completed)>=100 then raise exception 'TOO_MANY_MISSIONS';end if;
-  if public.imperium_rank_int(s->'tech'->'ramjet',5)<1 then raise exception 'RAMJET_REQUIRED';end if;
+  if public.imperium_rank_int(s->'tech'->'ramjet',10)<1 then raise exception 'RAMJET_REQUIRED';end if;
   select (ordinality-1)::integer,value into idx,origin from jsonb_array_elements(s->'planets') with ordinality where value->>'id'=p_from;
   if origin is null then raise exception 'ORIGIN_MISSING';end if;
   select * into destination from public.galaxy_planets where id=p_to for update;
@@ -110,9 +110,9 @@ begin
    if destination.owner_id is not null then raise exception 'PLANET_TAKEN';end if;
    if (select count(*) from public.galaxy_planets where owner_id=uid)>=greatest(0,public.imperium_rank_int(s->'tech'->'colonization',6)-3) then raise exception 'COLONY_LIMIT';end if;
   end if;
-  level:=public.imperium_rank_int(s->'tech'->'ramjet',5);
+  level:=public.imperium_rank_int(s->'tech'->'ramjet',10);
   dist:=greatest(1,sqrt(power(case when origin->>'id' like 'g-%' then (origin->>'x')::numeric else (start->>'x')::numeric end-(destination.meta->>'x')::numeric,2)+power(case when origin->>'id' like 'g-%' then (origin->>'y')::numeric else (start->>'y')::numeric end-(destination.meta->>'y')::numeric,2))/40+abs(destination.slot-case when origin->>'id' like 'g-%' then coalesce((origin->>'slot')::integer,0) else 0 end)*.15);
-  seconds:=greatest(60000,ceil((120+dist*45)*1000/(1+level*.12)))/1000;fuel:=ceil(dist*(case when p_kind='scan' then 3 else 18 end)/(1+level*.12))*(case when p_kind='scan' then 2 else 1 end);
+  seconds:=greatest(60000,ceil((120+dist*45)*.78125*1000/(1+level*.05)))/1000;fuel:=ceil(dist*(case when p_kind='scan' then 3 else 18 end)/(1+level*.12))*(case when p_kind='scan' then 2 else 1 end);
   cargo:=case when p_kind='colony' then 100 else 0 end;
   if (origin->'resources'->>'fuel')::numeric<fuel+cargo or (p_kind='colony' and ((origin->'resources'->>'metal')::numeric<350 or (origin->'resources'->>'crystal')::numeric<250)) then raise exception 'RESOURCES_REQUIRED';end if;
   s:=jsonb_set(s,array['planets',idx::text,'ships',ship],to_jsonb(available-1));

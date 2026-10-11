@@ -18,12 +18,12 @@ export const TECHS = {
  scout:{name:'Sensortechnik',description:'Stufe 1: Sonden. Weitere Stufen: kürzere Sondenflüge und frühere PvP-Warnungen (90 % bis 10 % der Flugzeit).',cost:[100,100,30],time:10,lab:1,max:5},
  logistics:{name:'Transporttechnik',description:'Frachter freischalten; je Stufe +15 % Laderaum.',cost:[150,120,40],time:12,lab:1,max:5,requires:{tech:'scout',level:1}},
  colonization:{name:'Kolonisierung',description:'Stufen 1–3: die drei Tutorial-Kolonien. Stufen 4–6: Plätze für die künftige gemeinsame Galaxie.',cost:[350,250,100],time:16,lab:2,max:6,requires:{tech:'scout',level:1}},
- drive:{name:'Verbrennungstriebwerke',description:'Für Sonden, Kolonieschiffe, kleine Transporter, Kurier und Falke: je Stufe +12 % Antriebsleistung; kürzere Flüge und weniger Verbrauch. Stufe 3 ermöglicht Staustrahlforschung.',cost:[200,150,80],time:14,lab:2,max:5,requires:{tech:'logistics',level:1}},
- ramjet:{name:'Staustrahltriebwerke',description:'Stufe 1: Wächter; Stufe 2: Karawane. Je Stufe +12 % Leistung und weniger Verbrauch nur für diese Schiffe. Stufe 1 bereitet Flüge in die künftige gemeinsame Galaxie vor; Stufe 3 ermöglicht Impulstriebwerke.',cost:[600,450,200],time:24,lab:3,max:5,requires:{tech:'drive',level:3}},
- impulse:{name:'Impulstriebwerke',description:'Stufe 1: Donner; Stufe 2: Atlas. Je Stufe +12 % Leistung und weniger Verbrauch nur für diese Schiffe. Stufe 3 ermöglicht Hyperraumtriebwerke.',cost:[1800,1400,650],time:40,lab:4,max:5,requires:{tech:'ramjet',level:3}},
- hyperspace:{name:'Hyperraumtriebwerke',description:'Stufe 1: Titan; Stufe 2: Arche. Je Stufe +12 % Leistung und weniger Verbrauch nur für diese Schiffe.',cost:[5500,4200,2000],time:65,lab:5,max:5,requires:{tech:'impulse',level:3}},
+ drive:{name:'Verbrennungstriebwerke',description:'Für Sonden, Kolonieschiffe, kleine Transporter, Kurier und Falke: je Stufe +5 % Antriebsleistung; separate Verbrauchsreduktion von 12 % je Stufe. Stufe 3 ermöglicht Staustrahlforschung.',cost:[200,150,80],time:14,lab:2,max:10,requires:{tech:'logistics',level:1}},
+ ramjet:{name:'Staustrahltriebwerke',description:'Stufe 1: Wächter; Stufe 2: Karawane. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur für diese Schiffe. Stufe 1 bereitet Flüge in die künftige gemeinsame Galaxie vor; Stufe 3 ermöglicht Impulstriebwerke.',cost:[600,450,200],time:24,lab:3,max:10,requires:{tech:'drive',level:3}},
+ impulse:{name:'Impulstriebwerke',description:'Stufe 1: Donner; Stufe 2: Atlas. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur für diese Schiffe. Stufe 3 ermöglicht Hyperraumtriebwerke.',cost:[1800,1400,650],time:40,lab:4,max:10,requires:{tech:'ramjet',level:3}},
+ hyperspace:{name:'Hyperraumtriebwerke',description:'Stufe 1: Titan; Stufe 2: Arche. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur für diese Schiffe.',cost:[5500,4200,2000],time:65,lab:5,max:10,requires:{tech:'impulse',level:3}},
  engineering:{name:'Bautechnik',description:'Je Stufe 5 % kürzere neue Bauaufträge; Arbeitsroboter.',cost:[250,200,40],time:16,lab:2,max:5},
- military:{name:'Militärtechnik',description:'Schaltet Falke, Wächter, Donner und Titan frei. Schaltet die vier Kriegsschiffklassen und orbitale Verteidigung frei.',cost:[300,220,80],time:18,lab:2,max:4,requires:{tech:'engineering',level:1}},
+ military:{name:'Militärtechnik',description:'Stufen 1–4 schalten Kriegsschiffe und Verteidigung frei. Angriffsplätze: Stufe 1 = 1, Stufe 5 = 2, Stufe 10 = 4 gleichzeitig. Ab Stufe 6 steigen Kosten je Stufe um Faktor 2,4.',cost:[300,220,80],time:18,lab:2,max:10,requires:{tech:'engineering',level:1}},
  weapons:{asset:'./assets/pvp-resource-v1/research/weapons.webp',name:'Waffentechnik',description:'Je Stufe +8 % Angriffsschaden.',cost:[400,300,100],time:60,lab:3,max:5,requires:{tech:'military',level:1}},
  shields:{asset:'./assets/pvp-resource-v1/research/shields.webp',name:'Schildtechnik',description:'Je Stufe +8 % Schildstärke.',cost:[350,450,100],time:60,lab:3,max:5,requires:{tech:'military',level:1}},
  armor:{asset:'./assets/pvp-resource-v1/research/armor.webp',name:'Panzerung',description:'Je Stufe +8 % Hüllenpunkte.',cost:[500,250,100],time:60,lab:3,max:5,requires:{tech:'military',level:1}},
@@ -56,7 +56,7 @@ export const TARGETS = [
  {id:'thalassa',name:'Thalassa',coord:'1:4:5',kind:'Ozeanplanet',specialty:'Kristall',distance:4,mult:[0.85,1.6,1.1],color:'#3c92c9',ocean:true,energy:1}
 ];
 export function vector(values){return Object.fromEntries(RES.map((k,i)=>[k,values[i]]));}
-export function costAt(item,level){return vector(item.cost.map(v=>Math.ceil(v*Math.pow(1.6,level))));}
+export function costAt(item,level){return vector(item.cost.map(v=>Math.ceil(v*Math.pow(1.6,level)*Math.pow(item===TECHS.military?1.5:1,Math.max(0,level-4)))));}
 export const ROUTE_ECONOMY={time:1,fuel:.75};
 
 // Cosmetic selection only: preserve tutorial art and keep shared planet variants stable across accounts.
@@ -73,3 +73,5 @@ export function planetImagePath(p){
 // The researched Falke retrofit applies to every interstellar flight type.
 export function shipFlightEngine(s,key,remote=false){return remote&&key==='falke'&&(s.tech.assaultDrive||0)>=1?'ramjet':SHIPS[key]?.engine||'drive';}
 export function canFlyInterstellar(s,key){const engine=shipFlightEngine(s,key,true);return (key==='falke'?(s.tech.assaultDrive||0)>=1:!!SHIPS[key]?.engine)&&(s.tech[engine]||0)>=1;}
+
+export function attackSlots(level){return level>=10?4:level>=5?2:level>=1?1:0;}
