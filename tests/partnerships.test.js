@@ -15,10 +15,10 @@ const from='g-helion-p1',to='g-orion-p1';
 test('Invitations require the named recipient; grants are directional and can be withdrawn',()=>{
  let w=cmd(world(),A,{op:'invite',friend:B,delivery:false,defense:false}),id=w.partners[0].id;assert.throws(()=>cmd(w,A,{op:'accept',id}),/eingeladene/);assert.throws(()=>cmd(w,A,{op:'invite',friend:B}),/bereits/);w=cmd(w,B,{op:'accept',id,delivery:true});assert.equal(projectPvP(w,A).social.partners[0].received.delivery,true);assert.equal(projectPvP(w,B).social.partners[0].received.delivery,false);assert.throws(()=>cmd(w,A,{op:'support',from,to,fleet:{waechter:1}}),/Recht/);assert.throws(()=>cmd(w,B,{op:'permissions',id:'wrong',delivery:true}),/nicht gefunden/);
 });
-test('Delivery reserves ships, hulls and both-leg fuel; stock arrives on schedule including overflow',()=>{
+test('Delivery reserves ships, hulls and both-leg fuel; overflow stays aboard and returns to the owner',()=>{
  let w=friends(),source=w.saves[0].state.planets[1],target=w.saves[1].state.planets[1];source.hulls={karawane:[.7]};const info=socialFlight(w.saves[0].state,source,target,{karawane:2},'delivery');assert.equal(info.ms,sharedFlight(w.saves[0].state,source,target,2,'karawane').ms);target.resources.metal=33408.4;
  w=cmd(w,A,{op:'deliver',from,to,fleet:{karawane:2},cargo:vector([1000,500,0])});const m=w.socialMissions[0];assert.equal(m.due,T+info.ms);assert.equal(w.saves[0].state.planets[1].ships.karawane,2);assert.equal(w.saves[0].state.planets[1].resources.fuel,10000-info.fuel);assert.equal(projectPvP(w,'stranger').social.missions.length,0);
- w=processWorld({...w,now:m.due},B,{type:'sync'});assert.equal(w.socialMissions[0].status,'returning');assert.ok(w.saves[1].state.planets[1].depot.metal>0);assert.equal(w.saves[1].state.planets[1].resources.crystal,10500);
+ w=processWorld({...w,now:m.due},B,{type:'sync'});assert.equal(w.socialMissions[0].status,'returning');assert.equal(w.saves[1].state.planets[1].depot.metal,0);assert.ok(w.socialMissions[0].cargo.metal>0);assert.equal(w.saves[1].state.planets[1].resources.crystal,10500);
  w=processWorld({...w,now:T+2*info.ms},A,{type:'sync'});assert.equal(w.saves[0].state.planets[1].ships.karawane,4);assert.deepEqual(w.saves[0].state.planets[1].hulls.karawane,[.7]);const stocks=structuredClone(w.saves);assert.deepEqual(processWorld(w,A,{type:'sync'}).saves,stocks);
 });
 test('Tutorial destinations, own planets, negative cargo, invalid fleet classes and unavailable drives reject atomically',()=>{
@@ -51,4 +51,19 @@ test('Support arriving exactly with an attack defends and reports preserve indiv
 });
 test('Partner UI escapes names, distinguishes ownership and explains consent and reserved barter',()=>{
  const w=friends(),s=w.saves[0].state,projection=projectPvP(w,A).social;projection.partners[0].name='<script>bad</script>';const html=socialView(s,projection,{mode:'trade-offer'});assert.ok(!html.includes('<script>bad'));assert.match(html,/Gegenleistung/);assert.match(html,/Lieferungen auf meine/);assert.match(html,/Erst dann werden Ladung/);assert.match(socialView(s,null),/partnerships.sql/);
+});
+
+test('partner delivery waits at a full origin without creating overflow, then frees ships after spending',()=>{
+ let w=friends();const source=w.saves[0].state.planets[1],target=w.saves[1].state.planets[1];target.resources.metal=33408.4;
+ w=cmd(w,A,{op:'deliver',from,to,fleet:{karawane:1},cargo:vector([1000,0,0])});const m=w.socialMissions[0];w.saves[0].state.planets[1].resources.metal=33408.4;
+ w=processWorld({...w,now:m.due+m.duration},A,{type:'sync'});assert.equal(w.socialMissions[0].awaitingUnload,true);assert.equal(w.socialMissions[0].cargo.metal,1000);assert.equal(w.saves[0].state.planets[1].ships.karawane,3);assert.equal(w.saves[0].state.planets[1].depot.metal,0);
+ const held=structuredClone(w);w=processWorld({...w,now:w.now+86400000},A,{type:'sync'});assert.equal(w.socialMissions[0].cargo.metal,1000);assert.equal(w.saves[0].state.planets[1].ships.karawane,3);
+ w=processWorld(w,A,{type:'command',action:{type:'build',planet:from,key:'warehouse'}});assert.ok(w.socialMissions[0].cargo.metal<1000);w=processWorld({...w,now:w.saves[0].state.planets[1].build.end},A,{type:'sync'});assert.ok(w.socialMissions[0].status==='returned');assert.equal(w.saves[0].state.planets[1].ships.karawane,4);assert.equal(w.saves[0].state.planets[1].depot.metal,0);assert.equal(held.socialMissions[0].status,'returning');
+});
+test('barter waits at a full target, holds payment separately and warehouse completion starts return at its exact time',()=>{
+ let w=friends();w.saves[1].state.planets[1].resources.metal=33408.4;
+ w=cmd(w,A,{op:'trade-offer',from,to,fleet:{karawane:1},cargo:vector([1000,0,0]),payment:vector([0,500,0])});w=cmd(w,B,{op:'trade-accept',id:w.trades[0].id});const due=w.socialMissions[0].due;
+ w=processWorld({...w,now:due},B,{type:'sync'});assert.equal(w.socialMissions[0].awaitingUnload,true);assert.equal(w.socialMissions[0].status,'outbound');assert.equal(w.socialMissions[0].cargo.metal,1000);assert.equal(w.socialMissions[0].payment.crystal,500);assert.equal(w.saves[1].state.planets[1].depot.metal,0);
+ w.saves[1].state.planets[1].build={key:'warehouse',level:5,start:w.now,end:w.now+10000};const direct=processWorld({...w,now:w.now+20000},A,{type:'sync'}),stepped=processWorld({...w,now:w.now+10000},A,{type:'sync'});assert.equal(direct.socialMissions[0].due,due+10000+direct.socialMissions[0].duration);assert.equal(direct.socialMissions[0].cargo.crystal,500);assert.equal(direct.socialMissions[0].cargo.metal,0);assert.equal(direct.socialMissions[0].payment.crystal,0);
+ const again=processWorld({...stepped,now:direct.now},A,{type:'sync'});assert.deepEqual(direct,again);
 });
