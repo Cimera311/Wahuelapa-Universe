@@ -67,3 +67,28 @@ test('barter waits at a full target, holds payment separately and warehouse comp
  w.saves[1].state.planets[1].build={key:'warehouse',level:5,start:w.now,end:w.now+10000};const direct=processWorld({...w,now:w.now+20000},A,{type:'sync'}),stepped=processWorld({...w,now:w.now+10000},A,{type:'sync'});assert.equal(direct.socialMissions[0].due,due+10000+direct.socialMissions[0].duration);assert.equal(direct.socialMissions[0].cargo.crystal,500);assert.equal(direct.socialMissions[0].cargo.metal,0);assert.equal(direct.socialMissions[0].payment.crystal,0);
  const again=processWorld({...stepped,now:direct.now},A,{type:'sync'});assert.deepEqual(direct,again);
 });
+
+for(const origin of ['home','ferrum'])test('Partner delivery can launch from '+origin+' and returns its ships and damage to that same private planet',()=>{
+ let w=friends(),s=w.saves[0].state;const home=s.planets[0];home.buildings.warehouse=4;home.resources=vector([10000,10000,10000]);home.ships.karawane=2;home.hulls={karawane:[.7]};home.buildings.metal=home.buildings.crystal=home.buildings.fuel=0;
+ if(origin==='ferrum'){const p=structuredClone(home);Object.assign(p,{id:'ferrum',name:'Ferrum'});s.planets.push(p);}const source=s.planets.find(p=>p.id===origin),info=sharedFlight(s,source,w.saves[1].state.planets[1],1,'karawane');
+ w=cmd(w,A,{op:'deliver',from:origin,to,fleet:{karawane:1},cargo:vector([500,0,0])});const m=w.socialMissions[0];assert.equal(m.duration,info.ms);assert.equal(w.saves[0].state.planets.find(p=>p.id===origin).ships.karawane,1);
+ w=processWorld({...w,now:m.due+m.duration},A,{type:'sync'});const returned=w.saves[0].state.planets.find(p=>p.id===origin);assert.equal(w.socialMissions[0].status,'returned');assert.equal(returned.ships.karawane,2);assert.deepEqual(returned.hulls.karawane,[.7]);assert.equal(w.saves[0].state.planets[1].ships.karawane,4);
+});
+test('Homeworld support returns to its private origin after host dismissal or permission withdrawal',()=>{
+ for(const operation of ['dismiss','permissions']){let w=friends();w.saves[0].state.planets[0].ships.waechter=1;w.saves[0].state.planets[0].resources.fuel=10000;
+ w=cmd(w,A,{op:'support',from:'home',to,fleet:{waechter:1}});const m=w.socialMissions[0];w=processWorld({...w,now:m.due},B,{type:'sync'});assert.equal(w.socialMissions[0].status,'stationed');w=cmd(w,B,operation==='dismiss'?{op:'dismiss',id:m.id}:{op:'permissions',id:w.partners[0].id,delivery:true,defense:false});w=processWorld({...w,now:m.due+m.duration},A,{type:'sync'});assert.equal(w.saves[0].state.planets[0].ships.waechter,1);assert.equal(w.saves[0].state.planets[1].ships.waechter,4);assert.equal(w.socialMissions[0].status,'returned');}
+});
+test('Partner delivery overflow waits at the full homeworld and unloads once after room is free',()=>{
+ let w=friends();const p=w.saves[0].state.planets[0];p.buildings.metal=p.buildings.crystal=p.buildings.fuel=0;p.resources=vector([2000,2000,2000]);p.ships.karawane=1;w.saves[1].state.planets[1].resources.metal=33408.4;
+ w=cmd(w,A,{op:'deliver',from:'home',to,fleet:{karawane:1},cargo:vector([500,0,0])});const m=w.socialMissions[0];w.saves[0].state.planets[0].resources.metal=4000;w=processWorld({...w,now:m.due+m.duration},A,{type:'sync'});assert.equal(w.socialMissions[0].awaitingUnload,true);assert.equal(w.saves[0].state.planets[0].ships.karawane,0);assert.equal(w.saves[0].state.planets[0].depot.metal,0);
+ w.saves[0].state.planets[0].resources.metal-=500;w=processWorld(w,A,{type:'sync'});assert.equal(w.socialMissions[0].status,'returned');assert.equal(w.saves[0].state.planets[0].ships.karawane,1);assert.equal(w.saves[0].state.planets[0].resources.metal,4000);assert.equal(processWorld(w,A,{type:'sync'}).saves[0].state.planets[0].ships.karawane,1);
+});
+test('Direct barter from homeworld uses the same private origin for its reserved payment return',()=>{
+ let w=friends();const p=w.saves[0].state.planets[0];p.buildings.metal=p.buildings.crystal=p.buildings.fuel=0;p.resources=vector([2000,2000,2000]);p.ships.karawane=1;
+ w=cmd(w,A,{op:'trade-offer',from:'home',to,fleet:{karawane:1},cargo:vector([500,0,0]),payment:vector([0,250,0])});w=cmd(w,B,{op:'trade-accept',id:w.trades[0].id});const m=w.socialMissions[0];w=processWorld({...w,now:m.due+m.duration},A,{type:'sync'});assert.equal(w.saves[0].state.planets[0].resources.crystal,2250);assert.equal(w.saves[0].state.planets[0].ships.karawane,1);assert.equal(w.socialMissions[0].status,'returned');
+});
+
+test('Generated dashboard command supports homeworld origins and exposes their feature flag',async()=>{
+ const {readFileSync}=await import('node:fs'),code=readFileSync('supabase/dashboard/game-command.ts','utf8').replace(/^import .*?;$/gm,'');const bundled=await import('data:text/javascript;base64,'+Buffer.from('const Deno={serve(){}};\n'+code+'\nexport {processWorld,projectPvP};').toString('base64'));
+ const w=friends();w.saves[0].state.planets[0].ships.waechter=1;w.saves[0].state.planets[0].resources.fuel=10000;const next=bundled.processWorld(w,A,{type:'social',eventId:'20000000-0000-0000-0000-999999999999',action:{op:'support',from:'home',to,fleet:{waechter:1}}});assert.equal(next.socialMissions[0].from,'home');assert.equal(bundled.projectPvP(next,A).features.partnerOrigins,true);
+});

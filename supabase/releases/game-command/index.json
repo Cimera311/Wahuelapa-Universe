@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-11.02",
+  "latest": "2026-10-11.03",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -71,6 +71,13 @@
       "sourceCommit": "66b8a7b273ab031f5d2a3d13b2ae0461269b3341",
       "description": "Restladung bleibt im Frachter; automatische Entladung, gebundene Flotten und Kampfteilnahme statt Lieferdepot.",
       "sha256": "ed3c1c8e4c3a4e7f16ff77f088b9b283e633f89b611be39a9b29f167d2cf3f2a"
+    },
+    {
+      "version": "2026-10-11.03",
+      "createdAt": "2026-10-11T17:58:08.011Z",
+      "sourceCommit": "09336f2a3d3feff189d1cc77e6d5d40a429ee963",
+      "description": "Partnerflotten von Heimat- und Tutorialplaneten; konsistente Rückkehr und kompakte Partnerkarten.",
+      "sha256": "c823f412ae00ac89cbe43602ca0b0dcc19ca21e8bda0e321798d6a919f535d3b"
     }
   ]
 }
