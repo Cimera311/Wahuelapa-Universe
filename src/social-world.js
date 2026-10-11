@@ -10,6 +10,7 @@ const socialCargo=c=>{if(!c||typeof c!=='object'||RES.some(k=>!Number.isSafeInte
 const socialSum=c=>RES.reduce((n,k)=>n+c[k],0);
 function socialPay(p,c){settle(p);if(RES.some(k=>p.resources[k]<c[k]))throw Error('Lokale Ressourcen reichen nicht.');for(const k of RES)p.resources[k]-=c[k];settle(p);}
 function socialPlanet(w,owner,id){const meta=w.planets.find(p=>p.id===id&&p.owner_id===owner&&!p.reserved);const p=getPlanet(socialState(w,owner),id);if(!meta||!p.system)throw Error('Wähle eine besiedelte gemeinsame Galaxiekolonie.');return p;}
+function socialOrigin(w,owner,id){const p=getPlanet(socialState(w,owner),id);return p.system?socialPlanet(w,owner,id):p;}
 export function socialFlight(s,from,to,fleet,kind){
  const entries=Object.entries(fleet||{});if(!entries.length||entries.some(([k,n])=>!Number.isSafeInteger(n)||n<1||SHIPS[k]?.category!==(kind==='support'?'military':'freighter')))throw Error('Wähle verfügbare '+(kind==='support'?'Kriegsschiffe':'Frachter')+' in ganzen Zahlen.');
  let ms=0,fuel=0,slowest='';for(const [key,count] of entries){if((from.ships[key]||0)<count)throw Error('Nicht genügend verfügbare Schiffe.');if(from.system!==to.system&&(!canFlyInterstellar(s,key)||(s.tech[shipFlightEngine(s,key,true)]||0)<1))throw Error('Für interstellare Flüge fehlt ein geeigneter Antrieb.');const leg=sharedFlight(s,from,to,count,key);if(leg.ms>ms){ms=leg.ms;slowest=key;}fuel+=2*leg.fuel;}
@@ -17,7 +18,7 @@ export function socialFlight(s,from,to,fleet,kind){
 }
 function socialReturn(w,m){if(!['outbound','stationed'].includes(m.status))throw Error('Diese Flotte ist bereits auf dem Rückweg.');const duration=m.status==='outbound'?Math.max(1,Math.min(m.duration,w.now-m.startedAt)):m.duration;m.status='returning';m.due=w.now+duration;}
 function socialLaunch(w,uid,a,id,kind,payment=socialZero()){
- const s=socialState(w,uid),from=socialPlanet(w,uid,a.from),target=w.planets.find(p=>p.id===a.to&&!p.reserved&&p.owner_id&&p.owner_id!==uid);if(!target)throw Error('Wähle eine fremde besiedelte Galaxiekolonie.');const owner=target.owner_id,to=socialPlanet(w,owner,a.to);
+ const s=socialState(w,uid),from=socialOrigin(w,uid,a.from),target=w.planets.find(p=>p.id===a.to&&!p.reserved&&p.owner_id&&p.owner_id!==uid);if(!target)throw Error('Wähle eine fremde besiedelte Galaxiekolonie.');const owner=target.owner_id,to=socialPlanet(w,owner,a.to);
  if(!socialGrant(w,owner,uid,kind==='support'?'defense':'delivery'))throw Error('Dein Partner hat dieses Recht nicht freigegeben.');
  if(w.socialMissions.filter(m=>m.owner===uid&&!['returned','lost'].includes(m.status)).length>=20)throw Error('Maximal 20 gemeinsame Flottenaufträge.');
  const f=socialFlight(s,from,to,a.fleet,kind),cargo=kind==='support'?socialZero():socialCargo(a.cargo);
@@ -46,7 +47,7 @@ export function socialAction(w,uid,a,id){
  if(op==='recall'||op==='dismiss'){const m=w.socialMissions.find(m=>m.id===a.id&&m.kind==='support'&&(op==='recall'?m.owner===uid:m.host===uid));if(!m)throw Error('Du darfst diese Flotte nicht zurückschicken.');socialReturn(w,m);return;}
  if(op==='deliver'||op==='support'){socialLaunch(w,uid,a,id,op==='support'?'support':'delivery');return;}
  if(op==='trade-offer'){
-  const from=socialPlanet(w,uid,a.from),target=w.planets.find(p=>p.id===a.to&&!p.reserved&&p.owner_id&&p.owner_id!==uid);if(!target)throw Error('Handelspartner fehlt.');const to=socialPlanet(w,target.owner_id,a.to);
+  const from=socialOrigin(w,uid,a.from),target=w.planets.find(p=>p.id===a.to&&!p.reserved&&p.owner_id&&p.owner_id!==uid);if(!target)throw Error('Handelspartner fehlt.');const to=socialPlanet(w,target.owner_id,a.to);
   if(!socialGrant(w,target.owner_id,uid,'delivery')||!socialGrant(w,uid,target.owner_id,'delivery'))throw Error('Direkter Handel benötigt beidseitiges Lieferrecht.');
   const cargo=socialCargo(a.cargo),payment=socialCargo(a.payment);if(!socialSum(cargo)||!socialSum(payment))throw Error('Angebot und Gegenleistung dürfen nicht leer sein.');socialFlight(s,from,to,a.fleet,'delivery');const cap=fleetCapacity(s,a.fleet);if(socialSum(cargo)>cap||socialSum(payment)>cap)throw Error('Zu wenig Laderaum.');
   if(w.trades.filter(t=>t.owner===uid&&t.status==='offered').length>=10)throw Error('Maximal 10 offene Tauschangebote.');
@@ -60,9 +61,9 @@ export function socialAction(w,uid,a,id){
  }
  throw Error('Unbekannte Partneraktion.');
 }
-export function socialEvents(w){return w.socialMissions.filter(m=>['outbound','returning'].includes(m.status)).flatMap(m=>{if(!m.awaitingUnload)return [{time:m.due,id:m.id,kind:'social',mission:m,order:m.status==='outbound'?1:3}];const p=socialPlanet(w,m.status==='returning'?m.owner:m.host,m.status==='returning'?m.from:m.to);const time=nextCargoSpaceEvent(socialState(w,m.status==='returning'?m.owner:m.host),p);return Number.isFinite(time)?[{time,id:m.id,kind:'social',mission:m,order:1}]:[];});}
+export function socialEvents(w){return w.socialMissions.filter(m=>['outbound','returning'].includes(m.status)).flatMap(m=>{if(!m.awaitingUnload)return [{time:m.due,id:m.id,kind:'social',mission:m,order:m.status==='outbound'?1:3}];const p=m.status==='returning'?socialOrigin(w,m.owner,m.from):socialPlanet(w,m.host,m.to);const time=nextCargoSpaceEvent(socialState(w,m.status==='returning'?m.owner:m.host),p);return Number.isFinite(time)?[{time,id:m.id,kind:'social',mission:m,order:1}]:[];});}
 export function arriveSocial(w,m,time){
- const s=socialState(w,m.owner),from=socialPlanet(w,m.owner,m.from);
+ const s=socialState(w,m.owner),from=socialOrigin(w,m.owner,m.from);
  if(m.status==='returning'){unloadCargo(from,m.cargo);if(cargoPresent(m.cargo)){m.awaitingUnload=true;m.due=time;return;}delete m.awaitingUnload;for(const [k,n] of Object.entries(m.fleet))from.ships[k]+=n;putHulls(from,m.hulls);from.shieldUntil=Math.max(from.shieldUntil||0,m.shieldUntil||0);m.status='returned';socialLog(s,time,'Partnerflotte zurückgekehrt','Schiffe und Ladung auf '+from.name+' eingetroffen.');return;}
  const to=socialPlanet(w,m.host,m.to),host=socialState(w,m.host);
  if(m.kind==='support'){if(!socialGrant(w,m.host,m.owner,'defense')){m.status='returning';m.due=time+m.duration;return;}m.status='stationed';socialLog(s,time,'Verteidigungsflotte stationiert',to.name+' wird von deinen Schiffen unterstützt.');socialLog(host,time,'Verstärkung eingetroffen',s.name+' unterstützt '+to.name+'.');return;}

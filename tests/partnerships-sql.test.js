@@ -38,6 +38,11 @@ test('Partnership database persistence, atomic delivery, private reports and fle
   const building=await runServerCommand(rpc,A,{type:'command',requestId:'60000000-0000-0000-0000-000000000001',action:{type:'build',planet:'g-helion-p1',key:'warehouse'}});now=building.state.planets[1].build.end;
   const done=await runServerCommand(rpc,A,{type:'sync'});assert.ok(!done.pvp.social.missions.some(x=>x.id===m.id));assert.equal(done.state.planets[1].ships.karawane,4);assert.equal(done.state.planets[1].depot.metal,0);assert.equal((await runServerCommand(rpc,A,{type:'sync'})).state.planets[1].ships.karawane,4);
  });
+ await t.test('Support launched from the private homeworld persists and returns there after recall',async()=>{
+  const row=(await db.query('select state from public.game_saves where user_id=$1',[A])).rows[0];const home=row.state.planets[0];home.ships.waechter=1;home.buildings.warehouse=4;home.resources.fuel=10000;await db.query('update public.game_saves set state=$2 where user_id=$1',[A,JSON.stringify(row.state)]);
+  const launched=await call(A,{op:'support',from:'home',to:'g-orion-p1',fleet:{waechter:1}}),m=launched.pvp.social.missions.find(m=>m.from==='home');assert.equal(launched.state.planets[0].ships.waechter,0);now=m.due;const host=await runServerCommand(rpc,B,{type:'sync'});assert.equal(host.pvp.social.missions.find(x=>x.id===m.id).status,'stationed');
+  const recalled=await call(A,{op:'recall',id:m.id});now=recalled.pvp.social.missions.find(x=>x.id===m.id).due;const returned=await runServerCommand(rpc,A,{type:'sync'});assert.equal(returned.state.planets[0].ships.waechter,1);assert.ok(!returned.pvp.social.missions.some(x=>x.id===m.id));
+ });
  await t.test('Support owner receives private persistent battle reports and trace access; strangers do not',async()=>{
   const C='00000000-0000-0000-0000-000000000003';await db.query('insert into auth.users values($1)',[C]);await db.query('insert into public.game_saves(user_id,state) values($1,$2)',[C,JSON.stringify(seed.saves[0].state)]);
   const id='50000000-0000-0000-0000-000000000001',report={at:now,outcome:'defender',rounds:[],supporting:[{owner:A,commander:'Ally',before:{waechter:2},after:{waechter:1}}],trace:{version:1,ruleVersion:2,initial:[],final:[],rounds:[]}};
