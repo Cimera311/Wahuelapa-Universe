@@ -397,7 +397,20 @@ function forecastShipJobs(s) {
     const ratio = stats(s, p).ratio;
     j.paused = ratio === 0 && j.workRemaining > 0;
     j.end = s.time + Math.max(1, Math.ceil(j.workRemaining / (ratio || 1)));
+    let work = j.workRemaining;
+    for (const queued of p.shipqueue || []) {
+      work += queued.workTotal;
+      queued.paused = ratio === 0;
+      queued.end = s.time + Math.max(1, Math.ceil(work / (ratio || 1)));
+    }
   }
+}
+var SHIP_QUEUE_LIMIT = 50;
+function shipOrders(p) {
+  return [p.shipjob, ...p.shipqueue || []].filter(Boolean);
+}
+function nextShipOrder(p) {
+  p.shipjob = (p.shipqueue || []).shift() || null;
 }
 function produce(s, ms2) {
   for (const p of s.planets) {
@@ -436,7 +449,7 @@ function pay(p, c) {
   settle(p);
 }
 function defenseSlots(p) {
-  return Object.entries(SHIPS).reduce((a, [k, sh]) => a + (sh.slots || 0) * (p.ships[k] || 0), 0) + (SHIPS[p.shipjob?.key]?.slots || 0) * (p.shipjob?.count || 0);
+  return Object.entries(SHIPS).reduce((a, [k, sh]) => a + (sh.slots || 0) * (p.ships[k] || 0), 0) + shipOrders(p).reduce((a, j) => a + (SHIPS[j.key]?.slots || 0) * j.count, 0);
 }
 function shipRefund(job) {
   if (!job) return { resources: vector([0, 0, 0]), salvage: vector([0, 0, 0]), legacyDefense: false };
@@ -694,7 +707,7 @@ function advance(s, now) {
       if (p.shipjob && p.shipjob.workRemaining === 0) {
         const j = p.shipjob;
         p.ships[j.key] += j.count;
-        p.shipjob = null;
+        nextShipOrder(p);
         report(s, "Schiffbau abgeschlossen", `${p.name}: ${j.count} \xD7 ${SHIPS[j.key].name}.`);
       }
     }
@@ -759,17 +772,22 @@ function act(s, action, now = Date.now()) {
     pay(p, info.cost);
     n.research = { key: action.key, level: n.tech[action.key] + 1, start: n.time, end: n.time + info.ms, planet: p.id };
   } else if (action.type === "ship") {
-    const info = shipInfo(n, p, action.key, action.count);
-    if (info.reason) throw Error(info.reason);
-    if (p.shipjob) throw Error("Die Schiffswerft ist besch\xE4ftigt.");
     const count = action.count;
     if (!Number.isSafeInteger(count) || count < 1) throw Error("W\xE4hle eine positive ganze Anzahl Schiffe.");
+    const info = shipInfo(n, p, action.key, count);
+    if (info.reason) throw Error(info.reason);
+    if (shipOrders(p).length >= SHIP_QUEUE_LIMIT) throw Error("Die Bauwarteschlange ist voll (50 Auftr\xE4ge).");
+    if (!Number.isSafeInteger(info.ms) || n.time + info.ms > 864e13 || RES.some((k) => !Number.isSafeInteger(info.cost[k]) || info.cost[k] > 1e12)) throw Error("Dieser Bauauftrag ist zu gro\xDF.");
     if (p.defenseSalvage) for (const k of RES) p.defenseSalvage[k] -= info.salvage[k];
     pay(p, info.cost);
-    p.shipjob = { id: ++n.seq, key: action.key, count, start: n.time, end: n.time + info.ms, workTotal: info.ms, workRemaining: info.ms, payment: { resources: { ...info.cost }, salvage: { ...info.salvage } } };
+    const job = { id: ++n.seq, key: action.key, count, start: n.time, end: n.time + info.ms, workTotal: info.ms, workRemaining: info.ms, payment: { resources: { ...info.cost }, salvage: { ...info.salvage } } };
+    if (p.shipjob) {
+      p.shipqueue ??= [];
+      p.shipqueue.push(job);
+    } else p.shipjob = job;
   } else if (action.type === "cancel-ship") {
-    const j = p.shipjob, o = action.order;
-    if (!j) throw Error("Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen.");
+    const o = action.order, j = o?.id !== void 0 ? shipOrders(p).find((j2) => j2.id === o.id) : p.shipjob;
+    if (!j) throw Error("Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen. Der Bauauftrag hat sich ge\xE4ndert. Bitte die Ansicht aktualisieren.");
     if (!o || ["key", "count", "start"].some((k) => o[k] !== j[k]) || (j.id !== void 0 ? o.id !== j.id : o.end !== (j.orderEnd ?? j.end))) throw Error("Der Bauauftrag hat sich ge\xE4ndert. Bitte die Ansicht aktualisieren.");
     const refund = shipRefund(j);
     for (const k of RES) {
@@ -778,7 +796,8 @@ function act(s, action, now = Date.now()) {
       p.defenseSalvage[k] += refund.salvage[k];
     }
     settle(p);
-    p.shipjob = null;
+    if (j === p.shipjob) nextShipOrder(p);
+    else p.shipqueue = p.shipqueue.filter((q) => q !== j);
     report(n, "Schiffsbau abgebrochen", p.name + ": " + j.count + " \xD7 " + SHIPS[j.key].name + ". Rohstoffe zur\xFCckerstattet; \xDCbersch\xFCsse bleiben im Lieferdepot." + (refund.legacyDefense ? " Metall und Kristall des alten Verteidigungsauftrags bleiben als Reparaturmaterial verf\xFCgbar." : ""));
   } else if (action.type === "probe" || action.type === "colony" || action.type === "transport") {
     const ship = action.type === "probe" ? "probe" : action.type === "colony" ? "colony" : "transport";
@@ -1175,20 +1194,31 @@ function validateSave(input) {
     check(job(p.build, BUILDINGS) && (!p.build || p.build.level === p.buildings[p.build.key] + 1));
     check(job(p.shipjob, SHIPS) && (!p.shipjob || integer(p.shipjob.count, Number.MAX_SAFE_INTEGER) && p.shipjob.count > 0));
   }
-  for (const p of s.planets) if (p.shipjob) {
-    const j = p.shipjob;
-    if (j.workTotal !== void 0 || j.workRemaining !== void 0) {
-      check(isNum(j.workTotal, 864e13) && j.workTotal > 0 && isNum(j.workRemaining, j.workTotal) && typeof j.paused === "boolean");
-      if (j.orderEnd !== void 0) check(isNum(j.orderEnd, 864e13) && j.orderEnd > j.start);
+  const shipIds = [];
+  for (const p of s.planets) {
+    p.shipqueue ??= [];
+    check(Array.isArray(p.shipqueue) && p.shipqueue.length + (p.shipjob ? 1 : 0) <= SHIP_QUEUE_LIMIT && (!p.shipqueue.length || !!p.shipjob));
+    for (const j of [p.shipjob, ...p.shipqueue].filter(Boolean)) {
+      check(job(j, SHIPS) && integer(j.count, Number.MAX_SAFE_INTEGER) && j.count > 0);
+      const waiting = j !== p.shipjob;
+      if (j.workTotal !== void 0 || j.workRemaining !== void 0) {
+        check(isNum(j.workTotal, 864e13) && j.workTotal > 0 && isNum(j.workRemaining, j.workTotal) && typeof j.paused === "boolean");
+        if (j.orderEnd !== void 0) check(isNum(j.orderEnd, 864e13) && j.orderEnd > j.start);
+      }
+      if (waiting) check(j.workRemaining === j.workTotal && j.payment !== void 0 && j.id !== void 0);
+      if (j.id !== void 0) {
+        check(integer(j.id, s.seq) && j.id > 0);
+        shipIds.push(j.id);
+      }
+      if (j.payment !== void 0) check(j.payment && cargo(j.payment.resources) && cargo(j.payment.salvage) && RES.every((k, i) => Number.isSafeInteger(j.payment.resources[k]) && Number.isSafeInteger(j.payment.salvage[k]) && j.payment.resources[k] + j.payment.salvage[k] === SHIPS[j.key].cost[i] * j.count) && j.payment.salvage.fuel === 0 && (SHIPS[j.key].category === "defense" || RES.every((k) => j.payment.salvage[k] === 0)));
     }
-    if (j.id !== void 0) check(integer(j.id, s.seq) && j.id > 0);
-    if (j.payment !== void 0) check(j.payment && cargo(j.payment.resources) && cargo(j.payment.salvage) && RES.every((k) => Number.isSafeInteger(j.payment.resources[k]) && Number.isSafeInteger(j.payment.salvage[k])) && j.payment.salvage.fuel === 0 && (SHIPS[j.key].category === "defense" || RES.every((k) => j.payment.salvage[k] === 0)));
   }
+  check(new Set(shipIds).size === shipIds.length);
   check(job(s.research, TECHS) && (!s.research || s.research.level === s.tech[s.research.key] + 1 && ids.includes(s.research.planet)));
   check(Array.isArray(s.discovered) && s.discovered.length <= 3 && new Set(s.discovered).size === s.discovered.length && s.discovered.every((id) => TARGETS.some((t) => t.id === id)));
   check(Array.isArray(s.missions) && s.missions.length <= 100);
   const fleetOK = (f, military = false) => f && typeof f === "object" && !Array.isArray(f) && Object.keys(f).length > 0 && Object.entries(f).every(([k, n]) => (isFreighter(k) || military && ["military", "civil"].includes(SHIPS[k]?.category)) && integer(n, Number.MAX_SAFE_INTEGER) && n > 0);
-  const eventIds = [];
+  const eventIds = [...shipIds];
   const order = (o) => o && RES.every((k) => o[k] === "max" || integer(o[k], 1e12));
   for (const m of s.missions) {
     check(integer(m.id, s.seq) && m.id > 0 && ids.includes(m.from) && ["probe", "colony", "transport", "deliver", "collect", "station", "route"].includes(m.type) && Object.hasOwn(SHIPS, m.ship) && integer(m.count, Number.MAX_SAFE_INTEGER) && m.count > 0 && cargo(m.cargo) && ["outbound", "return"].includes(m.phase) && isNum(m.start, 864e13) && m.start <= s.time && isNum(m.due, 864e13) && m.due >= s.time && isNum(m.duration, 864e5) && m.duration > 0);
@@ -1543,7 +1573,7 @@ function projectPvP(w, uid) {
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
     social: socialProjection(w, uid),
-    features: { partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
+    features: { shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,
