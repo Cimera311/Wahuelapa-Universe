@@ -1,4 +1,10 @@
 export const GAME_NEWS=[
+ {date:'11.10.2026',title:'Deine gesamte Flotte im Überblick',status:'Flottenübersicht 0.5.3',items:[
+ 'Die Gesamtübersicht lässt sich zwischen Nach Schiff und Nach Planet umschalten. So siehst du die Orbitbestände aller eigenen Planeten und wo deine Schiffe liegen.',
+ 'Kategorien für Transport, Kampf, Sonden & Kolonie und Verteidigung helfen beim Filtern. Am Desktop stehen die Karten nebeneinander, mobil lassen sich ihre Details aufklappen.',
+ 'Unterwegs nutzt das vertraute Handelsrouten-Design mit passenden Informationen zum jeweiligen Auftrag. Handelsrouten lassen sich auch hier bearbeiten, pausieren und beenden.',
+ 'Galaxieflüge, eigene Angriffe und Partnerflotten sind ebenfalls sichtbar. Fliegende und beim Partner stationierte Schiffe werden getrennt vom Orbitbestand deiner Planeten angezeigt.'
+ ]},
  {date:'11.10.2026',title:'Kompakte Werft mit direktem Schiffbau',status:'Werft-Update 0.5.2',items:[
  'Bild, Schiffname, Ressourcen als Symbol und Menge, Bauzeit, Mengenwahl und Bauen bleiben auch eingeklappt sichtbar – mobil und am Desktop.',
  'Beschreibung, Laderaum, Tempo, Verbrauch und Voraussetzungen lassen sich je Schiff aufklappen.',
