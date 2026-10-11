@@ -1,4 +1,9 @@
 export const GAME_NEWS=[
+ {date:'11.10.2026',title:'Flottenversand bei unterschiedlichen Serverständen',status:'Korrektur 0.5.1',items:[
+ 'Liefern, Abholen und Stationieren mit einem Schiffstyp senden wieder beide unterstützten Anfrageformate. Damit funktionieren diese Aufträge auch während eines noch ausstehenden Backend-Updates.',
+ 'Gemischte Flotten prüfen vor dem Versand die Serverunterstützung. Ein veralteter Server führt zu einem klaren Hinweis statt einer irreführenden Schiffsfehlermeldung.',
+ 'Übersteigt eine gespeicherte Auswahl den aktuellen Schiffsbestand, zeigt das Formular gewählte und verfügbare Anzahl an.'
+ ]},
  {date:'11.10.2026',title:'Dein Imperium auf einen Blick',status:'Übersicht-Update 0.5',items:[
  'Kompakte Übersicht für Browser und Mobilgerät: kleinere Planetenansicht und aufgeräumte Bauaufträge mit aufklappbaren Details.',
  'Produktion pro Stunde zwischen dem gesamten Imperium und der aktiven Welt umschalten. Die tatsächliche Förderleistung berücksichtigt planetare Faktoren und Strommangel.',
