@@ -23,15 +23,15 @@ test('Orders keep unsent amounts when navigating through another group',t=>{
  const {doc,w,api}=ui(t);api.show('orders');input(w,doc.querySelector('#fleet-order-form [name="metal"]'),321);
  group(doc,'hangar');group(doc,'trade');assert.equal(doc.querySelector('#fleet-order-form [name="metal"]').value,'321');
 });
-test('Mobile arrows stay within the selected group; desktop More closes with Escape',t=>{
- const {doc,w,api}=ui(t);w.matchMedia=()=>({matches:true});api.show('hangar');
+test('Group navigation uses the same direct sections and keyboard behavior at every width',t=>{
+ const {doc,w,api}=ui(t);api.show('hangar');
  doc.getElementById('fleet-tab-hangar').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
  assert.equal(doc.getElementById('fleet-pane-overview').hidden,false);
  assert.equal(doc.activeElement.id,'fleet-tab-overview');
- w.matchMedia=()=>({matches:false});doc.querySelector('[data-action="fleet-more"]').click();
- assert.equal(doc.querySelector('[data-action="fleet-more"]').getAttribute('aria-expanded'),'true');
- doc.querySelector('[data-action="fleet-more"]').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
- assert.equal(doc.querySelector('[data-action="fleet-more"]').getAttribute('aria-expanded'),'false');
+ assert.equal(doc.querySelector('[data-action="fleet-more"]'),null);
+ group(doc,'pvp');assert.deepEqual([...doc.querySelectorAll('.fleet-nav-sections button')].map(b=>b.dataset.section),['pvp','defense','partners']);
+ doc.getElementById('fleet-tab-pvp').dispatchEvent(new w.KeyboardEvent('keydown',{key:'End',bubbles:true}));
+ assert.equal(doc.activeElement.id,'fleet-tab-partners');
 });
 test('Attack and defense split the existing UI while retaining repair, reports and alerts',t=>{
  const {doc,api}=ui(t),state=api.state(),pvp={enabled:true,serverNow:state.time,colonies:[],incoming:[{commander:'Enemy',to:'home',arrival:state.time+60000}],outgoing:[],reports:[],features:{combatRules:2}};

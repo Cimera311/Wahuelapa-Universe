@@ -15,7 +15,8 @@ test('Return flight progress uses the current leg, not the original departure',(
  assert.deepEqual(fleetMissionProgress({start:0,duration:1000,due:2000,phase:'return'},1500),{start:1000,end:2000,percent:50});
 });
 test('Grouping and filtering work globally, preserve disclosures and do not switch the active planet',t=>{
- const {doc,api}=ui(t);api.show('hangar');doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();
+ const {doc,api}=ui(t);api.show('hangar');doc.querySelector('[data-action="fleet-group-nav"][data-group="hangar"]').click();
+ doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();
  const active=api.state().active,card=doc.querySelector('[data-fleet-detail="ship:karawane"]');
  assert.match(card.textContent,/10 im Orbit/);card.open=false;
  doc.querySelector('[data-action="fleet-group"][data-value="planet"]').click();
@@ -31,6 +32,7 @@ test('Overview route ignores route search and its edit button opens the route ed
  const {w,doc,api}=ui(t),s=api.state();
  s.missions.push({id:800,type:'route',name:'Test route',fleet:{karawane:1},ship:'karawane',count:1,from:s.planets[0].id,to:s.planets[1].id,home:s.planets[0].id,stops:s.planets.map(p=>({planet:p.id,load:{},unload:{}})),rounds:0,repeat:true,start:s.time,due:s.time+60000,duration:60000,cargo:{metal:20,crystal:0,fuel:0}});
  api.show('routes');input(w,doc.getElementById('route-search'),'nothing matches');
+ doc.querySelector('[data-action="fleet-group-nav"][data-group="hangar"]').click();
  doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();
  const overview=doc.getElementById('fleet-pane-overview'),route=overview.querySelector('.trade-route');
  assert.equal(route.hidden,false);assert.equal(route.querySelector('[role="progressbar"]').getAttribute('aria-valuemax'),'100');
@@ -42,7 +44,8 @@ test('Overview route ignores route search and its edit button opens the route ed
 test('Own partner and attack fleets use mission cards without adding foreign fleets to orbit totals',t=>{
  const {doc,api}=ui(t),s=api.state(),from=s.planets[0].id,to=s.planets[1].id;
  api.attach({pvp:{incoming:[],outgoing:[{id:'attack',from,to,status:'returning',fleet:{falke:3},arrival:s.time-1000,returnAt:s.time+1000}],social:{partners:[],missions:[{id:'own',own:true,kind:'support',status:'stationed',hostName:'Partner',from,to,fleet:{falke:5}},{id:'foreign',own:false,kind:'support',status:'stationed',hostName:'Foreign',from,to,fleet:{falke:99}}]}}});
- api.show('hangar');doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();
+ api.show('hangar');doc.querySelector('[data-action="fleet-group-nav"][data-group="hangar"]').click();
+ doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();
  const overview=doc.getElementById('fleet-pane-overview');
  assert.match(overview.textContent,/Angriffe & Partnerflotten · 2/);
  assert.equal(overview.querySelectorAll('[data-social-op="recall"]').length,1);
@@ -52,5 +55,6 @@ test('Own partner and attack fleets use mission cards without adding foreign fle
 });
 
 test('Waiting freighters show bound ships and remaining cargo without a flight countdown',t=>{
- const {doc,api}=ui(t),s=api.state();s.missions.push({id:900,type:'transport',ship:'transport',count:1,from:s.planets[0].id,to:s.planets[1].id,phase:'return',awaitingUnload:s.planets[0].id,cargo:{metal:123,crystal:0,fuel:0},start:s.time-60000,due:s.time,duration:60000});api.show('hangar');doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();const card=doc.querySelector('.fleet-travel-card');assert.match(card.textContent,/Wartet auf Lagerplatz/);assert.match(card.textContent,/123/);assert.match(card.textContent,/Restladung bleibt an Bord/);assert.equal(card.querySelector('[data-due]'),null);assert.equal(card.querySelector('[role="progressbar"]').hidden,true);
+ const {doc,api}=ui(t),s=api.state();s.missions.push({id:900,type:'transport',ship:'transport',count:1,from:s.planets[0].id,to:s.planets[1].id,phase:'return',awaitingUnload:s.planets[0].id,cargo:{metal:123,crystal:0,fuel:0},start:s.time-60000,due:s.time,duration:60000});api.show('hangar');doc.querySelector('[data-action="fleet-group-nav"][data-group="hangar"]').click();
+ doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();const card=doc.querySelector('.fleet-travel-card');assert.match(card.textContent,/Wartet auf Lagerplatz/);assert.match(card.textContent,/123/);assert.match(card.textContent,/Restladung bleibt an Bord/);assert.equal(card.querySelector('[data-due]'),null);assert.equal(card.querySelector('[role="progressbar"]').hidden,true);
 });
