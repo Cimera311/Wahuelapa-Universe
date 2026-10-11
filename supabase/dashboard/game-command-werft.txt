@@ -946,6 +946,10 @@ function socialPlanet(w, owner, id) {
   if (!meta || !p.system) throw Error("W\xE4hle eine besiedelte gemeinsame Galaxiekolonie.");
   return p;
 }
+function socialOrigin(w, owner, id) {
+  const p = getPlanet(socialState(w, owner), id);
+  return p.system ? socialPlanet(w, owner, id) : p;
+}
 function socialFlight(s, from, to, fleet, kind) {
   const entries = Object.entries(fleet || {});
   if (!entries.length || entries.some(([k, n]) => !Number.isSafeInteger(n) || n < 1 || SHIPS[k]?.category !== (kind === "support" ? "military" : "freighter"))) throw Error("W\xE4hle verf\xFCgbare " + (kind === "support" ? "Kriegsschiffe" : "Frachter") + " in ganzen Zahlen.");
@@ -969,7 +973,7 @@ function socialReturn(w, m) {
   m.due = w.now + duration;
 }
 function socialLaunch(w, uid, a, id, kind, payment = socialZero()) {
-  const s = socialState(w, uid), from = socialPlanet(w, uid, a.from), target = w.planets.find((p) => p.id === a.to && !p.reserved && p.owner_id && p.owner_id !== uid);
+  const s = socialState(w, uid), from = socialOrigin(w, uid, a.from), target = w.planets.find((p) => p.id === a.to && !p.reserved && p.owner_id && p.owner_id !== uid);
   if (!target) throw Error("W\xE4hle eine fremde besiedelte Galaxiekolonie.");
   const owner = target.owner_id, to = socialPlanet(w, owner, a.to);
   if (!socialGrant(w, owner, uid, kind === "support" ? "defense" : "delivery")) throw Error("Dein Partner hat dieses Recht nicht freigegeben.");
@@ -1030,7 +1034,7 @@ function socialAction(w, uid, a, id) {
     return;
   }
   if (op === "trade-offer") {
-    const from = socialPlanet(w, uid, a.from), target = w.planets.find((p) => p.id === a.to && !p.reserved && p.owner_id && p.owner_id !== uid);
+    const from = socialOrigin(w, uid, a.from), target = w.planets.find((p) => p.id === a.to && !p.reserved && p.owner_id && p.owner_id !== uid);
     if (!target) throw Error("Handelspartner fehlt.");
     const to = socialPlanet(w, target.owner_id, a.to);
     if (!socialGrant(w, target.owner_id, uid, "delivery") || !socialGrant(w, uid, target.owner_id, "delivery")) throw Error("Direkter Handel ben\xF6tigt beidseitiges Lieferrecht.");
@@ -1066,13 +1070,13 @@ function socialAction(w, uid, a, id) {
 function socialEvents(w) {
   return w.socialMissions.filter((m) => ["outbound", "returning"].includes(m.status)).flatMap((m) => {
     if (!m.awaitingUnload) return [{ time: m.due, id: m.id, kind: "social", mission: m, order: m.status === "outbound" ? 1 : 3 }];
-    const p = socialPlanet(w, m.status === "returning" ? m.owner : m.host, m.status === "returning" ? m.from : m.to);
+    const p = m.status === "returning" ? socialOrigin(w, m.owner, m.from) : socialPlanet(w, m.host, m.to);
     const time = nextCargoSpaceEvent(socialState(w, m.status === "returning" ? m.owner : m.host), p);
     return Number.isFinite(time) ? [{ time, id: m.id, kind: "social", mission: m, order: 1 }] : [];
   });
 }
 function arriveSocial(w, m, time) {
-  const s = socialState(w, m.owner), from = socialPlanet(w, m.owner, m.from);
+  const s = socialState(w, m.owner), from = socialOrigin(w, m.owner, m.from);
   if (m.status === "returning") {
     unloadCargo(from, m.cargo);
     if (cargoPresent(m.cargo)) {
@@ -1539,7 +1543,7 @@ function projectPvP(w, uid) {
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
     social: socialProjection(w, uid),
-    features: { cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
+    features: { partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,
