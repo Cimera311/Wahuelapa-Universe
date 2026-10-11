@@ -1,4 +1,9 @@
 export const GAME_NEWS=[
+ {date:'11.10.2026',title:'Ein Treffpunkt für alle Commander',status:'Community',items:[
+ 'Chat und Wünsche sind oben neben den News erreichbar. Der Universum-Chat verbindet alle angemeldeten Commander und aktualisiert sich automatisch, solange sein Fenster geöffnet ist.',
+ 'Im Wünsche-Bereich kannst du Ideen veröffentlichen und andere Vorschläge unterstützen. Admins können Wünsche als offen, geplant oder umgesetzt markieren.',
+ 'Beiträge werden gemeinsam auf dem Server gespeichert. Eigene Beiträge lassen sich ausblenden; Entwürfe bleiben bei einem Sendeproblem im geöffneten Fenster erhalten.'
+ ]},
  {date:'11.10.2026',title:'Partnerflotten von deiner Heimatwelt',status:'Partner-Update',items:[
  'Lieferungen, Verteidigungsflotten und direkte Tauschgeschäfte können von jedem eigenen Planeten starten – auch von Heimatwelt und Tutorialkolonien. Partnerziele bleiben freigegebene Kolonien in der gemeinsamen Galaxie.',
  'Rückruf und Rückflug führen zum ursprünglichen Startplaneten. Es gelten weiterhin die passenden Galaxieantriebe, Flugzeiten und Treibstoffkosten; volle Heimatlager lassen Restladung an Bord.',

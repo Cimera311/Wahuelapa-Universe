@@ -1,0 +1,54 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {PGlite} from '@electric-sql/pglite';
+import {createCloud} from '../src/cloud.js';
+import {communityRows} from '../src/community.js';
+import {ui,tick} from './helpers/game-ui.js';
+const A='00000000-0000-0000-0000-000000000001',B='00000000-0000-0000-0000-000000000002';
+const request='10000000-0000-0000-0000-000000000001';
+const entry={id:1,commander:'Alpha',title:'Mehr Planeten',body:'Eine Idee',status:'open',createdAt:'2026-10-11T17:00:00Z',mine:false,deleted:false,voted:false,votes:0};
+test('Community RPC enforces identity, privileges, limits, votes and duplicate protection',async t=>{
+ const db=new PGlite();t.after(()=>db.close());
+ await db.exec(`create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create role anon;create role authenticated;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;create table public.game_saves(user_id uuid primary key,state jsonb);create table public.pvp_admins(user_id uuid primary key);insert into auth.users values('${A}'),('${B}');insert into game_saves values('${A}','{"name":"Alpha","email":"PRIVATE"}'),('${B}','{"name":"Beta"}');`);
+ const sql=readFileSync('supabase/community.sql','utf8');await db.exec(sql);await db.exec(sql);
+ const as=async id=>db.exec(`reset role;select set_config('request.jwt.claim.sub','${id||''}',false);set role authenticated;`);
+ const call=async (kind,op='list',params={})=>(await db.query('select public.imperium_community($1,$2,$3,$4,$5,$6,$7,$8,$9) result',[kind,op,params.id??null,params.title??'',params.body??'',params.before??null,params.request??null,params.vote??null,params.status??null])).rows[0].result;
+ await as(null);await assert.rejects(call('chat'),/AUTH_REQUIRED/);
+ await as(A);await assert.rejects(db.query('select * from public.community_posts'),/permission denied/);
+ await assert.rejects(call('chat','post',{body:'x'.repeat(801),request}),/INVALID_CONTENT/);
+ const first=await call('chat','post',{body:'Hello',request});assert.deepEqual(await call('chat','post',{body:'Hello',request}),first);
+ await assert.rejects(call('chat','post',{body:'Changed',request}),/REQUEST_CONFLICT/);
+ await assert.rejects(call('chat','post',{body:'Spam',request:B}),/RATE_LIMIT/);
+ const wish=await call('wish','post',{title:'A wish',body:'More worlds',request:A});
+ await as(B);const feed=await call('chat');assert.equal(feed.items[0].commander,'Alpha');assert.equal(feed.items[0].mine,false);assert.doesNotMatch(JSON.stringify(feed),/PRIVATE|user_id|00000000/);
+ await assert.rejects(call('chat','delete',{id:first.id}),/FORBIDDEN/);
+ await assert.rejects(call('wish','status',{id:wish.id,status:'done'}),/FORBIDDEN/);
+ await call('wish','vote',{id:wish.id,vote:true});await call('wish','vote',{id:wish.id,vote:true});assert.equal((await call('wish')).items[0].votes,1);
+ await call('wish','vote',{id:wish.id,vote:false});assert.equal((await call('wish')).items[0].votes,0);
+ await db.exec(`reset role;insert into public.pvp_admins values('${B}');`);await as(B);
+ await call('wish','status',{id:wish.id,status:'planned'});assert.equal((await call('wish')).items[0].status,'planned');
+ await call('chat','delete',{id:first.id});const tombstone=(await call('chat')).items[0];assert.equal(tombstone.deleted,true);assert.equal(tombstone.body,'');
+ await db.exec(`reset role;insert into public.community_posts(user_id,request_id,kind,commander,body) select '${A}',md5(i::text)::uuid,'chat','Alpha',i::text from generate_series(1,55) i;`);await as(A);
+ const page=await call('chat');assert.equal(page.items.length,50);assert.equal(page.hasMore,true);const second=await call('chat','list',{before:page.items.at(-1).id});assert.equal(second.hasMore,false);assert.equal(second.items.length,6);
+ await assert.rejects(call('chat','status',{id:first.id,status:'done'}),/POST_NOT_FOUND/);
+});
+test('Community cloud validates responses and keeps game revisions untouched',async()=>{
+ const calls=[];let result={items:[entry],hasMore:false,isAdmin:false};const c=createCloud({auth:{getSession:async()=>({data:{session:{user:{id:A}}}})},rpc:async(name,params)=>{calls.push({name,params});return {data:result};}});
+ await assert.rejects(c.community('chat'),/anmelden/);assert.equal(calls.length,0);await c.session();await c.community('wish');assert.equal(calls[0].name,'imperium_community');assert.equal(c.revision,0);
+ result={items:[{...entry,status:'<script>'}],hasMore:false,isAdmin:false};await assert.rejects(c.community('wish'),/Ungültige/);
+ result={id:1};await c.community('chat',{op:'post',body:'Hallo',request});assert.equal(calls.at(-1).params.p_request,request);
+});
+test('Community escapes user text and omits soft-deleted messages',()=>{
+ const html=communityRows([{...entry,body:'<img src=x onerror=alert(1)>',commander:'<script>',title:'<b>'}],'wish');
+ assert.doesNotMatch(html,/<img|<script>|<b>/);assert.match(html,/&lt;img/);assert.doesNotMatch(html,/data-community-op="delete"/);
+ assert.doesNotMatch(communityRows([{...entry,deleted:true}],'chat'),/Eine Idee/);
+});
+test('Header opens shared chat, preserves failed drafts and separates wishes',async t=>{
+ const {doc,w,api}=ui(t);w.crypto.randomUUID=()=>request;let fail=true;const calls=[];
+ api.attach({user:{id:A},community:async(kind,params)=>{calls.push({kind,params});if(params.op==='post'&&fail)throw Error('Offline');return params.op==='post'?{id:1}:{items:[{...entry,body:'Hallo'}],hasMore:false,isAdmin:false};}});api.render();
+ doc.querySelector('[data-action="community-open"][data-kind="chat"]').click();await tick();
+ const form=doc.querySelector('.community-compose');form.elements.body.value='Hallo';form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();assert.equal(form.elements.body.value,'Hallo');assert.match(doc.querySelector('.community-error').textContent,/Offline/);
+ fail=false;form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();assert.equal(form.elements.body.value,'');const posts=calls.filter(c=>c.params.op==='post');assert.equal(posts[0].params.request,posts[1].params.request);
+ doc.querySelector('[data-action="community-open"][data-kind="wish"]').click();await tick();assert.ok(doc.querySelector('.community-compose [name="title"]'));assert.equal(calls.at(-1).kind,'wish');
+});
