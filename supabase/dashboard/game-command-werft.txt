@@ -405,7 +405,14 @@ function forecastShipJobs(s) {
     }
   }
 }
-var SHIP_QUEUE_LIMIT = 50;
+var SHIP_QUEUE_LIMIT = 20;
+var SHIP_QUEUE_LEGACY_LIMIT = 50;
+function shipQueueCapacity(p) {
+  return Math.min(SHIP_QUEUE_LIMIT, Math.max(0, p.buildings.shipyard));
+}
+function shipQueueFullReason(p) {
+  return shipOrders(p).length >= shipQueueCapacity(p) ? shipQueueCapacity(p) < SHIP_QUEUE_LIMIT ? `Alle Auftragspl\xE4tze belegt. Mehr Pl\xE4tze ab Werftstufe ${shipQueueCapacity(p) + 1}.` : `Alle ${SHIP_QUEUE_LIMIT} Auftragspl\xE4tze belegt. Maximale Warteschlangengr\xF6\xDFe erreicht.` : "";
+}
 function shipOrders(p) {
   return [p.shipjob, ...p.shipqueue || []].filter(Boolean);
 }
@@ -776,7 +783,8 @@ function act(s, action, now = Date.now()) {
     if (!Number.isSafeInteger(count) || count < 1) throw Error("W\xE4hle eine positive ganze Anzahl Schiffe.");
     const info = shipInfo(n, p, action.key, count);
     if (info.reason) throw Error(info.reason);
-    if (shipOrders(p).length >= SHIP_QUEUE_LIMIT) throw Error("Die Bauwarteschlange ist voll (50 Auftr\xE4ge).");
+    const full = shipQueueFullReason(p);
+    if (full) throw Error(full);
     if (!Number.isSafeInteger(info.ms) || n.time + info.ms > 864e13 || RES.some((k) => !Number.isSafeInteger(info.cost[k]) || info.cost[k] > 1e12)) throw Error("Dieser Bauauftrag ist zu gro\xDF.");
     if (p.defenseSalvage) for (const k of RES) p.defenseSalvage[k] -= info.salvage[k];
     pay(p, info.cost);
@@ -1197,7 +1205,7 @@ function validateSave(input) {
   const shipIds = [];
   for (const p of s.planets) {
     p.shipqueue ??= [];
-    check(Array.isArray(p.shipqueue) && p.shipqueue.length + (p.shipjob ? 1 : 0) <= SHIP_QUEUE_LIMIT && (!p.shipqueue.length || !!p.shipjob));
+    check(Array.isArray(p.shipqueue) && p.shipqueue.length + (p.shipjob ? 1 : 0) <= SHIP_QUEUE_LEGACY_LIMIT && (!p.shipqueue.length || !!p.shipjob));
     for (const j of [p.shipjob, ...p.shipqueue].filter(Boolean)) {
       check(job(j, SHIPS) && integer(j.count, Number.MAX_SAFE_INTEGER) && j.count > 0);
       const waiting = j !== p.shipjob;
