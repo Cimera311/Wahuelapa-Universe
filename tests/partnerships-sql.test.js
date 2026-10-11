@@ -43,6 +43,13 @@ test('Partnership database persistence, atomic delivery, private reports and fle
   const launched=await call(A,{op:'support',from:'home',to:'g-orion-p1',fleet:{waechter:1}}),m=launched.pvp.social.missions.find(m=>m.from==='home');assert.equal(launched.state.planets[0].ships.waechter,0);now=m.due;const host=await runServerCommand(rpc,B,{type:'sync'});assert.equal(host.pvp.social.missions.find(x=>x.id===m.id).status,'stationed');
   const recalled=await call(A,{op:'recall',id:m.id});now=recalled.pvp.social.missions.find(x=>x.id===m.id).due;const returned=await runServerCommand(rpc,A,{type:'sync'});assert.equal(returned.state.planets[0].ships.waechter,1);assert.ok(!returned.pvp.social.missions.some(x=>x.id===m.id));
  });
+ await t.test('Ship queues survive SQL snapshots, retries, removals and offline completion',async()=>{
+  const row=(await db.query('select state from public.game_saves where user_id=$1',[A])).rows[0],p=row.state.planets[0];Object.assign(p.buildings,{shipyard:6,solar:20,warehouse:4,metal:0,crystal:0,fuel:0});p.resources=vector([10000,10000,10000]);const before=p.ships.falke;await db.query('update public.game_saves set state=$2 where user_id=$1',[A,JSON.stringify(row.state)]);
+  const first=await runServerCommand(rpc,A,{type:'command',requestId:'70000000-0000-0000-0000-000000000001',action:{type:'ship',planet:'home',key:'falke',count:1}});
+  const request={type:'command',requestId:'70000000-0000-0000-0000-000000000002',action:{type:'ship',planet:'home',key:'transport',count:2}},queued=await runServerCommand(rpc,A,request),retried=await runServerCommand(rpc,A,request);assert.equal(queued.pvp.features.shipQueue,true);assert.equal(retried.state.planets[0].shipqueue.length,1);assert.equal(retried.state.planets[0].resources.metal,queued.state.planets[0].resources.metal);
+  const j=queued.state.planets[0].shipqueue[0],cancel={type:'command',requestId:'70000000-0000-0000-0000-000000000003',action:{type:'cancel-ship',planet:'home',order:{id:j.id,key:j.key,count:j.count,start:j.start,end:j.end}}};const removed=await runServerCommand(rpc,A,cancel);assert.equal(removed.state.planets[0].shipqueue.length,0);assert.equal(removed.state.planets[0].shipjob.id,first.state.planets[0].shipjob.id);assert.equal((await runServerCommand(rpc,A,cancel)).state.planets[0].resources.metal,removed.state.planets[0].resources.metal);
+  const restored=await runServerCommand(rpc,A,{...request,requestId:'70000000-0000-0000-0000-000000000004'});now=restored.state.planets[0].shipqueue[0].end;const finished=await runServerCommand(rpc,A,{type:'sync'});assert.equal(finished.state.planets[0].ships.falke,before+1);assert.equal(finished.state.planets[0].ships.transport,p.ships.transport+2);assert.equal(finished.state.planets[0].shipjob,null);assert.equal(finished.state.planets[0].shipqueue.length,0);
+ });
  await t.test('Support owner receives private persistent battle reports and trace access; strangers do not',async()=>{
   const C='00000000-0000-0000-0000-000000000003';await db.query('insert into auth.users values($1)',[C]);await db.query('insert into public.game_saves(user_id,state) values($1,$2)',[C,JSON.stringify(seed.saves[0].state)]);
   const id='50000000-0000-0000-0000-000000000001',report={at:now,outcome:'defender',rounds:[],supporting:[{owner:A,commander:'Ally',before:{waechter:2},after:{waechter:1}}],trace:{version:1,ruleVersion:2,initial:[],final:[],rounds:[]}};
@@ -50,4 +57,6 @@ test('Partnership database persistence, atomic delivery, private reports and fle
   await db.query("select set_config('request.jwt.claim.sub',$1,false)",[A]);const logs=(await db.query('select public.imperium_battle_log($1,null,0) as data',[id])).rows[0].data;assert.equal(logs.ownSide,'defender');assert.equal(logs.summary.supporting[0].owner,A);assert.equal((await db.query('select count(*)::int as n from public.game_reports where user_id=$1 and mission_id=$2',[A,id])).rows[0].n,1);
   await db.query("select set_config('request.jwt.claim.sub',$1,false)",['00000000-0000-0000-0000-000000000004']);await assert.rejects(db.query('select public.imperium_battle_log($1,null,0)',[id]),/NOT_FOUND/);
  });
+
+
 });

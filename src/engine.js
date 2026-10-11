@@ -39,14 +39,22 @@ function forecastShipJobs(s){for(const p of s.planets){const j=p.shipjob;if(!j)c
  const ratio=stats(s,p).ratio;j.paused=ratio===0&&j.workRemaining>0;
  // Keep paused saves finite. Their end is a placeholder, excluded from scheduling.
  j.end=s.time+Math.max(1,Math.ceil(j.workRemaining/(ratio||1)));
+ let work=j.workRemaining;for(const queued of p.shipqueue||[]){work+=queued.workTotal;queued.paused=ratio===0;queued.end=s.time+Math.max(1,Math.ceil(work/(ratio||1)));}
 }}
+export const SHIP_QUEUE_LIMIT=20;
+// Saves from 2026-10-11.04 may contain 50 already-paid orders; keep every one.
+export const SHIP_QUEUE_LEGACY_LIMIT=50;
+export function shipQueueCapacity(p){return Math.min(SHIP_QUEUE_LIMIT,Math.max(0,p.buildings.shipyard));}
+export function shipQueueFullReason(p){return shipOrders(p).length>=shipQueueCapacity(p)?(shipQueueCapacity(p)<SHIP_QUEUE_LIMIT?`Alle Auftragsplätze belegt. Mehr Plätze ab Werftstufe ${shipQueueCapacity(p)+1}.`:`Alle ${SHIP_QUEUE_LIMIT} Auftragsplätze belegt. Maximale Warteschlangengröße erreicht.`):'';}
+export function shipOrders(p){return [p.shipjob,...p.shipqueue||[]].filter(Boolean);}
+function nextShipOrder(p){p.shipjob=(p.shipqueue||[]).shift()||null;}
 function produce(s,ms){for(const p of s.planets){settle(p);const z=stats(s,p);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);if(p.shipjob)p.shipjob.workRemaining=Math.max(0,p.shipjob.workRemaining-ms*z.ratio);}}
 function report(s,title,body){s.reports.unshift({id:++s.seq,time:s.time,title,body});s.reports=s.reports.slice(0,60);}
 export function need(s,p,req){if(!req)return '';if(req.tech&&s.tech[req.tech]<req.level)return `Benötigt ${TECHS[req.tech].name} Stufe ${req.level}.`;if(req.building&&p.buildings[req.building]<req.level)return `Benötigt ${BUILDINGS[req.building].name} Stufe ${req.level}.`;return '';}
 export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key];return {cost:costAt(b,l),ms:Math.ceil(b.time*Math.pow(1.35,l)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000),reason:need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=(['orbital','bunker'].includes(key)?4:30)?'Maximale Gebäudestufe erreicht.':'')};}
 export function researchInfo(s,p,key){const t=TECHS[key];if(!t)throw Error('Unbekannte Forschung.');const l=s.tech[key];return {cost:costAt(t,l),ms:Math.ceil(t.time*Math.pow(1.5,l)*Math.pow(key==='military'?1.5:1,Math.max(0,l-4))/Math.max(1,1+(p.buildings.lab-1)*.15)*1000),reason:(key==='colonization'&&l>=3&&l<t.max?need(s,p,{tech:['ramjet','impulse','hyperspace'][l-3],level:1}):'')||(p.buildings.lab<t.lab?`Benötigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.`:need(s,p,t.requires)||(l>=t.max?'Maximale Forschungsstufe erreicht.':''))};}
 function pay(p,c){settle(p);for(const k of RES)if(!Number.isFinite(c[k])||c[k]<0||p.resources[k]+1e-8<c[k])throw Error('Nicht genügend lokale Ressourcen.');for(const k of RES)p.resources[k]=Math.max(0,p.resources[k]-c[k]);settle(p);}
-export function defenseSlots(p){return Object.entries(SHIPS).reduce((a,[k,sh])=>a+(sh.slots||0)*(p.ships[k]||0),0)+(SHIPS[p.shipjob?.key]?.slots||0)*(p.shipjob?.count||0);}
+export function defenseSlots(p){return Object.entries(SHIPS).reduce((a,[k,sh])=>a+(sh.slots||0)*(p.ships[k]||0),0)+shipOrders(p).reduce((a,j)=>a+(SHIPS[j.key]?.slots||0)*j.count,0);}
 export function shipRefund(job){
  if(!job)return {resources:vector([0,0,0]),salvage:vector([0,0,0]),legacyDefense:false};
  if(job.payment)return {resources:{...job.payment.resources},salvage:{...job.payment.salvage},legacyDefense:false};
@@ -115,7 +123,7 @@ export function advance(s,now){
   produce(s,Math.max(0,next-s.time));s.time=Math.max(s.time,next);
   // Fixed order: research, buildings, shipbuilding, then missions by id.
   if(s.research&&s.research.end<=s.time){const j=s.research;s.tech[j.key]=j.level;s.research=null;report(s,'Forschung abgeschlossen',`${TECHS[j.key].name} erreicht Stufe ${j.level}.`);}
-  for(const p of s.planets){if(p.build&&p.build.end<=s.time){const j=p.build;p.buildings[j.key]=j.level;p.build=null;report(s,'Ausbau abgeschlossen',`${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);}if(p.shipjob&&p.shipjob.workRemaining===0){const j=p.shipjob;p.ships[j.key]+=j.count;p.shipjob=null;report(s,'Schiffbau abgeschlossen',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}}
+  for(const p of s.planets){if(p.build&&p.build.end<=s.time){const j=p.build;p.buildings[j.key]=j.level;p.build=null;report(s,'Ausbau abgeschlossen',`${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);}if(p.shipjob&&p.shipjob.workRemaining===0){const j=p.shipjob;p.ships[j.key]+=j.count;nextShipOrder(p);report(s,'Schiffbau abgeschlossen',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}}
   for(const m of [...s.missions].sort((a,b)=>a.id-b.id))if(!m.paused&&!m.awaitingUnload&&m.due<=s.time){
    if(m.type==='route'){routeArrival(s,m);}
    else if(m.type==='station'){parkFleet(s,m,m.to,'Flotte stationiert');}
@@ -134,12 +142,12 @@ export function act(s,action,now=Date.now()){
  const n=structuredClone(s);advance(n,now);const p=getPlanet(n,action.planet||n.active);
  if(action.type==='build'){const info=buildInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(p.build)throw Error('Auf diesem Planeten läuft bereits ein Bauauftrag.');pay(p,info.cost);p.build={key:action.key,level:p.buildings[action.key]+1,start:n.time,end:n.time+info.ms};}
  else if(action.type==='research'){const info=researchInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(n.research)throw Error('Es läuft bereits eine imperiumsweite Forschung.');pay(p,info.cost);n.research={key:action.key,level:n.tech[action.key]+1,start:n.time,end:n.time+info.ms,planet:p.id};}
- else if(action.type==='ship'){const info=shipInfo(n,p,action.key,action.count);if(info.reason)throw Error(info.reason);if(p.shipjob)throw Error('Die Schiffswerft ist beschäftigt.');const count=action.count;if(!Number.isSafeInteger(count)||count<1)throw Error('Wähle eine positive ganze Anzahl Schiffe.');if(p.defenseSalvage)for(const k of RES)p.defenseSalvage[k]-=info.salvage[k];pay(p,info.cost);p.shipjob={id:++n.seq,key:action.key,count,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{resources:{...info.cost},salvage:{...info.salvage}}};}
+ else if(action.type==='ship'){const count=action.count;if(!Number.isSafeInteger(count)||count<1)throw Error('Wähle eine positive ganze Anzahl Schiffe.');const info=shipInfo(n,p,action.key,count);if(info.reason)throw Error(info.reason);const full=shipQueueFullReason(p);if(full)throw Error(full);if(!Number.isSafeInteger(info.ms)||n.time+info.ms>8.64e15||RES.some(k=>!Number.isSafeInteger(info.cost[k])||info.cost[k]>1e12))throw Error('Dieser Bauauftrag ist zu groß.');if(p.defenseSalvage)for(const k of RES)p.defenseSalvage[k]-=info.salvage[k];pay(p,info.cost);const job={id:++n.seq,key:action.key,count,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{resources:{...info.cost},salvage:{...info.salvage}}};if(p.shipjob){p.shipqueue??=[];p.shipqueue.push(job);}else p.shipjob=job;}
  else if(action.type==='cancel-ship'){
-  const j=p.shipjob,o=action.order;
-  if(!j)throw Error('Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen.');
+  const o=action.order,j=o?.id!==undefined?shipOrders(p).find(j=>j.id===o.id):p.shipjob;
+  if(!j)throw Error('Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen. Der Bauauftrag hat sich geändert. Bitte die Ansicht aktualisieren.');
   if(!o||['key','count','start'].some(k=>o[k]!==j[k])||(j.id!==undefined?o.id!==j.id:o.end!==(j.orderEnd??j.end)))throw Error('Der Bauauftrag hat sich geändert. Bitte die Ansicht aktualisieren.');
-  const refund=shipRefund(j);for(const k of RES){p.depot[k]+=refund.resources[k];p.defenseSalvage??=vector([0,0,0]);p.defenseSalvage[k]+=refund.salvage[k];}settle(p);p.shipjob=null;
+  const refund=shipRefund(j);for(const k of RES){p.depot[k]+=refund.resources[k];p.defenseSalvage??=vector([0,0,0]);p.defenseSalvage[k]+=refund.salvage[k];}settle(p);if(j===p.shipjob)nextShipOrder(p);else p.shipqueue=p.shipqueue.filter(q=>q!==j);
   report(n,'Schiffsbau abgebrochen',p.name+': '+j.count+' × '+SHIPS[j.key].name+'. Rohstoffe zurückerstattet; Überschüsse bleiben im Lieferdepot.'+(refund.legacyDefense?' Metall und Kristall des alten Verteidigungsauftrags bleiben als Reparaturmaterial verfügbar.':''));
  }
  else if(action.type==='probe'||action.type==='colony'||action.type==='transport'){

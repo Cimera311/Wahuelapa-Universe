@@ -111,6 +111,30 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 @media(max-width:600px){.fleet-overview{padding:16px}.fleet-stock-heading{gap:16px}.fleet-stock-switch{width:100%}.fleet-stock-switch button{flex:1}.fleet-stock-filters{gap:6px;margin:18px 0}.fleet-stock-filters button{padding:9px 12px;font-size:12px}.fleet-stock-grid{grid-template-columns:minmax(0,1fr);gap:10px}.fleet-stock-card>summary{padding:14px;min-height:78px}.fleet-stock-card>summary>img{width:76px;height:52px}.fleet-stock-total{font-size:23px}.fleet-stock-card summary strong{font-size:16px}.fleet-stock-body{margin:0 14px 14px}.fleet-overview .route-card{padding:14px}.fleet-underway-heading{margin-top:24px}}
 
 /* Compact shipyard: core production controls stay visible; only extra information collapses. */
+.ship-queue.panel{padding:16px;margin:0 0 20px;min-width:0}
+.ship-queue-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.ship-queue-heading h2{margin:0;font-size:18px}
+.ship-queue-heading small,.ship-queue-copy small{color:var(--muted);font-size:12px}
+.ship-queue-row{display:grid;grid-template-columns:20px 64px minmax(0,1fr) minmax(100px,auto) 112px;gap:12px;align-items:center;padding:12px 8px;border-top:1px solid var(--line);min-width:0}
+.ship-queue-position{color:var(--muted);font-variant-numeric:tabular-nums;text-align:center}
+.ship-queue-row>img{width:64px;height:64px;object-fit:contain}
+.ship-queue-copy{min-width:0}.ship-queue-name{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.ship-queue-name strong{font-size:15px;overflow-wrap:anywhere}
+.ship-queue-badge{background:var(--cyan);color:#06212d;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px}
+.ship-queue-copy .track{margin:0 0 6px}.ship-queue-time{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.ship-queue .ship-queue-cancel{background:#0a1c2b;margin:0;min-height:44px;justify-self:end;color:#94e4ed;border-color:#35596d;padding:10px 14px}
+.ship-queue-row:not(.active) .ship-queue-cancel{width:44px;padding:0;font-size:26px;color:var(--text)}
+.ship-queue-footer{margin:0;padding-top:10px;border-top:1px solid var(--line);line-height:1.6;font-size:11px}
+.ship-queue-empty{margin:0;line-height:1.6}
+@media(max-width:700px){
+ .ship-queue.panel{padding:12px}.ship-queue-heading{gap:5px}.ship-queue-heading h2{font-size:17px}.ship-queue-heading small{font-size:11px}
+ .ship-queue-row{grid-template-columns:16px 44px minmax(0,1fr) auto;gap:8px;padding:12px 0}
+ .ship-queue-row>img{width:44px;height:44px}.ship-queue-name{gap:5px;margin-bottom:6px}.ship-queue-name strong{font-size:13px}
+ .ship-queue-copy{grid-column:3/5}.ship-queue-time{grid-column:3;grid-row:2;font-size:12px}
+ .ship-queue .ship-queue-cancel{grid-column:4;grid-row:2;padding:8px 10px;font-size:12px}
+ .ship-queue-row:not(.active) .ship-queue-cancel{font-size:24px}.ship-queue-badge{font-size:10px;padding:3px 7px}
+ .ship-queue-copy small{font-size:11px}.ship-queue-footer{font-size:10px}
+}
 .world-grid.ships{grid-template-columns:minmax(0,1fr);gap:12px}
 .ships .compact-ship.panel{display:block;padding:14px;margin:0;min-width:0}
 .ship-build-row{display:grid;grid-template-columns:minmax(140px,1fr) minmax(180px,1fr) minmax(115px,.65fr) auto 48px;gap:12px;align-items:center}

@@ -1,0 +1,7 @@
+{
+  "version": "2026-10-11.05",
+  "createdAt": "2026-10-11T18:46:06.008Z",
+  "sourceCommit": "30591446eab6aaa1ccbedd180397927aa0519d01",
+  "description": "Werftplätze nach Ausbaustufe: ein Auftrag je Stufe, maximal 20; bereits bezahlte Altaufträge bleiben erhalten.",
+  "sha256": "2045b624b21345b7c84d37267e32836f2eda2578228601998d6df52e635028d8"
+}
