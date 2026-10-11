@@ -32,6 +32,8 @@ export function validateSave(input){
   if(m.type==='station')check(m.phase==='outbound');
   if(m.fleet)check(m.type==='route'&&fleetOK(m.fleet)&&m.fleet[m.ship]===m.count);
   if(m.pending)check(m.type==='route'&&fleetOK(m.pending.fleet)&&text(m.pending.name,40)&&m.pending.name.trim().length>0&&typeof m.pending.repeat==='boolean'&&Array.isArray(m.pending.stops)&&m.pending.stops.length>=2&&m.pending.stops.length<=12&&m.pending.stops[0].planet===m.home&&m.pending.stops.every((stop,i)=>ids.includes(stop.planet)&&stop.planet!==m.pending.stops[(i+1)%m.pending.stops.length].planet&&order(stop.load)&&order(stop.unload)));
+  if(m.paused!==undefined)check(m.type==='route'&&typeof m.paused==='boolean'&&(!m.paused||m.index===0&&RES.every(k=>m.cargo[k]===0)));
+  if(m.pauseRequested!==undefined)check(m.type==='route'&&typeof m.pauseRequested==='boolean');
   if(m.type==='route'){
    check(m.phase==='outbound'&&text(m.name,40)&&typeof m.repeat==='boolean'&&typeof m.stopping==='boolean'&&integer(m.rounds,1e12)&&Array.isArray(m.stops)&&m.stops.length>=2&&m.stops.length<=12&&ids.includes(m.home)&&m.stops[0].planet===m.home&&integer(m.index,m.stops.length-1));
    check(m.stops.every((stop,i)=>ids.includes(stop.planet)&&stop.planet!==m.stops[(i+1)%m.stops.length].planet&&order(stop.load)&&order(stop.unload))&&m.to===m.stops[m.index].planet&&m.from===m.stops[(m.index+m.stops.length-1)%m.stops.length].planet);

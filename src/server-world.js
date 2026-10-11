@@ -47,9 +47,14 @@ function resolveAttack(w,m,time){
   m.report={outcome:'cancelled',at:time,reason:'Das Ziel ist nicht mehr angreifbar.'};log(a,time,'Angriff abgebrochen',m.report.reason);return;
  }
  const d=row.state,p=getPlanet(d,m.to),defense={fleet:{...p.ships},tech:{...d.tech},hulls:p.hulls,shieldFactor:shieldFactor(p.shieldUntil,time)};
- const supporting=socialDefense(w,m.defender_id,m.to,time);if(supporting.length)defense.groups=[{id:'host',owner:m.defender_id,commander:d.name,...defense},...supporting];
+ const pausedRoutes=d.missions.filter(r=>r.type==='route'&&r.paused&&r.home===m.to);
+ const parked=pausedRoutes.map(r=>({id:'route:'+r.id,owner:m.defender_id,commander:d.name+' · '+r.name,fleet:{...r.fleet||{[r.ship]:r.count}},hulls:r.hulls,tech:{...d.tech},shieldFactor:shieldFactor(r.shieldUntil,time)}));
+ const supporting=socialDefense(w,m.defender_id,m.to,time);if(supporting.length||parked.length)defense.groups=[{id:'host',owner:m.defender_id,commander:d.name,...defense},...parked,...supporting];
  const result=resolveBattle({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,m.ruleVersion||1);
  const before={...p.ships},homeResult=result.defenderGroups?.find(g=>g.id==='host')||result.defender;
+ for(const r of pausedRoutes){const after=result.defenderGroups.find(g=>g.id==='route:'+r.id);r.fleet=after.fleet;r.hulls=after.hulls;r.shieldUntil=time+300000;if(!Object.keys(r.fleet).length){d.missions=d.missions.filter(x=>x.id!==r.id);log(d,time,'Pausierte Routenflotte zerstört',r.name);}else{[r.ship,r.count]=Object.entries(r.fleet)[0];}}
+ const hostBefore=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,before[k]+parked.reduce((n,g)=>n+(g.fleet[k]||0),0)]));
+ const hostAfter=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,(homeResult.fleet[k]||0)+pausedRoutes.reduce((n,r)=>n+(r.fleet[k]||0),0)]));
  const supportReports=[];for(const group of supporting){const after=result.defenderGroups.find(g=>g.id===group.id),mission=w.socialMissions.find(x=>x.id===group.id);mission.fleet=after.fleet;mission.hulls=after.hulls;mission.shieldUntil=time+300000;if(!Object.keys(after.fleet).length)mission.status='lost';supportReports.push({owner:group.owner,commander:group.commander,before:group.fleet,after:after.fleet});log(stateOf(w,group.owner),time,'PvP-Kampfbericht','Deine Unterstützung auf '+p.name+' hat mitverteidigt. Übrig: '+fleetText(after.fleet));}
  for(const key of Object.keys(SHIPS))p.ships[key]=homeResult.fleet[key]||0;
  p.hulls=homeResult.hulls;p.shieldUntil=time+300000;
@@ -63,7 +68,7 @@ function resolveAttack(w,m,time){
  target.debris??=zero();for(const k of RES)target.debris[k]=field[k]-cargo.salvage[k];
  m.status=Object.keys(result.attacker.fleet).length?'returning':'returned';m.resolved_at=w.now;m.survivors=result.attacker.fleet;m.return_hulls=result.attacker.hulls;m.cargo=cargo.cargo;m.shieldUntil=time+300000;
  if(result.trace)result.trace.participants={attacker:a.name,defender:d.name+(supporting.length?' mit '+supporting.map(g=>g.commander).join(', '):'')};
- m.report={at:time,outcome:result.outcome,ruleVersion:m.ruleVersion||1,traceAvailable:!!result.trace,...(result.trace?{trace:result.trace}:{}),rounds:result.rounds,attackerBefore:m.fleet,attackerAfter:m.survivors,defenderBefore:supporting.length?Object.fromEntries(Object.keys(SHIPS).map(k=>[k,before[k]+supporting.reduce((n,g)=>n+(g.fleet[k]||0),0)])):before,defenderAfter:supporting.length?result.defender.fleet:{...p.ships},...(supporting.length?{supporting:supportReports,hostBefore:before,hostAfter:{...p.ships}}:{}),loot:cargo.loot,salvage:cargo.salvage,debrisLeft:{...target.debris},defenseRepair:result.defenseRepair};
+ m.report={at:time,outcome:result.outcome,ruleVersion:m.ruleVersion||1,traceAvailable:!!result.trace,...(result.trace?{trace:result.trace}:{}),rounds:result.rounds,attackerBefore:m.fleet,attackerAfter:m.survivors,defenderBefore:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,hostBefore[k]+supporting.reduce((n,g)=>n+(g.fleet[k]||0),0)])),defenderAfter:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,result.defender.fleet[k]||0])),hostBefore,hostAfter,...(supporting.length?{supporting:supportReports}:{}),loot:cargo.loot,salvage:cargo.salvage,debrisLeft:{...target.debris},defenseRepair:result.defenseRepair};
  const outcome=result.outcome==='attacker'?'Angreifer gewinnt':result.outcome==='defender'?'Verteidiger gewinnt':'Unentschieden';
  const body=outcome+' · '+target.meta.name+' · '+result.rounds.length+' Runden. Angreifer übrig: '+fleetText(m.survivors)+'. Beute M/K/T: '+RES.map(k=>cargo.loot[k]).join('/')+'. Trümmer geborgen M/K: '+cargo.salvage.metal+'/'+cargo.salvage.crystal+'.';
  log(a,time,'PvP-Kampfbericht',body);log(d,time,'PvP-Kampfbericht',body);
@@ -159,7 +164,7 @@ export function processWorld(snapshot,uid,request){
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,shipyardEnergy:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},homeAttacks:true,protectionMs:COLONY_PROTECTION,
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,arrival:m.arrival_at,returnAt:m.return_at})),
  incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),

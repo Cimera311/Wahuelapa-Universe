@@ -65,13 +65,32 @@ function loadCargo(s,p,cargo,order,count,ship='transport',fleet=null){settle(p);
 function stopCargo(s,m,stop){const p=getPlanet(s,stop.planet),out=vector(RES.map(k=>stop.unload[k]==='max'?m.cargo[k]:Math.min(m.cargo[k],stop.unload[k])));for(const k of RES)m.cargo[k]-=out[k];deliver(p,out);loadCargo(s,p,m.cargo,stop.load,m.count,m.ship,fleetManifest(m));}
 function leaveRoute(s,m,index){const from=m.stops[m.index].planet,to=m.stops[index].planet,f=mixedRouteLeg(s,getPlanet(s,from),getPlanet(s,to),fleetManifest(m));m.from=from;m.to=to;m.index=index;m.start=s.time;m.duration=f.ms;m.due=s.time+f.ms;}
 function parkFleet(s,m,id,title){const p=getPlanet(s,id);deliver(p,m.cargo);for(const [k,n] of Object.entries(fleetManifest(m)))p.ships[k]+=n;putHulls(p,m.hulls);p.shieldUntil=Math.max(p.shieldUntil||0,m.shieldUntil||0);s.missions=s.missions.filter(x=>x.id!==m.id);report(s,title,`${Object.entries(fleetManifest(m)).map(([k,n])=>n+' × '+SHIPS[k].name).join(', ')} im Orbit von ${p.name}. Ladung wurde eingelagert.`);}
+function applyRouteEdit(s,m){
+ if(!m.pending)return;
+ const next=m.pending,p=getPlanet(s,m.home),old=fleetManifest(m);
+ if(Object.entries(next.fleet).some(([k,n])=>p.ships[k]+(old[k]||0)<n))return false;
+ for(const [k,n] of Object.entries(old))p.ships[k]+=n;putHulls(p,m.hulls);
+ for(const [k,n] of Object.entries(next.fleet))p.ships[k]-=n;
+ setFleet(m,next.fleet);m.hulls=takeHulls(p,next.fleet);m.name=next.name;m.stops=structuredClone(next.stops);m.repeat=next.repeat;if(m.paused){m.index=0;m.to=m.home;m.from=m.stops.at(-1).planet;}delete m.pending;
+ report(s,'Routenänderung aktiviert',`${m.name}: Flotte und Stopps am Startplaneten aktualisiert.`);return true;
+}
+function pauseRoute(s,m,reason='Manuell pausiert'){
+ m.paused=true;m.pauseRequested=false;m.pauseReason=reason;
+ report(s,'Handelsroute pausiert',`${m.name}: ${reason}. Schiffe bleiben an die Route gebunden.`);
+}
+function resumeRoute(s,m){
+ const p=getPlanet(s,m.home),f=routeInfo(s,m.stops,fleetManifest(m));
+ if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel)throw Error('Treibstoff reicht nicht für die Runde einschließlich Reserve.');
+ pay(p,vector([0,0,f.fuel]));m.paused=false;m.pauseRequested=false;delete m.pauseReason;stopCargo(s,m,m.stops[0]);leaveRoute(s,m,1);
+}
 function routeArrival(s,m){
  if(m.index===0){deliver(getPlanet(s,m.home),m.cargo);m.cargo=vector([0,0,0]);m.rounds++;report(s,'Handelsrunde abgeschlossen',`${m.name}: Runde ${m.rounds} beendet.`);
-  if(m.pending&&!m.stopping){const next=m.pending,p=getPlanet(s,m.home),old=fleetManifest(m);if(Object.entries(next.fleet).every(([k,n])=>p.ships[k]+(old[k]||0)>=n)){for(const [k,n] of Object.entries(old))p.ships[k]+=n;putHulls(p,m.hulls);for(const [k,n] of Object.entries(next.fleet))p.ships[k]-=n;setFleet(m,next.fleet);m.hulls=takeHulls(p,next.fleet);m.name=next.name;m.stops=structuredClone(next.stops);m.repeat=next.repeat;delete m.pending;report(s,'Routenänderung aktiviert',`${m.name}: Flotte und Stopps am Startplaneten aktualisiert.`);}else report(s,'Routenänderung wartet',`${m.name}: Am Startplaneten fehlen Schiffe; bisherige Route bleibt aktiv.`);}
+  if(m.pending&&!m.stopping&&applyRouteEdit(s,m)===false)report(s,'Routenänderung wartet',`${m.name}: Am Startplaneten fehlen Schiffe; bisherige Route bleibt aktiv.`);
   if(!m.repeat||m.stopping){parkFleet(s,m,m.home,'Handelsroute beendet');return;}
+  if(m.pauseRequested){pauseRoute(s,m);return;}
   const p=getPlanet(s,m.home),f=routeInfo(s,m.stops,fleetManifest(m));
-  if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel){parkFleet(s,m,m.home,'Handelsroute pausiert: Treibstoff fehlt');return;}
-  pay(p,vector([0,0,f.fuel]));stopCargo(s,m,m.stops[0]);leaveRoute(s,m,1);
+  if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel){pauseRoute(s,m,'Treibstoff fehlt');return;}
+  resumeRoute(s,m);
  }else{stopCargo(s,m,m.stops[m.index]);report(s,'Handelsstopp',`${m.name}: ${getPlanet(s,m.to).name} · Runde ${m.rounds+1}.`);leaveRoute(s,m,(m.index+1)%m.stops.length);}
 }
 export function advance(s,now){
@@ -79,13 +98,13 @@ export function advance(s,now){
  let guard=0;
  while(true){
   forecastShipJobs(s);
-  const times=[];for(const p of s.planets){if(p.build)times.push(p.build.end);if(p.shipjob&&!p.shipjob.paused)times.push(p.shipjob.workRemaining===0?s.time:p.shipjob.end);}if(s.research)times.push(s.research.end);for(const m of s.missions)times.push(m.due);
+  const times=[];for(const p of s.planets){if(p.build)times.push(p.build.end);if(p.shipjob&&!p.shipjob.paused)times.push(p.shipjob.workRemaining===0?s.time:p.shipjob.end);}if(s.research)times.push(s.research.end);for(const m of s.missions)if(!m.paused)times.push(m.due);
   const next=Math.min(...times);if(next>now||!Number.isFinite(next))break;if(++guard>100000){for(const m of s.missions)if(m.type==='route'&&!m.stopping){m.stopping=true;report(s,'Handelsroute endet nach langer Abwesenheit',`${m.name}: Die aktuelle Runde wird noch abgeschlossen.`);}guard=0;}
   produce(s,Math.max(0,next-s.time));s.time=Math.max(s.time,next);
   // Fixed order: research, buildings, shipbuilding, then missions by id.
   if(s.research&&s.research.end<=s.time){const j=s.research;s.tech[j.key]=j.level;s.research=null;report(s,'Forschung abgeschlossen',`${TECHS[j.key].name} erreicht Stufe ${j.level}.`);}
   for(const p of s.planets){if(p.build&&p.build.end<=s.time){const j=p.build;p.buildings[j.key]=j.level;p.build=null;report(s,'Ausbau abgeschlossen',`${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);}if(p.shipjob&&p.shipjob.workRemaining===0){const j=p.shipjob;p.ships[j.key]+=j.count;p.shipjob=null;report(s,'Schiffbau abgeschlossen',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}}
-  for(const m of [...s.missions].sort((a,b)=>a.id-b.id))if(m.due<=s.time){
+  for(const m of [...s.missions].sort((a,b)=>a.id-b.id))if(!m.paused&&m.due<=s.time){
    if(m.type==='route'){routeArrival(s,m);}
    else if(m.type==='station'){parkFleet(s,m,m.to,'Flotte stationiert');}
    else if(m.type==='collect'&&m.phase==='outbound'){loadCargo(s,getPlanet(s,m.to),m.cargo,m.order,m.count,m.ship);m.phase='return';m.due=s.time+m.duration;report(s,'Material abgeholt',`${getPlanet(s,m.to).name}: Ladung auf dem Rückweg.`);}
@@ -95,7 +114,7 @@ export function advance(s,now){
    else {deliver(getPlanet(s,m.to),m.cargo);report(s,'Transport angekommen',`${getPlanet(s,m.from).name} → ${getPlanet(s,m.to).name}: ${RES.map(k=>`${Math.round(m.cargo[k])} ${k==='metal'?'Metall':k==='crystal'?'Kristall':'Treibstoff'}`).join(', ')}. Überschüsse bleiben im Lieferdepot.`);m.cargo=vector([0,0,0]);m.phase='return';m.due=s.time+m.duration;}
   }
  }
- produce(s,now-s.time);s.time=now;forecastShipJobs(s);return s;
+ produce(s,now-s.time);s.time=now;for(const m of s.missions)if(m.paused)m.due=now;forecastShipJobs(s);return s;
 }
 export function act(s,action,now=Date.now()){
  // Work on a copy; a rejected command cannot partially mutate the caller.
@@ -119,8 +138,14 @@ export function act(s,action,now=Date.now()){
  }
  else if(action.type==='repair'){const hulls=p.hulls||{},cost=vector(RES.map((k,i)=>i===2?0:Object.entries(hulls).reduce((a,[key,list])=>a+list.reduce((v,hp)=>v+SHIPS[key].cost[i]*.3*(1-hp),0),0)));for(const k of RES)cost[k]=Math.ceil(cost[k]);if(!Object.values(hulls).some(x=>x.length))throw Error('Keine beschädigten Einheiten.');pay(p,cost);p.hulls={};report(n,'Einheiten repariert',p.name);}
  else if(action.type==='reserve'){if(!action.reserves||RES.some(k=>!Number.isSafeInteger(action.reserves[k])||action.reserves[k]<0||action.reserves[k]>1e12))throw Error('Ungültige Reserve.');p.reserves={...action.reserves};}
- else if(action.type==='edit-route'||action.type==='cancel-route-edit'){const m=n.missions.find(m=>m.id===action.id&&m.type==='route');if(!m||m.stopping)throw Error('Diese Route lässt sich nicht mehr bearbeiten.');if(action.type==='cancel-route-edit'){delete m.pending;}else{const fleet=checkedFleet(action.fleet),stops=checkedStops(n,action.stops,m.home);routeInfo(n,stops,fleet);m.pending={name:String(action.name||'Handelsroute').trim().slice(0,40)||'Handelsroute',fleet,stops,repeat:!!action.repeat};report(n,'Routenänderung vorgemerkt',`${m.name}: Aktivierung bei Rückkehr zum Startplaneten.`);}}
- else if(action.type==='stop-route'){const m=n.missions.find(m=>m.id===action.id&&m.type==='route');if(!m)throw Error('Route nicht gefunden.');m.stopping=true;report(n,'Route endet nach dieser Runde',m.name);}
+ else if(action.type==='edit-route'||action.type==='cancel-route-edit'){const m=n.missions.find(m=>m.id===action.id&&m.type==='route');if(!m||m.stopping)throw Error('Diese Route lässt sich nicht mehr bearbeiten.');if(action.type==='cancel-route-edit'){delete m.pending;}else{const fleet=checkedFleet(action.fleet),stops=checkedStops(n,action.stops,m.home);routeInfo(n,stops,fleet);m.pending={name:String(action.name||'Handelsroute').trim().slice(0,40)||'Handelsroute',fleet,stops,repeat:!!action.repeat};if(m.paused){if(applyRouteEdit(n,m)===false)throw Error('Für die Änderung fehlen Schiffe am Startplaneten.');}else report(n,'Routenänderung vorgemerkt',`${m.name}: Aktivierung bei Rückkehr zum Startplaneten.`);}}
+ else if(['pause-route','resume-route','cancel-route-pause'].includes(action.type)){
+ const m=n.missions.find(m=>m.id===action.id&&m.type==='route');if(!m||m.stopping)throw Error('Route nicht verfügbar.');
+ if(action.type==='pause-route'){if(m.paused)throw Error('Route ist bereits pausiert.');m.pauseRequested=true;report(n,'Routenpause vorgemerkt',`${m.name}: Pause nach Rückkehr zum Startplaneten.`);}
+ else if(action.type==='cancel-route-pause'){if(m.paused)throw Error('Route ist bereits pausiert.');m.pauseRequested=false;}
+ else{if(!m.paused)throw Error('Route ist nicht pausiert.');resumeRoute(n,m);report(n,'Route fortgesetzt',m.name);}
+ }
+ else if(action.type==='stop-route'){const m=n.missions.find(m=>m.id===action.id&&m.type==='route');if(!m)throw Error('Route nicht gefunden.');if(m.paused)parkFleet(n,m,m.home,'Handelsroute beendet');else{m.stopping=true;report(n,'Route endet nach dieser Runde',m.name);}}
  else if(['station','collect','route','deliver'].includes(action.type)){
   if(n.missions.length>=100)throw Error('Zu viele Flotten unterwegs.');
   if(action.type!=='route'&&action.type!=='station'&&!isFreighter(action.ship||'transport'))throw Error('Liefern, Abholen und Handelsrouten benötigen Transporter.');
