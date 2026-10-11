@@ -21,16 +21,16 @@ export function validateSave(input){
  check(job(s.research,TECHS)&&(!s.research||s.research.level===s.tech[s.research.key]+1&&ids.includes(s.research.planet)));
  check(Array.isArray(s.discovered)&&s.discovered.length<=3&&new Set(s.discovered).size===s.discovered.length&&s.discovered.every(id=>TARGETS.some(t=>t.id===id)));
  check(Array.isArray(s.missions)&&s.missions.length<=100);
- const fleetOK=f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length>0&&Object.entries(f).every(([k,n])=>isFreighter(k)&&integer(n,Number.MAX_SAFE_INTEGER)&&n>0);
+ const fleetOK=(f,military=false)=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length>0&&Object.entries(f).every(([k,n])=>(isFreighter(k)||military&&['military','civil'].includes(SHIPS[k]?.category))&&integer(n,Number.MAX_SAFE_INTEGER)&&n>0);
  const eventIds=[];
  const order=o=>o&&RES.every(k=>o[k]==='max'||integer(o[k],1e12));
  for(const m of s.missions){
   check(integer(m.id,s.seq)&&m.id>0&&ids.includes(m.from)&&['probe','colony','transport','deliver','collect','station','route'].includes(m.type)&&Object.hasOwn(SHIPS,m.ship)&&integer(m.count,Number.MAX_SAFE_INTEGER)&&m.count>0&&cargo(m.cargo)&&['outbound','return'].includes(m.phase)&&isNum(m.start,8.64e15)&&m.start<=s.time&&isNum(m.due,8.64e15)&&m.due>=s.time&&isNum(m.duration,86400000)&&m.duration>0);
   if(['probe','colony'].includes(m.type)){check(m.ship===m.type&&TARGETS.some(t=>t.id===m.to));check(m.type!=='colony'||m.phase==='outbound'&&m.count===1&&!ids.includes(m.to));}
-  else {check(ids.includes(m.to)&&m.from!==m.to);check(m.type==='station'||isFreighter(m.ship));if(m.type!=='transport'){const total=RES.reduce((a,k)=>a+m.cargo[k],0);const max=m.type==='route'&&m.fleet?Object.entries(m.fleet).reduce((a,[k,n])=>a+Math.floor((SHIPS[k]?.cargo||0)*(1+s.tech.logistics*.15))*n,0):Math.floor(SHIPS[m.ship].cargo*(1+s.tech.logistics*.15))*m.count;check(total<=max);}}
+  else {check(ids.includes(m.to)&&m.from!==m.to);check(m.type==='station'||isFreighter(m.ship));if(m.type!=='transport'){const total=RES.reduce((a,k)=>a+m.cargo[k],0);const max=m.fleet?Object.entries(m.fleet).reduce((a,[k,n])=>a+Math.floor((SHIPS[k]?.cargo||0)*(1+s.tech.logistics*.15))*n,0):Math.floor(SHIPS[m.ship].cargo*(1+s.tech.logistics*.15))*m.count;check(total<=max);}}
   if(m.type==='collect')check(order(m.order));
   if(m.type==='station')check(m.phase==='outbound');
-  if(m.fleet)check(m.type==='route'&&fleetOK(m.fleet)&&m.fleet[m.ship]===m.count);
+  if(m.fleet)check(['route','deliver','collect','station'].includes(m.type)&&fleetOK(m.fleet,m.type==='station')&&m.fleet[m.ship]===m.count);
   if(m.pending)check(m.type==='route'&&fleetOK(m.pending.fleet)&&text(m.pending.name,40)&&m.pending.name.trim().length>0&&typeof m.pending.repeat==='boolean'&&Array.isArray(m.pending.stops)&&m.pending.stops.length>=2&&m.pending.stops.length<=12&&m.pending.stops[0].planet===m.home&&m.pending.stops.every((stop,i)=>ids.includes(stop.planet)&&stop.planet!==m.pending.stops[(i+1)%m.pending.stops.length].planet&&order(stop.load)&&order(stop.unload)));
   if(m.paused!==undefined)check(m.type==='route'&&typeof m.paused==='boolean'&&(!m.paused||m.index===0&&RES.every(k=>m.cargo[k]===0)));
   if(m.pauseRequested!==undefined)check(m.type==='route'&&typeof m.pauseRequested==='boolean');
