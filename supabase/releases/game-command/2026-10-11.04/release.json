@@ -1,0 +1,7 @@
+{
+  "version": "2026-10-11.04",
+  "createdAt": "2026-10-11T18:33:23.998Z",
+  "sourceCommit": "ca85056b5931746f307f59facf2ab0346da6ff4b",
+  "description": "Planetare Werft-Warteschlangen mit bezahlten Folgeaufträgen, automatischem Weiterbau, Einzelabbruch und kompakter Bauübersicht.",
+  "sha256": "f6f34bde53d306f22c26f6db6bb008c048658c41416b8b22df6ffe8dfa22bbda"
+}
