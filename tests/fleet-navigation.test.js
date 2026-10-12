@@ -19,6 +19,15 @@ test('Fleet entry opens overview and groups recall the last section without chan
  assert.deepEqual(FLEET_GROUPS.pvp.sections,['pvp','defense','partners']);
  assert.equal(fleetGroupFor('reports'),'trade');
 });
+test('Reports navigation stays scroll-safe without changing other fleet sections',t=>{
+ const {doc,api}=ui(t);
+ api.show('reports');
+ assert.equal(doc.querySelector('.fleet-navigation').dataset.activeSection,'reports');
+ assert.equal(doc.querySelector('#fleet-pane-reports').hidden,false);
+ api.show('hangar');
+ assert.equal(doc.querySelector('.fleet-navigation').dataset.activeSection,'hangar');
+});
+
 test('Orders keep unsent amounts when navigating through another group',t=>{
  const {doc,w,api}=ui(t);api.show('orders');input(w,doc.querySelector('#fleet-order-form [name="metal"]'),321);
  group(doc,'hangar');group(doc,'trade');assert.equal(doc.querySelector('#fleet-order-form [name="metal"]').value,'321');
