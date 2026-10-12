@@ -55,14 +55,36 @@ export function reportDetail(r,state,galaxy){
  }
  return participants+(r.body?'<p>'+reportEscape(r.body)+'</p>':'')+(p.fleet?'<p>'+(r.kind==='return'?'Zurückgekehrte Angreiferflotte':r.kind==='attack'?'Eingesetzte Angreiferflotte':'Flotte')+': '+reportEscape(reportFleet(p.fleet))+'</p>':'')+(p.cargo?'<p>'+(r.kind==='return'?'Zurückgebrachte Ladung':'Ladung')+': '+reportEscape(reportCargo(p.cargo))+'</p>':'');
 }
+const reportIconPaths={
+ battle:'<path d="M5 3l16 16-3 3L2 6V3h3zm14 0h2v3l-6 6-3-3 7-6zM3 21l6-6"/>',
+ attack:'<path d="M4 19 20 4m-9 0h9v9M4 5l5 5M4 12l4 4"/>',
+ return:'<path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/>',
+ transport:'<path d="M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4"/>',
+ scan:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5M8 11h6m-3-3v6"/>',
+ colony:'<circle cx="12" cy="12" r="8"/><path d="M4.5 15.5 19.5 8M12 2v4m0 12v4M2 12h4m12 0h4"/>',
+ other:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'
+};
+function reportIcon(kind){return '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+reportIconPaths[kind]+'</svg>';}
 export function reportRows(items,state,galaxy,{selectable=false,selected=new Set(),opened=new Set()}={}){
  if(!items.length)return '<p class="muted report-empty">Keine passenden Berichte.</p>';
- let day='';return items.map(original=>{
+ let day='';
+ return items.map(original=>{
   const related=original.missionId&&items.find(q=>q.kind==='battle'&&q.missionId===original.missionId&&q.payload?.ownSide==='attacker');
   const r=related&&['attack','return'].includes(original.kind)?{...original,payload:{...original.payload,commander:original.payload?.commander||related.payload.commander}}:original;
-  const date=new Date(r.time).toLocaleDateString('de-DE'),group=date!==day?'<h3 class="report-day">'+reportEscape(date)+'</h3>':'';day=date;
-  const p=r.payload||{},place=p.to?reportPlanetName(p.to,state,galaxy):'',badge=reportResults[r.outcome]||(p.outcome==='attacker'?'Angreifer gewinnt':p.outcome==='defender'?'Verteidiger gewinnt':'');
-  return group+'<div class="report-list-row">'+(selectable?'<input type="checkbox" data-report-select="'+reportEscape(r.id)+'" aria-label="Bericht auswählen: '+reportEscape(r.title)+'" '+(selected.has(r.id)?'checked':'')+'>':'')+'<details data-report-id="'+reportEscape(r.id)+'" '+(opened.has(r.id)?'open':'')+'><summary><time datetime="'+new Date(r.time).toISOString()+'">'+reportEscape(reportDate(r.time))+'</time><span class="report-row-copy"><strong>'+reportEscape(r.title||reportKinds[r.kind])+'</strong><small>'+reportEscape(['battle','attack','return'].includes(r.kind)?[reportContext(r,state,galaxy).perspective,place,p.commander].filter(Boolean).join(' · '):[place,p.commander].filter(Boolean).join(' · '))+'</small></span><span class="report-badge '+reportEscape(r.outcome||'')+'">'+reportEscape(badge||reportKinds[r.kind]||'Ereignis')+'</span><span class="report-chevron" aria-hidden="true">⌄</span></summary><div class="report-detail">'+reportDetail(r,state,galaxy)+'</div></details></div>';
+  const stamp=new Date(r.time),date=stamp.toLocaleDateString('de-DE'),group=date!==day?'<h3 class="report-day">'+reportEscape(date)+'</h3>':'';day=date;
+  const p=r.payload||{},place=p.to?reportPlanetName(p.to,state,galaxy):'',kind=Object.hasOwn(reportKinds,r.kind)?r.kind:'other';
+  const badge=reportResults[r.outcome]||(p.outcome==='attacker'?'Angreifer gewinnt':p.outcome==='defender'?'Verteidiger gewinnt':'');
+  const detailLine=['battle','attack','return'].includes(r.kind)?[reportContext(r,state,galaxy).perspective,place,p.commander]:[place,p.commander];
+  const caption=detailLine.filter(Boolean).join(' · ')||'Berichtsdetails ansehen';
+  return group+'<div class="report-list-row report-kind-'+kind+'">'+
+   (selectable?'<input class="report-select" type="checkbox" data-report-select="'+reportEscape(r.id)+'" aria-label="Bericht auswählen: '+reportEscape(r.title||reportKinds[kind])+'" '+(selected.has(r.id)?'checked':'')+'>':'')+
+   '<details data-report-id="'+reportEscape(r.id)+'" '+(opened.has(r.id)?'open':'')+'>'+
+   '<summary><span class="report-row-symbol" aria-hidden="true">'+reportIcon(kind)+'</span>'+
+   '<span class="report-row-copy"><strong>'+reportEscape(r.title||reportKinds[kind])+'</strong><small>'+reportEscape(caption)+'</small></span>'+
+   '<time datetime="'+stamp.toISOString()+'"><span class="report-date-full">'+reportEscape(reportDate(r.time))+'</span><span class="report-date-short">'+reportEscape(stamp.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}))+'</span></time>'+
+   '<span class="report-badge '+reportEscape(r.outcome||'')+'">'+reportEscape(badge||reportKinds[kind]||'Ereignis')+'</span>'+
+   '<span class="report-chevron" aria-hidden="true">⌄</span></summary>'+
+   '<div class="report-detail">'+reportDetail(r,state,galaxy)+'</div></details></div>';
  }).join('');
 }
 export function filterReports(items,filters,now){
