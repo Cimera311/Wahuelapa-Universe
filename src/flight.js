@@ -1,6 +1,7 @@
 import {SHIPS,shipFlightEngine} from './config.js';
+import {REALM_CONFIG} from './realm-config.js';
 
-export const GALAXY_FLIGHT_RULE_VERSION=3;
+export const GALAXY_FLIGHT_RULE_VERSION=4;
 export const ENGINE_SPEED_BONUS=.05;
 export const ENGINE_FUEL_BONUS=.12;
 // Retain former level-five flight times while opening levels six through ten.
@@ -16,5 +17,5 @@ export function sharedFlight(s,from,to,count=1,ship='transport',start=s.galaxy){
  const def=SHIPS[ship];if(!def||def.speed<=0)throw Error('Unbekanntes oder unbewegliches Schiff.');
  const distance=sharedDistance(from,to,start),remote=(from.system||'tutorial')!==(to.system||'tutorial');
  const engine=shipFlightEngine(s,ship,remote),factor=1+(s.tech[engine]||0)*ENGINE_SPEED_BONUS,fuelFactor=1+(s.tech[engine]||0)*ENGINE_FUEL_BONUS;
- return {distance,ms:Math.max(60000,Math.ceil((120+distance*45)*FLIGHT_BASE_SCALE*1000/(def.speed*factor))),fuel:Math.ceil(def.fuel*distance*count/fuelFactor)};
+ return {distance,ms:Math.ceil(Math.max(60000,Math.ceil((120+distance*45)*FLIGHT_BASE_SCALE*1000/(def.speed*factor)))*REALM_CONFIG.galaxyFlightTimeFactor),fuel:Math.ceil(def.fuel*distance*count/fuelFactor)};
 }
