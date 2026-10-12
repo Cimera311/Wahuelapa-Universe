@@ -300,11 +300,11 @@ function resolveBattle(attacker, defender, seed, version = COMBAT_RULE_VERSION) 
   }
   return { outcome, attacker: aa, defender: dd, debris, defenseRepair, rounds, ...combatGroups(defender, d), trace: { ...defender.groups ? { defenderGroups: structuredClone(defender.groups) } : {}, version: 1, ruleVersion: 2, seed: String(seed), tech: { attacker: { ...attacker.tech }, defender: { ...defender.tech } }, shieldFactors: { attacker: attacker.shieldFactor ?? 1, defender: defender.shieldFactor ?? 1 }, initial, final: [...a, ...d].map(snapshot), rounds: logs } };
 }
-function loadPlunder(stock, depot, bunker, capacity2, debris, victory, budget = stock) {
+function loadPlunder(stock, depot, bunker, capacity2, debris, victory) {
   const loot = vector([0, 0, 0]), salvage = vector([0, 0, 0]);
   let room = Math.max(0, capacity2);
   if (victory) for (const k of RES) {
-    loot[k] = Math.min(room, Math.floor(Math.max(0, stock[k] + depot[k] - bunker) * 0.25), budget[k]);
+    loot[k] = Math.min(room, Math.floor(Math.max(0, stock[k] + depot[k] - bunker) * 0.25));
     room -= loot[k];
   }
   if (victory) for (const k of RES) {
@@ -1423,15 +1423,10 @@ function resolveAttack(w, m, time) {
   p.defenseSalvage ??= zero();
   for (const k of RES) p.defenseSalvage[k] += result.defenseRepair[k];
   const bunker = Math.min(2e3, capacity(p) * 0.025 * (p.buildings.bunker || 0));
-  if (result.outcome === "attacker" && (!p.raidWindowStart || time - p.raidWindowStart >= DAY)) {
-    p.raidWindowStart = time;
-    p.raidBudget = vector(RES.map((k) => Math.floor(Math.max(0, p.resources[k] + p.depot[k] - bunker) * 0.25)));
-  }
   const cap = fleetCapacity({ tech: m.combat.tech }, result.attacker.fleet);
   const field = vector(RES.map((k) => (target.debris?.[k] || 0) + result.debris[k]));
-  const cargo = loadPlunder(p.resources, p.depot, bunker, cap, field, result.outcome === "attacker", p.raidBudget || zero());
+  const cargo = loadPlunder(p.resources, p.depot, bunker, cap, field, result.outcome === "attacker");
   withdraw(p, cargo.loot);
-  if (p.raidBudget) for (const k of RES) p.raidBudget[k] -= cargo.loot[k];
   target.debris ??= zero();
   for (const k of RES) target.debris[k] = field[k] - cargo.salvage[k];
   m.status = Object.keys(result.attacker.fleet).length ? "returning" : "returned";
