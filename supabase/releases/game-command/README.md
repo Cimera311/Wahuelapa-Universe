@@ -31,7 +31,7 @@ Ab `2026-10-11.05` richtet sich die Zahl neuer Werftaufträge nach der Werftstuf
 ```sh
 cp supabase/dashboard/game-command.ts supabase/dashboard/game-command-gesamt.txt
 cp supabase/dashboard/game-command.ts supabase/dashboard/game-command-werft.txt
-npm run game-command:archive -- 2026-10-12.01 "Beschreibung der Backend-Änderung"
+npm run game-command:archive -- 2026-10-12.03 "Beschreibung der Backend-Änderung"
 npm test
 ```
 
