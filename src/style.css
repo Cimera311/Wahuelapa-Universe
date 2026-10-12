@@ -207,3 +207,165 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 
 .galaxy-v2-player{z-index:2;min-width:80px;max-width:150px}.galaxy-v2-player i{width:9px;height:9px;background:#c7b6ff!important;box-shadow:0 0 12px #b496ef!important;border:1px solid #e1d6ff;border-radius:2px;transform:rotate(45deg);margin-bottom:8px}.galaxy-v2-player strong{font-size:11px;font-weight:normal;max-width:140px}.galaxy-v2-player small{font-size:10px;color:#d1bfff}.galaxy-v2-player.is-me i{background:#65e8cb!important;box-shadow:0 0 14px #65e8cb!important;border-color:#c4fff0}.galaxy-v2-player.is-me small{color:#7defd4}.galaxy-v2-star:focus-visible{outline:2px solid #a0f4ff;outline-offset:3px}.galaxy-v2-map:has(.galaxy-v2-player){min-height:620px}
 @media(max-width:760px){.galaxy-v2-map:has(.galaxy-v2-player){min-height:0}.galaxy-v2-player{display:none}}
+
+
+/* Mobile reports: readable cards and reliable checkbox sizing.
+   Keep presentation independent of the persisted report/selection state. */
+.report-list-row{
+  position:relative;
+  align-items:stretch;
+  min-width:0;
+  transition:border-color .16s ease,box-shadow .16s ease;
+}
+.report-list-row::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  background:#41869d;
+  pointer-events:none;
+}
+.report-list-row.report-kind-attack::before,
+.report-list-row.report-kind-battle::before{background:#d2a55c}
+.report-list-row.report-kind-scan::before{background:#78b7e8}
+.report-list-row.report-kind-colony::before{background:#b4a4ff}
+.report-list-row.report-outcome-win::before{background:#54d5a4}
+.report-list-row.report-outcome-loss::before{background:#ed887f}
+.report-list-row.report-outcome-draw::before,
+.report-list-row.report-outcome-cancelled::before{background:#e4c47c}
+.report-list-row:focus-within{border-color:#56cbe4}
+.report-list-row:has(>details[open]){border-color:#3b869c;box-shadow:0 6px 22px #0003}
+.report-list-row>.report-select{
+  display:flex;
+  flex:0 0 44px;
+  width:44px;
+  min-width:44px;
+  flex-direction:row;
+  align-items:flex-start;
+  justify-content:center;
+  gap:0;
+  margin:0;
+  padding:19px 0 0;
+  background:#091d2b;
+  border-right:1px solid #244356;
+  cursor:pointer;
+}
+.report-list-row>.report-select input[type="checkbox"]{
+  display:block;
+  flex:none;
+  appearance:auto;
+  width:19px;
+  min-width:19px;
+  max-width:19px;
+  height:19px;
+  min-height:19px;
+  padding:0;
+  margin:0;
+  accent-color:#30ccf3;
+  cursor:pointer;
+}
+.report-list-row>details{flex:1 1 0%;min-width:0;max-width:100%}
+.report-list-row summary{min-width:0}
+.report-list-row summary:focus-visible{outline:2px solid #7ce7f0;outline-offset:-3px;border-radius:8px}
+.report-list-row .report-row-copy strong{line-height:1.4}
+.report-list-row .report-row-copy small{line-height:1.5}
+.report-list-row .report-badge{border-radius:999px;font-weight:750}
+.report-list-row .report-chevron{font-size:20px;line-height:1}
+@media(max-width:760px){
+  /* This page has a tall, two-level fleet navigation; it must scroll away
+     instead of obscuring the report actions/content on narrow screens. */
+  #app:has(#report-list) .fleet-navigation{position:relative;top:auto;z-index:1}
+  .report-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .report-tabs button{width:100%;min-width:0}
+  .report-list-row{
+    margin:10px 0;
+    border-radius:14px;
+    background:linear-gradient(145deg,#0c2535,#081a29 80%);
+  }
+  .report-list-row>.report-select{
+    flex-basis:42px;
+    width:42px;
+    min-width:42px;
+    padding-top:17px;
+  }
+  .report-list-row summary{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"date badge" "copy chevron";
+    column-gap:10px;
+    row-gap:10px;
+    align-items:center;
+    padding:14px;
+  }
+  .report-list-row summary time{
+    grid-area:date;
+    min-width:0;
+    font-size:11px;
+    font-weight:650;
+    letter-spacing:.035em;
+    color:#90b7c9;
+    white-space:normal;
+  }
+  .report-list-row .report-row-copy{grid-area:copy;min-width:0}
+  .report-list-row .report-row-copy strong{
+    display:block;
+    font-size:15px;
+    font-weight:750;
+    color:#e9f6fd;
+    overflow-wrap:anywhere;
+  }
+  .report-list-row .report-row-copy small{
+    display:block;
+    margin-top:5px;
+    font-size:12px;
+    color:#9bbdcf;
+    overflow-wrap:anywhere;
+  }
+  .report-list-row .report-badge{
+    grid-area:badge;
+    justify-self:end;
+    min-width:0;
+    max-width:100%;
+    padding:5px 9px;
+    font-size:10px;
+    font-weight:750;
+    line-height:1.25;
+    text-align:center;
+    white-space:normal;
+  }
+  .report-list-row .report-chevron{
+    grid-area:chevron;
+    justify-self:end;
+    align-self:center;
+    font-size:23px;
+    color:#8cc8d7;
+  }
+  .report-list-row details[open]>summary{background:#123448}
+  .report-detail{
+    min-width:0;
+    padding:13px 14px 17px;
+    border-top:1px solid #2a5063;
+  }
+  .report-detail p{font-size:13px;line-height:1.6}
+  .report-participants{grid-template-columns:minmax(0,1fr)}
+  .report-participants section{padding:12px}
+  .report-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .report-metrics>div{
+    min-width:0;
+    padding:12px;
+    background:#102b3a;
+    border:1px solid #2b4d60;
+    border-radius:10px;
+  }
+  .report-metrics>div:last-child{grid-column:1/-1}
+  .report-metrics strong{font-size:14px;line-height:1.4}
+  .report-force-table{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .report-force-table table{min-width:460px}
+  .report-detail [data-action="battle-log"]{width:100%;margin-top:8px}
+}
+@media(max-width:370px){
+  .report-list-row>.report-select{flex-basis:38px;width:38px;min-width:38px}
+  .report-list-row summary{padding:12px 10px;column-gap:6px}
+  .report-list-row .report-badge{font-size:9px;padding:5px 7px}
+  .report-detail{padding:12px 10px 15px}
+}
