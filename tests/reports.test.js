@@ -23,6 +23,10 @@ test('Mission reports replace fallback rows with durable records without mixing 
 test('Report rows escape all user text, preserve open details and filter archive/type/outcome/time',()=>{
  const s=newGame('A',T),r={id:'<bad>',time:T,kind:'battle',title:'<script>',outcome:'win',archived:false,payload:{commander:'<img>',to:'g-orion-p1',ownSide:'defender',defenderBefore:{waechter:4},defenderAfter:{waechter:2},rounds:[],loot:{metal:500}}};
  const html=reportRows([r],s,null,{selectable:true,selected:new Set([r.id]),opened:new Set([r.id])});assert.doesNotMatch(html,/<script>|<img>/);assert.match(html,/&lt;script&gt;/);assert.match(html,/checked/);assert.match(html,/Eigene Verluste/);assert.match(html,/datetime=/);assert.match(html,/data-report-id="&lt;bad&gt;" open/);
+ assert.match(html,/class="report-list-row report-kind-battle report-outcome-win"/);
+ assert.match(html,/<label class="report-select"><input type="checkbox"/);
+ assert.match(html,/<\/label><details data-report-id=/);
+ assert.doesNotMatch(html,/class="report-list-row"[^>]*>\s*<input/);
  assert.equal(filterReports([r],{archived:false,kind:'battle',outcome:'win',days:'1',search:'script'},T+1).length,1);assert.equal(filterReports([r],{archived:true},T).length,0);assert.equal(filterReports([r],{days:'1'},T+86400001).length,0);
  assert.doesNotMatch(reportsPage({items:[],total:0},{archived:false,search:''},s,null,{error:'<script>'}),/<script>/);
 });
