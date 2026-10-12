@@ -73,11 +73,17 @@ test('Destroyed freighters lose their cargo capacity; debris excludes fuel and d
  assert.equal(b.attacker.fleet.karawane||0,0);assert.equal(b.debris.fuel,0);
  const defense=resolveBattle({fleet:{titan:30},tech:{}},{fleet:{flak:1},tech:{}},ID);assert.equal(defense.defenseRepair.metal,112);assert.equal(defense.debris.metal,0);
 });
-test('Victim-wide 24h loot budget prevents repeated raids from stacking the 25% limit',()=>{
- let w=processWorld(fixture(),A,attack());w.now=w.attacks[0].return_at;w=processWorld(w,A,{type:'sync'});
+test('Every successful raid takes up to 25% of current unprotected stock without a daily budget',()=>{
+ let w=fixture();
+ // Obsolete persisted budget fields must never reduce new plunder.
+ const target=w.saves[1].state.planets[1];target.raidWindowStart=T;target.raidBudget=vector([0,0,0]);
+ w=processWorld(w,A,attack());w.now=w.attacks[0].return_at;w=processWorld(w,A,{type:'sync'});
  assert.equal(w.attacks[0].report.loot.metal,2500);
  w=processWorld(w,A,{...attack(),requestId:'10000000-0000-0000-0000-000000000002'});w.now=w.attacks[1].return_at;w=processWorld(w,A,{type:'sync'});
- assert.equal(w.attacks[1].report.loot.metal,0);w=processWorld(w,A,{...attack(),requestId:'10000000-0000-0000-0000-000000000003'});assert.equal(w.attacks.length,3);
+ assert.equal(w.attacks[1].report.loot.metal,1875);
+ w=processWorld(w,A,{...attack(),requestId:'10000000-0000-0000-0000-000000000003'});w.now=w.attacks[2].return_at;w=processWorld(w,A,{type:'sync'});
+ assert.equal(w.attacks[2].report.loot.metal,1406);
+ assert.equal(w.saves[1].state.planets[1].resources.metal,4219);
 });
 test('Damage survives stationing, saving and repair; defense slots prevent overspending and movement',()=>{
  const w=fixture();let s=w.saves[0].state,p=s.planets[1];p.hulls={waechter:[.5]};
@@ -101,9 +107,10 @@ test('Local defense salvage reduces displayed and paid costs without becoming or
  s=act(s,{type:'ship',planet:p.id,key:'flak',count:1},T);p=s.planets[1];assert.deepEqual(p.defenseSalvage,vector([0,0,0]));assert.deepEqual(p.resources,vector([0,0,0]));advance(s,p.shipjob.end);assert.equal(p.ships.flak,1);
 });
 
-test('A failed raid does not start or consume the victim loot-budget window',()=>{
+test('A failed raid returns no loot and cannot remove target resources',()=>{
  let w=fixture();w.saves[1].state.planets[1].ships.titan=100;w=processWorld(w,A,attack());w.now=w.attacks[0].arrival_at;w=processWorld(w,B,{type:'sync'});
- assert.equal(w.attacks[0].report.outcome,'defender');assert.equal(w.saves[1].state.planets[1].raidWindowStart,undefined);assert.equal(w.saves[1].state.planets[1].raidBudget,undefined);assert.equal(w.attacks[0].status,'returned');
+ assert.equal(w.attacks[0].report.outcome,'defender');assert.deepEqual(w.attacks[0].report.loot,vector([0,0,0]));assert.equal(w.saves[1].state.planets[1].resources.metal,10000);
+ assert.equal(w.attacks[0].status,'returned');
 });
 
 const request=(from='home',fleet={waechter:4,karawane:4})=>({type:'attack',requestId:ID,action:{from,to:'g-orion-p1',fleet}});
