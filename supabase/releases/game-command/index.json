@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-12.01",
+  "latest": "2026-10-12.02",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -106,6 +106,13 @@
       "sourceCommit": "5b7a7a5d36af4745401a4335213bc1d09e15669e",
       "description": "Jeder erfolgreiche Angriff plündert erneut 25 Prozent der aktuellen ungeschützten Rohstoffe; kein 24-Stunden-Beutebudget.",
       "sha256": "b4ce4854238aa765d3e30cada7c04639fb01a89328f649217444ccd211846368"
+    },
+    {
+      "version": "2026-10-12.02",
+      "createdAt": "2026-10-12T08:19:24.711Z",
+      "sourceCommit": "23b3add3facab9f79214dec2eea645f0c548a77e",
+      "description": "Realm-Konfiguration: Galaxiefluege x3 fuer neue Flugabschnitte; Tutorial, Treibstoff und bereits gestartete Fluege bleiben unveraendert.",
+      "sha256": "f4b4f795378daaef742366b9ac3ab86422020635ff9acaaec41a1b3dfc6fec2f"
     }
   ]
 }
