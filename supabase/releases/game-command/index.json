@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-11.06",
+  "latest": "2026-10-12.01",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -99,6 +99,13 @@
       "sourceCommit": "a7b81d7153b1479ee58b6976b51fdc2ed4a84d83",
       "description": "Sensortechnik: 10 Prozent fruehere Angriffserkennung je Stufe; Forschung bis Stufe 100",
       "sha256": "cae9f87ccd1cdbeb94731ed83fa44258e0fb92712c4b0d5638dd3e6b99864444"
+    },
+    {
+      "version": "2026-10-12.01",
+      "createdAt": "2026-10-12T07:24:07.609Z",
+      "sourceCommit": "5b7a7a5d36af4745401a4335213bc1d09e15669e",
+      "description": "Jeder erfolgreiche Angriff plündert erneut 25 Prozent der aktuellen ungeschützten Rohstoffe; kein 24-Stunden-Beutebudget.",
+      "sha256": "b4ce4854238aa765d3e30cada7c04639fb01a89328f649217444ccd211846368"
     }
   ]
 }
