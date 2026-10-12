@@ -207,3 +207,93 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 
 .galaxy-v2-player{z-index:2;min-width:80px;max-width:150px}.galaxy-v2-player i{width:9px;height:9px;background:#c7b6ff!important;box-shadow:0 0 12px #b496ef!important;border:1px solid #e1d6ff;border-radius:2px;transform:rotate(45deg);margin-bottom:8px}.galaxy-v2-player strong{font-size:11px;font-weight:normal;max-width:140px}.galaxy-v2-player small{font-size:10px;color:#d1bfff}.galaxy-v2-player.is-me i{background:#65e8cb!important;box-shadow:0 0 14px #65e8cb!important;border-color:#c4fff0}.galaxy-v2-player.is-me small{color:#7defd4}.galaxy-v2-star:focus-visible{outline:2px solid #a0f4ff;outline-offset:3px}.galaxy-v2-map:has(.galaxy-v2-player){min-height:620px}
 @media(max-width:760px){.galaxy-v2-map:has(.galaxy-v2-player){min-height:0}.galaxy-v2-player{display:none}}
+
+
+/* Reports 2026: readable, touch-first journal cards; keep the existing desktop details. */
+.fleet-navigation[data-active-section="reports"]{position:relative;top:auto;z-index:1}
+#fleet-pane-reports,#fleet-pane-reports .panel,#report-list{min-width:0}
+#fleet-pane-reports .page-heading{padding-top:2px}
+#fleet-pane-reports .page-heading h1{margin-bottom:5px}
+#fleet-pane-reports .page-heading p{max-width:52ch}
+.report-tabs{gap:8px;margin-bottom:16px}
+.report-tabs button{flex:1;min-width:0;background:#0b2737;border:1px solid #315367;color:#bfd8e7;box-shadow:none;border-radius:10px;font-size:13px;min-height:46px}
+.report-tabs button[aria-selected=true]{background:linear-gradient(145deg,#126078,#103b52);color:#e7fbff;border-color:#36c8df;box-shadow:inset 0 -3px #42d7e9}
+.report-filters{gap:10px}
+.report-filters button{min-height:44px}
+.report-toolbar{border-top:1px solid #244356;border-bottom:1px solid #244356;margin:18px 0 20px;padding:12px 0;gap:9px}
+.report-toolbar>span{color:#b4cad7;font-weight:600;font-size:12px}
+.report-toolbar button{min-height:42px;background:#102d3f;border-color:#315870;color:#bce9f3;box-shadow:none;font-size:12px}
+.report-toolbar button[data-action="report-archive"]:not(:disabled){color:#e0fbff;border-color:#3caabf}
+.report-toolbar button:disabled{opacity:.52}
+.report-day{display:flex;align-items:center;gap:14px;margin:24px 0 12px;color:#9fbdd0;font-weight:700;font-size:12px;letter-spacing:.08em}
+.report-day:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,#36566a,transparent)}
+.report-list-row{--report-accent:#83b8cc;--report-glow:#1e5b6b2c;align-items:flex-start;min-width:0;margin:9px 0;overflow:hidden;border:1px solid #2b4c60;border-left:3px solid var(--report-accent);border-radius:12px;background:linear-gradient(115deg,var(--report-glow),transparent 52%),linear-gradient(145deg,#0e2939,#081b29);box-shadow:0 6px 20px #00000018;transition:border-color .16s,background .16s}
+.report-kind-battle{--report-accent:#e7b16e;--report-glow:#8c532e24}
+.report-kind-attack{--report-accent:#e98f82;--report-glow:#7a313529}
+.report-kind-return{--report-accent:#82d3ad;--report-glow:#286e5526}
+.report-kind-transport{--report-accent:#5acbdf;--report-glow:#126a8b26}
+.report-kind-scan{--report-accent:#a3a6ed;--report-glow:#5556a026}
+.report-kind-colony{--report-accent:#e3c67c;--report-glow:#7e672b25}
+.report-list-row:has(>details[open]){border-color:#477990;border-left-color:var(--report-accent);background:linear-gradient(145deg,#123247,#091b2b)}
+.report-list-row>input.report-select[type="checkbox"]{display:block;flex:0 0 18px;inline-size:18px;min-width:18px;max-width:18px;block-size:18px;min-height:18px;max-height:18px;padding:0;margin:22px 0 0 12px;accent-color:#39d1e8;appearance:auto;cursor:pointer}
+.report-list-row>details{flex:1;min-width:0;max-width:100%}
+.report-list-row>details>summary{display:grid;grid-template-columns:42px minmax(0,1fr) max-content max-content 28px;grid-template-areas:"symbol copy when badge chevron";align-items:center;gap:13px;padding:14px 16px;min-width:0;min-height:76px;list-style:none;cursor:pointer}
+.report-list-row>details>summary::-webkit-details-marker{display:none}
+.report-list-row>details>summary:focus-visible{outline:2px solid #76e3f2;outline-offset:-4px;border-radius:9px}
+.report-row-symbol{grid-area:symbol;width:42px;height:42px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--report-accent) 38%,#284659);border-radius:11px;color:var(--report-accent);background:#071925}
+.report-row-symbol svg{display:block;width:23px;height:23px}
+.report-row-copy{grid-area:copy;min-width:0;gap:6px}
+.report-row-copy strong{color:#edf8ff;font-size:14px;line-height:1.35;letter-spacing:.005em;overflow-wrap:anywhere}
+.report-row-copy small{color:#a2bdce;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.report-list-row>details>summary time{grid-area:when;white-space:nowrap;font-size:12px;color:#9cbacd;font-variant-numeric:tabular-nums}
+.report-date-short{display:none}
+.report-badge{grid-area:badge;justify-self:end;max-width:100%;padding:5px 9px;border:1px solid #385970;background:#102c3b;color:#c0dded;border-radius:8px;font-size:11px;line-height:1.2;font-weight:700;white-space:normal;text-align:center}
+.report-chevron{grid-area:chevron;display:grid;place-items:center;justify-self:end;width:28px;height:28px;border:1px solid #2a4b5f;background:#102a3a;border-radius:8px;color:#7bd5e5;font-size:19px;line-height:1}
+.report-list-row>details[open]>summary{background:#123245;box-shadow:inset 0 -1px #315368}
+.report-list-row>details[open]>summary .report-chevron{transform:rotate(180deg);background:#19465a;border-color:#36869b}
+.report-detail{padding:16px 20px 20px;border-top:1px solid #31536a;min-width:0}
+.report-detail p{color:#bfd1de;line-height:1.65;overflow-wrap:anywhere}
+.report-metrics{gap:9px}
+.report-metrics>div{padding:12px;border:1px solid #2a4d63;border-radius:10px;background:#0b2333;min-width:0}
+.report-metrics small{font-size:11px;line-height:1.45}
+.report-metrics strong{font-size:15px}
+.report-force-table{max-width:100%;border:1px solid #2a4a5e;border-radius:10px;padding:0 10px 7px;scrollbar-width:thin}
+.report-force-table caption{padding:12px 0}
+.report-detail button[data-action="battle-log"]{max-width:100%;white-space:normal;text-align:center}
+@media(max-width:760px){
+ #fleet-pane-reports .panel{padding:13px}
+ #fleet-pane-reports .page-heading h1{font-size:26px}
+ .report-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .report-toolbar{margin:12px 0 17px}
+ .report-toolbar>span{flex-basis:100%;margin:0}
+ .report-toolbar button{flex:1;min-width:0}
+ .report-day{margin:22px 1px 11px}
+ .report-list-row{margin:8px 0;border-radius:11px}
+ .report-list-row>input.report-select[type="checkbox"]{margin:18px 0 0 10px}
+ .report-list-row>details>summary{grid-template-columns:36px minmax(0,1fr) max-content 20px;grid-template-areas:"symbol copy copy chevron" "symbol when badge chevron";gap:6px 9px;padding:12px 11px;min-height:86px}
+ .report-row-symbol{width:36px;height:36px;border-radius:9px}
+ .report-row-symbol svg{width:20px;height:20px}
+ .report-row-copy{gap:3px}
+ .report-row-copy strong{font-size:13.5px}
+ .report-row-copy small{font-size:11px;line-height:1.4}
+ .report-list-row>details>summary time{font-size:11px}
+ .report-date-full{display:none}
+ .report-date-short{display:inline}
+ .report-badge{padding:4px 7px;font-size:10px}
+ .report-chevron{width:20px;height:25px;font-size:17px;border:0;background:transparent}
+ .report-detail{padding:14px 12px 16px}
+ .report-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .report-metrics>div:last-child:nth-child(odd){grid-column:1/-1}
+ .report-participants section{padding:12px}
+ .report-force-table{padding:0 8px 6px}
+ .report-force-table table{min-width:390px}
+ .report-detail button[data-action="battle-log"]{width:100%;min-height:46px}
+}
+@media(max-width:380px){
+ #fleet-pane-reports .panel{padding:10px}
+ .report-list-row>details>summary{grid-template-columns:32px minmax(0,1fr) max-content 16px;gap:5px 6px;padding:11px 7px}
+ .report-list-row>input.report-select[type="checkbox"]{margin-left:7px}
+ .report-row-symbol{width:32px;height:32px}
+ .report-row-copy strong{font-size:12.5px}
+ .report-badge{font-size:9px;padding:4px 5px}
+}
