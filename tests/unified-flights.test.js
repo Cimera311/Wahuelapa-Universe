@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {newGame,legInfo,flightInfo,routeLegInfo,act,advance} from '../src/engine.js';
-import {sharedDistance,sharedFlight} from '../src/flight.js';
+import {sharedDistance,sharedFlight,FLIGHT_BASE_SCALE} from '../src/flight.js';
+import {REALM_CONFIG} from '../src/realm-config.js';
 import {attackFlight} from '../src/combat.js';
 import {resolveBattle,attackFleet} from '../src/combat.js';
 import {galaxyFlight} from '../src/galaxy.js';
@@ -41,14 +42,28 @@ test('scans and colonies use ship-specific shared formula; probe fuel includes r
 
 test('minimum one minute, effective slowest ship, research and count only affect appropriate values',()=>{
  const s=ready(),from=colony(s),to=colony(s,'helion',2);
- s.tech.drive=5;assert.equal(sharedFlight(s,from,to,1,'falke').ms,68750);
+ s.tech.drive=5;assert.equal(sharedFlight(s,from,to,1,'falke').ms,206250);
  s.tech.drive=5;assert.equal(flightInfo(s,s.planets[0],{distance:2},1,false,'transport').ms,16250);
  const f=sharedFlight(s,from,to,1,'longProbe');
  s.tech.scout=0;assert.equal(sharedFlight(s,from,to,1,'longProbe').ms,f.ms);
  const a=attackFlight(s,from,to,{falke:100,titan:1});assert.equal(a.ms,sharedFlight(s,from,to,1,'titan').ms);assert.equal(a.slowest,'titan');
  assert.equal(sharedFlight(s,from,to,100,'falke').ms,sharedFlight(s,from,to,1,'falke').ms);
  // Minimum is reached by locally using a researched fast ship.
- s.tech.drive=20;assert.equal(sharedFlight(s,from,to,1,'falke').ms,60000);
+ s.tech.drive=20;assert.equal(sharedFlight(s,from,to,1,'falke').ms,180000);
+});
+
+test('editable realm flight multiplier applies to all new galaxy legs, not tutorial flights or fuel',()=>{
+ const s=ready(),from=colony(s),to=colony(s,'orion',1,900,300);
+ assert.equal(REALM_CONFIG.galaxyFlightTimeFactor,3);
+ const dist=sharedDistance(from,to,s.galaxy),shipped=sharedFlight(s,from,to,2,'karawane');
+ const priorMs=Math.max(60000,Math.ceil((120+dist*45)*FLIGHT_BASE_SCALE*1000/(.9*(1+s.tech.ramjet*.05))));
+ assert.equal(shipped.ms,priorMs*3);
+ assert.equal(shipped.fuel,Math.ceil(12*dist*2/(1+s.tech.ramjet*.12)));
+ const privateFrom=s.planets[0],privateTo={...privateFrom,id:'ferrum',distance:2};
+ assert.equal(flightInfo(s,privateFrom,privateTo,1,false,'transport').ms,Math.ceil((10+2*8)*FLIGHT_BASE_SCALE*1000/(1+s.tech.drive*.05)));
+ // A same-system flight previously clamped to one minute now lasts three minutes.
+ s.tech.drive=20;
+ assert.equal(sharedFlight(s,from,{...from,slot:2},1,'falke').ms,180000);
 });
 
 test('existing outbound and return timestamps survive new logic and research changes',()=>{

@@ -79,8 +79,13 @@ function attackSlots(level) {
   return level >= 10 ? 4 : level >= 5 ? 2 : level >= 1 ? 1 : 0;
 }
 
+// src/realm-config.js
+var REALM_CONFIG = Object.freeze({
+  galaxyFlightTimeFactor: 3
+});
+
 // src/flight.js
-var GALAXY_FLIGHT_RULE_VERSION = 3;
+var GALAXY_FLIGHT_RULE_VERSION = 4;
 var ENGINE_SPEED_BONUS = 0.05;
 var ENGINE_FUEL_BONUS = 0.12;
 var FLIGHT_BASE_SCALE = 1.25 / 1.6;
@@ -95,7 +100,7 @@ function sharedFlight(s, from, to, count = 1, ship = "transport", start = s.gala
   if (!def || def.speed <= 0) throw Error("Unbekanntes oder unbewegliches Schiff.");
   const distance = sharedDistance(from, to, start), remote = (from.system || "tutorial") !== (to.system || "tutorial");
   const engine = shipFlightEngine(s, ship, remote), factor = 1 + (s.tech[engine] || 0) * ENGINE_SPEED_BONUS, fuelFactor = 1 + (s.tech[engine] || 0) * ENGINE_FUEL_BONUS;
-  return { distance, ms: Math.max(6e4, Math.ceil((120 + distance * 45) * FLIGHT_BASE_SCALE * 1e3 / (def.speed * factor))), fuel: Math.ceil(def.fuel * distance * count / fuelFactor) };
+  return { distance, ms: Math.ceil(Math.max(6e4, Math.ceil((120 + distance * 45) * FLIGHT_BASE_SCALE * 1e3 / (def.speed * factor))) * REALM_CONFIG.galaxyFlightTimeFactor), fuel: Math.ceil(def.fuel * distance * count / fuelFactor) };
 }
 
 // src/combat.js
