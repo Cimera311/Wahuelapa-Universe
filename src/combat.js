@@ -110,9 +110,9 @@ export function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION
  return {outcome,attacker:aa,defender:dd,debris,defenseRepair,rounds,...combatGroups(defender,d),trace:{...(defender.groups?{defenderGroups:structuredClone(defender.groups)}:{}),version:1,ruleVersion:2,seed:String(seed),tech:{attacker:{...attacker.tech},defender:{...defender.tech}},shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},initial,final:[...a,...d].map(snapshot),rounds:logs}};
 }
 
-export function loadPlunder(stock,depot,bunker,capacity,debris,victory,budget=stock){
+export function loadPlunder(stock,depot,bunker,capacity,debris,victory){
  const loot=vector([0,0,0]),salvage=vector([0,0,0]);let room=Math.max(0,capacity);
- if(victory)for(const k of RES){loot[k]=Math.min(room,Math.floor(Math.max(0,stock[k]+depot[k]-bunker)*.25),budget[k]);room-=loot[k];}
+ if(victory)for(const k of RES){loot[k]=Math.min(room,Math.floor(Math.max(0,stock[k]+depot[k]-bunker)*.25));room-=loot[k];}
  if(victory)for(const k of RES){salvage[k]=Math.min(room,debris[k]);room-=salvage[k];}
  return {loot,salvage,cargo:vector(RES.map(k=>loot[k]+salvage[k]))};
 }

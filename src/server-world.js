@@ -63,11 +63,10 @@ function resolveAttack(w,m,time){
  p.hulls=homeResult.hulls;p.shieldUntil=time+300000;
  p.defenseSalvage??=zero();for(const k of RES)p.defenseSalvage[k]+=result.defenseRepair[k];
  const bunker=Math.min(2000,capacity(p)*.025*(p.buildings.bunker||0));
- if(result.outcome==='attacker'&&(!p.raidWindowStart||time-p.raidWindowStart>=DAY)){p.raidWindowStart=time;p.raidBudget=vector(RES.map(k=>Math.floor(Math.max(0,p.resources[k]+p.depot[k]-bunker)*.25)));}
  const cap=fleetCapacity({tech:m.combat.tech},result.attacker.fleet);
  const field=vector(RES.map(k=>(target.debris?.[k]||0)+result.debris[k]));
- const cargo=loadPlunder(p.resources,p.depot,bunker,cap,field,result.outcome==='attacker',p.raidBudget||zero());
- withdraw(p,cargo.loot);if(p.raidBudget)for(const k of RES)p.raidBudget[k]-=cargo.loot[k];
+ const cargo=loadPlunder(p.resources,p.depot,bunker,cap,field,result.outcome==='attacker');
+ withdraw(p,cargo.loot);
  target.debris??=zero();for(const k of RES)target.debris[k]=field[k]-cargo.salvage[k];
  m.status=Object.keys(result.attacker.fleet).length?'returning':'returned';m.resolved_at=w.now;m.survivors=result.attacker.fleet;m.return_hulls=result.attacker.hulls;m.cargo=cargo.cargo;m.shieldUntil=time+300000;
  if(result.trace)result.trace.participants={attacker:a.name,defender:d.name+(supporting.length?' mit '+supporting.map(g=>g.commander).join(', '):'')};

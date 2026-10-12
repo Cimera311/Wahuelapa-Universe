@@ -61,7 +61,7 @@ test('Battle reports identify both roles, route and losses from the defender per
  const r={id:'battle',time:T,kind:'battle',title:'Gefecht',outcome:'loss',payload:{ownSide:'defender',commander:'<Angreifer>',from:'home',to:'g-orion-p1',outcome:'attacker',attackerBefore:{waechter:3},attackerAfter:{waechter:2},defenderBefore:{flak:4},defenderAfter:{flak:0},loot:{metal:500},rounds:[{round:1,attacker:2,defender:0}],returnAt:T+1000}};
  const html=reportRows([r],s,null);
  assert.match(html,/Du wurdest angegriffen/);assert.match(html,/Angreifer/);assert.match(html,/&lt;Angreifer&gt;/);assert.match(html,/Verteidiger · Du/);assert.match(html,/Verteidigter Planet: Silverstar/);assert.match(html,/Startplanet: Privates Heimatsystem \(home\)/);assert.doesNotMatch(html,/Startplanet: Aurelia/);
- assert.match(html,/Sieg des Angreifers/);assert.match(html,/Eigene Verluste<\/small><strong>4/);assert.match(html,/Orbitale Verteidigung/);assert.match(html,/Verloren/);assert.match(html,/Überlebt/);assert.match(html,/Beute des Angreifers/);assert.match(html,/Verbleibende Einheiten nach jeder Runde/);
+ assert.match(html,/Sieg des Angreifers/);assert.match(html,/Eigene Verluste<\/small><strong>4/);assert.match(html,/Orbitale Verteidigung/);assert.match(html,/Verloren/);assert.match(html,/Überlebt/);assert.match(html,/Beute des Angreifers/);assert.match(html,/Kampfrunden<\/small><strong>1/);assert.match(html,/Historischer Bericht/);
 });
 test('Attack, cancelled battle and legacy reports retain context without inventing ownership',()=>{
  const s=newGame('A',T),base={id:'x',time:T,payload:{from:'home',to:'g-orion-p1'}};

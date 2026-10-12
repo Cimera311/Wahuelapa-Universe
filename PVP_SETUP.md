@@ -79,7 +79,7 @@ Zum Einschalten `false` durch `true` ersetzen. Das Erhöhen von `epoch` verhinde
 
 Bei Sieg des Angreifers maximal 25 % der plünderbaren Vorräte einschließlich Lieferdepot. Normale Handelsreserven schützen nicht vor Raub. Der Bunker schützt je Stufe 2,5 % der Lagerkapazität, maximal 2000 je Rohstoff und maximal vier Stufen.
 
-Zusätzlich begrenzt ein gemeinsames Beutebudget pro Zielkolonie alle erfolgreichen Raids innerhalb von 24 Stunden auf 25 % der beim ersten Raid vorhandenen ungeschützten Bestände. Weitere Angreifer können dieses Budget nicht mehrfach ausschöpfen. Ein neuer Zeitraum beginnt nach Ablauf der 24 Stunden; das ist kein täglicher Mitternachts-Reset.
+Es gibt **kein 24-Stunden-Plünderungsbudget**. Nach jedem gewonnenen Angriff dürfen erneut bis zu 25 % der **zu diesem Zeitpunkt** ungeschützten Bestände erbeutet werden, sofern die überlebende Flotte genügend Frachtraum besitzt. Wiederholte Angriffe können somit fortlaufend Rohstoffe erbeuten.
 
 Nur überlebende Frachter bieten Laderaum. Zuerst werden Metall, Kristall und Treibstoff als Planetenbeute geladen; anschließend Metall/Kristall aus dem Trümmerfeld. Überschüsse bleiben am Ziel.
 
@@ -125,7 +125,7 @@ npm run build
 npx deno check --node-modules-dir=auto --no-lock supabase/functions/game-command/index.ts
 ```
 
-Tests decken Berechtigungen, Schutzgrenzen, Warnungsgeheimhaltung, gleichzeitig wirkenden Beschuss, beschädigte Rückflotten, Bunker/Depot, Beutebudget, Offline-Nachholen, Bauabschlüsse an der Ankunftsgrenze, Pause sowie doppelte/verlorene Anfragen ab. PostgreSQL wird durch PGlite geprüft, nicht durch eine SQL-Attrappe.
+Tests decken Berechtigungen, Schutzgrenzen, Warnungsgeheimhaltung, gleichzeitig wirkenden Beschuss, beschädigte Rückflotten, Bunker/Depot, wiederholte Plünderungen ohne Tageslimit, Offline-Nachholen, Bauabschlüsse an der Ankunftsgrenze, Pause sowie doppelte/verlorene Anfragen ab. PostgreSQL wird durch PGlite geprüft, nicht durch eine SQL-Attrappe.
 
 Offizielle Grundlagen: [Edge-Function-Authentifizierung](https://supabase.com/docs/guides/functions/auth-legacy-jwt), [getUser](https://supabase.com/docs/reference/javascript/auth-getuser), [Edge Functions deployen](https://supabase.com/docs/guides/functions/quickstart).
 
@@ -145,7 +145,7 @@ Die neue Website aktiviert Heimatangriffe erst, wenn die Serverantwort `homeAtta
 
 **Aktivierung:** Den vollständigen aktuellen Inhalt von `supabase/dashboard/game-command.ts` in der vorhandenen Edge Function **swift-handler → Code → index.ts** ersetzen und deployen. Keine neue Funktion anlegen; keine SQL-Migration erforderlich. Danach die Website neu laden.
 
-Der neue Schutzzeitraum gilt auch für bestehende Kolonien ab ihrer gespeicherten Gründungszeit. Schutz, der durch einen eigenen Angriff schon beendet wurde, wird nicht erneuert. Die 24-Stunden-Grenzen für Wiederholungsangriffe und Beutebudgets bleiben bestehen.
+Der neue Schutzzeitraum gilt auch für bestehende Kolonien ab ihrer gespeicherten Gründungszeit. Schutz, der durch einen eigenen Angriff schon beendet wurde, wird nicht erneuert. Das 24-Stunden-Plünderungsbudget ist entfernt: Jeder weitere erfolgreiche Angriff berechnet die 25-%-Beute neu. Sonstige Angriffs- und Schutzregeln bleiben unverändert.
 
 ## Flugkarten und dauerhaftes Berichtsarchiv
 
