@@ -317,3 +317,15 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .wish-comment-error{color:#ffaaa9;overflow-wrap:anywhere;}
 .community-wish-actions{flex-wrap:wrap;}
 @media(max-width:540px){.wish-thread{padding:10px}.wish-comment-form button{width:100%}}
+
+/* Orbitalwerft: separate queue, modular weapon choice and repair control. */
+.orbital-yard{margin-top:18px}.orbital-yard .ship-queue-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.orbital-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.orbital-option{border:1px solid #285064;border-radius:12px;padding:14px;background:#0a2230;min-width:0}
+.orbital-option-heading{display:flex;align-items:center;gap:12px}.orbital-option-heading img{width:64px;height:64px;object-fit:contain;border-radius:8px}
+.orbital-option-heading>div{min-width:0}.orbital-option-heading strong{display:block}.orbital-option-heading small{display:block;color:#a6bac6;margin-top:4px}
+.orbital-build-controls,.orbital-repair-controls,.orbital-job{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:12px}
+.orbital-build-controls label{flex:0 1 125px}.orbital-build-controls input{width:100%;min-width:0}
+.orbital-repair-controls{border-top:1px solid #305168;padding-top:10px}.orbital-repair-controls span{flex:1}
+.orbital-job{border-bottom:1px solid #305168;padding:8px 0}.orbital-job button{margin-left:auto}
+@media(max-width:700px){.orbital-options{grid-template-columns:1fr}.orbital-option{padding:12px}}
