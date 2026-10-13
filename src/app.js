@@ -1,4 +1,3 @@
-import {warTimesView} from './war-times.js';
 import {openCommunity} from './community.js';
 import {FLEET_GROUPS,FLEET_LABELS,fleetGroupFor,fleetNavigation} from './fleet-navigation.js';
 import {fleetOverviewHTML,fleetMissionProgress,fleetTravelCard} from './fleet-overview.js';
@@ -472,5 +471,5 @@ document.addEventListener('click',async e=>{
  const d=document.createElement('dialog');d.className='news-dialog war-dialog';
  d.innerHTML='<form method="dialog"><button aria-label="Schließen">×</button></form><header class="war-masthead"><strong>GALAXY WAR TIMES</strong><small>Unabhängig. Unbestechlich. Unverschämt.</small></header><div class="war-paper" id="war-paper"><p>Die galaktische Redaktion recherchiert …</p></div>';
  document.body.append(d);d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();
- try{if(!cloud?.user)throw Error('Das galaktische Kriegsarchiv ist für angemeldete Commander verfügbar.');const items=await cloud.warTimes();if(d.isConnected)d.querySelector('#war-paper').innerHTML=warTimesView(items);}catch(err){if(d.isConnected)d.querySelector('#war-paper').textContent=String(err?.message||err);}
+ try{if(!cloud?.user)throw Error('Das galaktische Kriegsarchiv ist für angemeldete Commander verfügbar.');const items=await cloud.warTimes();const newspaper=await import('./war-times.js?v=20261013-runtimefix');if(typeof newspaper.warTimesView!=='function')throw Error('Zeitungsmodul konnte nicht geladen werden.');if(d.isConnected)d.querySelector('#war-paper').innerHTML=newspaper.warTimesView(items);}catch(err){if(d.isConnected)d.querySelector('#war-paper').textContent=String(err?.message||err);}
 });
