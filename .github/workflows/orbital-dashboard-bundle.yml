@@ -1,0 +1,33 @@
+name: Build orbital Supabase dashboard bundle
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  bundle:
+    if: github.head_ref == 'feat/orbital-shipyard-defense-rework'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Bundle TypeScript Edge Function
+        run: |
+          npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --format=esm --platform=neutral --target=es2022 --external:npm:* --outfile=supabase/dashboard/game-command.ts
+          node -e "const fs=require('fs');const p='supabase/dashboard/game-command.ts';const b='// @ts-nocheck — Generated dashboard bundle; edit source modules instead.\\n\\n'+fs.readFileSync(p,'utf8');fs.writeFileSync(p,b);for(const name of ['game-command-gesamt.txt','game-command-werft.txt'])fs.writeFileSync('supabase/dashboard/'+name,b)"
+      - name: Archive release and commit generated deploy bundle
+        run: |
+          if git diff --quiet -- supabase/dashboard/game-command.ts; then echo 'Bundle unchanged'; exit 0; fi
+          node scripts/archive-game-command.mjs 2026-10-13.01 "Orbitalwerft, Plattformen, Reparatur und Erstschlag in Runde 0"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/dashboard/ supabase/releases/game-command/
+          git commit -m "Bundle and archive orbital defense server command 2026-10-13.01"
+          git push origin HEAD:feat/orbital-shipyard-defense-rework
