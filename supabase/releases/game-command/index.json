@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-13.02",
+  "latest": "2026-10-13.03",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -127,6 +127,13 @@
       "sourceCommit": "6080026fecb09da6135a375fa17bea44589d54e7",
       "description": "Orbitalwerft, modular bewaffnete Plattformen, Reparaturwarteschlange und Erstschlag Runde 0",
       "sha256": "ca1db9e359f041f5dbab3a814b011036c2a2e9cabde04cea5915c8026488ed35"
+    },
+    {
+      "version": "2026-10-13.03",
+      "createdAt": "2026-10-13T15:20:07.087Z",
+      "sourceCommit": "4660f5fa0822a44714eef71229bee67ed37a5225",
+      "description": "Orbitalwerft, modular bewaffnete Plattformen, Reparaturwarteschlange und Erstschlag Runde 0",
+      "sha256": "b536b4274f9b93e6f59bbe094680f15f90b12f3a51604a51e528e9dcdbf33fec"
     }
   ]
 }

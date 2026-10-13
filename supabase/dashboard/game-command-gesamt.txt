@@ -1291,6 +1291,7 @@ function validateSave(input) {
     check(Array.isArray(p.orbitalqueue) && p.orbitalqueue.length + (p.orbitaljob ? 1 : 0) <= SHIP_QUEUE_LEGACY_LIMIT && (!p.orbitalqueue.length || p.orbitaljob));
     for (const j of [p.orbitaljob, ...p.orbitalqueue].filter(Boolean)) {
       check(job(j, SHIPS) && SHIPS[j.key].category === "defense" && integer(j.count, Number.MAX_SAFE_INTEGER) && j.count > 0 && integer(j.id, s.seq) && j.id > 0 && ["build", "wreck", "damaged"].includes(j.mode) && isNum(j.workTotal, 864e13) && j.workTotal > 0 && isNum(j.workRemaining, j.workTotal) && typeof j.paused === "boolean" && cargo(j.payment) && RES.every((k) => Number.isSafeInteger(j.payment[k])));
+      if (j.salvage !== void 0) check(cargo(j.salvage) && RES.every((k) => Number.isSafeInteger(j.salvage[k])));
       if (j.mode === "damaged") check(Array.isArray(j.damagedHulls) && j.damagedHulls.length === j.count && j.damagedHulls.every((x) => typeof x === "number" && x > 0 && x < 1));
     }
   }
