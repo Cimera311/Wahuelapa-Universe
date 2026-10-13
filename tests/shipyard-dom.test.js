@@ -26,10 +26,13 @@ test('ship counts and detail state survive rerender but remain separate per plan
 test('building from a collapsed row submits the quantity and leaves paid queue actions available',async t=>{
  const {doc,w,api,p}=ready(t);const card=doc.querySelector('[data-ship-card="falke"]');input(w,card.querySelector('[data-ship-count]'),'3');card.querySelector('[data-action="ship"]').click();await tick();assert.equal(api.state().planets[0].shipjob.count,3);assert.equal(api.state().planets[0].shipjob.key,'falke');assert.equal(doc.querySelector('[data-ship-card="falke"] [data-action="ship"]').disabled,false);assert.equal(doc.querySelector('[data-ship-card="falke"] [data-action="ship"]').textContent,'Einreihen');assert.equal(doc.querySelector('[data-ship-queue-total]').textContent.startsWith('1 / 6 Auftrag'),true);assert.equal(doc.querySelector('[data-ship-card="falke"] [data-ship-count]').value,'1');
 });
-test('defense totals include salvage and orbital limits, and power shortages remain visible',t=>{
- const {doc,w,api,p}=ready(t);p.buildings.orbital=1;p.defenseSalvage=vector([100,100,100]);p.buildings.solar=0;p.buildings.fusion=0;p.buildings.tidal=0;doc.querySelector('[data-action="ship-category"][data-category="defense"]').click();const card=doc.querySelector('[data-ship-card="flak"]');assert.ok(card);assert.match(card.querySelector('[data-ship-time]').textContent,/Pausiert ohne Strom/);input(w,card.querySelector('[data-ship-count]'),'999');assert.equal(card.querySelector('[data-action="ship"]').disabled,true);assert.match(card.querySelector('[data-ship-reason]').textContent,/Orbitalplattform/);
+test('Orbitalwerft has a separate defense view with weapon and repair actions',t=>{
+ const {doc,api,p}=ready(t);p.buildings.orbital=6;p.orbitalWrecks={flak:2};p.hulls={flak:[.5]};p.ships.flak=1;p.buildings.solar=20;
+ api.show('defense');const yard=doc.querySelector('.orbital-yard');assert.ok(yard);assert.match(yard.textContent,/Orbitalwerft/);
+ assert.ok(yard.querySelector('[data-action="orbital-build"][data-key="plasma"]'));
+ assert.ok(yard.querySelector('[data-action="orbital-repair"][data-mode="wreck"][data-key="flak"]'));
+ assert.ok(yard.querySelector('[data-action="orbital-repair"][data-mode="damaged"][data-key="flak"]'));
 });
-
 test('Queue buttons add and remove the chosen waiting order without replacing the active job',async t=>{
  const {doc,w,api,p:original}=ready(t);original.buildings.metal=original.buildings.crystal=original.buildings.fuel=0;doc.querySelector('[data-ship-card="falke"] [data-action="ship"]').click();await tick();const active=api.state().planets[0].shipjob.id;
  input(w,doc.querySelector('[data-ship-card="waechter"] [data-ship-count]'),'2');doc.querySelector('[data-ship-card="waechter"] [data-action="ship"]').click();await tick();const p=api.state().planets[0];assert.equal(p.shipqueue[0].count,2);assert.equal(doc.querySelectorAll('.ship-queue-row').length,2);assert.match(doc.querySelector('[data-ship-queue-start]').textContent,/Start in/);assert.equal(doc.querySelector('[data-ship-queue] [role="progressbar"]').getAttribute('aria-label'),'Baufortschritt Falke');
