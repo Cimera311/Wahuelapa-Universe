@@ -157,7 +157,7 @@ test('Home planner matches server flight estimate and distinguishes loading, mis
  assert.match(pvpView(s,{...pvp,homeAttacks:false,protectionMs:86400000},g),/Spielserver-Update/);
  g.planets[0].reserved=true;assert.match(pvpView(s,pvp,g),/besiedelte Galaxiekolonie/);g.planets[0].reserved=false;
  const f=attackFlight(s,s.planets[0],w.planets[1].meta,request().action.fleet);
- assert.ok(pvpEstimate(s,g,'g-orion-p1',request().action.fleet).includes(f.fuel+' Treibstoff'));
+ assert.ok(pvpEstimate(s,g,'g-orion-p1',request().action.fleet).includes('Treibstoff: '+f.fuel.toLocaleString('de-DE')+' (Hin- und Rückflug, beim Start fällig)'));
 });
 
 test('New attacks pin v2, legacy launches stay v1, and full traces never enter sync projections',()=>{
