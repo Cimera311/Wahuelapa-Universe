@@ -445,9 +445,10 @@ function orbitalJobInfo(s, p, key, count = 1, mode = "build") {
     const missing = damaged.reduce((t, h) => t + 1 - h, 0);
     parts = sh.cost.map((v, i) => Math.ceil(v * (i === 2 ? 1 : 0.7) * missing));
   } else parts = sh.cost.map((v) => v * count);
-  const cost = vector(parts);
+  const salvage = vector(parts.map((v, i) => mode === "build" || i === 2 ? 0 : Math.min(v, p.defenseSalvage?.[RES[i]] || 0)));
+  const cost = vector(parts.map((v, i) => v - salvage[RES[i]]));
   const reason = !Number.isSafeInteger(count) || count < 1 || count > 1e5 ? "Ung\xFCltige St\xFCckzahl." : !(p.buildings.orbital || 0) ? "Baue zuerst eine Orbitalwerft." : mode === "build" && (s.tech[sh.tech] || 0) < sh.techLevel ? "Ben\xF6tigt Milit\xE4rtechnik " + sh.techLevel + "." : mode === "build" && (p.buildings.orbital || 0) < sh.orbital ? "Ben\xF6tigt Orbitalwerft Stufe " + sh.orbital + "." : mode === "wreck" && count > wreck ? "Nicht gen\xFCgend zerst\xF6rte Plattformen." : mode === "damaged" && !damaged.length ? "Keine besch\xE4digte Plattform dieser Art." : orbitalQueueFullReason(p);
-  return { cost, count: amount, ms: Math.ceil(sh.time * amount * 1e3 * shipyardTimeFactor(p.buildings.orbital || 0)), ratio: stats(s, p).ratio, reason };
+  return { cost, salvage, count: amount, ms: Math.ceil(sh.time * amount * 1e3 * shipyardTimeFactor(p.buildings.orbital || 0)), ratio: stats(s, p).ratio, reason };
 }
 function shipQueueFullReason(p) {
   return shipOrders(p).length >= shipQueueCapacity(p) ? shipQueueCapacity(p) < SHIP_QUEUE_LIMIT ? `Alle Auftragspl\xE4tze belegt. Mehr Pl\xE4tze ab Werftstufe ${shipQueueCapacity(p) + 1}.` : `Alle ${SHIP_QUEUE_LIMIT} Auftragspl\xE4tze belegt. Maximale Warteschlangengr\xF6\xDFe erreicht.` : "";
@@ -846,6 +847,7 @@ function act(s, action, now = Date.now()) {
       const j = orbitalOrders(p).find((q) => q.id === action.id);
       if (!j) throw Error("Orbitalauftrag nicht gefunden. Bitte neu laden.");
       for (const k of RES) p.depot[k] += j.payment?.[k] || 0;
+      if (j.salvage) for (const k of RES) p.defenseSalvage[k] = (p.defenseSalvage[k] || 0) + j.salvage[k];
       if (j.mode === "wreck") p.orbitalWrecks[j.key] = (p.orbitalWrecks[j.key] || 0) + j.count;
       if (j.mode === "damaged") {
         p.ships[j.key] += j.count;
@@ -861,7 +863,9 @@ function act(s, action, now = Date.now()) {
       if (info.reason) throw Error(info.reason);
       if (!Number.isSafeInteger(info.ms) || info.ms < 1 || n.time + info.ms > 864e13) throw Error("Orbitalauftrag zu gro\xDF.");
       pay(p, info.cost);
-      const job = { id: ++n.seq, key, count: info.count, mode, start: n.time, end: n.time + info.ms, workTotal: info.ms, workRemaining: info.ms, payment: { ...info.cost }, paused: stats(n, p).ratio === 0 };
+      p.defenseSalvage ??= vector([0, 0, 0]);
+      for (const k of RES) p.defenseSalvage[k] -= info.salvage[k];
+      const job = { id: ++n.seq, key, count: info.count, mode, start: n.time, end: n.time + info.ms, workTotal: info.ms, workRemaining: info.ms, payment: { ...info.cost }, salvage: { ...info.salvage }, paused: stats(n, p).ratio === 0 };
       if (mode === "wreck") p.orbitalWrecks[key] -= info.count;
       if (mode === "damaged") {
         job.damagedHulls = [...p.hulls[key] || []];
