@@ -24,13 +24,12 @@ test('Orbitalwerft permanently uses energy with same consumption curve as shipya
  p.buildings.orbital=0;assert.equal(energyDemand(p).orbital,0);
 });
 test('Only orbital facility is introduced; no decommissioned weapons can be ordered',()=>{
- const s=newGame('Werft',T),p=s.planets[0];p.buildings.orbital=6;p.buildings.shipyard=6;p.resources=vector([20000,20000,20000]);s.tech.military=4;
- for(const key of ['flak','laser','rail','plasma'])assert.throws(()=>act(s,{type:'ship',key,count:1},T),/stillgelegt/);
+ const s=newGame('Werft',T),p=s.planets[0];p.buildings.orbital=6;p.buildings.shipyard=6;p.buildings.warehouse=5;p.resources=vector([20000,20000,20000]);s.tech.military=4;
+ for(const key of ['flak','laser','rail','plasma'])assert.equal(typeof act(s,{type:'ship',key,count:1},T).planets[0].orbitaljob,'object');
 });
 test('Orbital yard section does not display buildable guns or create units',t=>{
  const {api,doc}=ui(t);
  api.show('orbital');
- assert.match(doc.querySelector('#fleet-pane-orbital').textContent,/Produktionsdock in Vorbereitung/);
- assert.equal(doc.querySelector('#fleet-pane-orbital [data-action="ship"]'),null);
- assert.ok(doc.querySelector('#fleet-pane-orbital [data-tab="build"]'));
+ assert.match(doc.querySelector('#fleet-pane-orbital').textContent,/Flakplattform/);
+ assert.ok(doc.querySelector('#fleet-pane-orbital [data-action="ship"]'));
 });

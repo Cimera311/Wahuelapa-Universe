@@ -36,7 +36,7 @@ test('Cancellation at a completion boundary cannot refund a finished order or re
  let s=add(add(ready()),'transport');const first=s.planets[0].shipjob,second=s.planets[0].shipqueue[0];assert.throws(()=>act(s,cancel(first),first.end),/abgeschlossen/);advance(s,first.end);assert.equal(s.planets[0].ships.falke,1);assert.equal(s.planets[0].shipjob.id,second.id);
 });
 test('Defense orders reserve all queued orbital slots and return salvage separately',()=>{
- let s=ready();s.planets[0].defenseSalvage=vector([400,200,0]);s.planets[0].ships.flak=2;assert.equal(defenseSlots(s.planets[0]),2);const before=structuredClone(s);assert.throws(()=>add(s,'flak',2),/stillgelegt/);assert.deepEqual(s,before);
+ let s=ready();s.planets[0].defenseSalvage=vector([400,200,0]);s.planets[0].ships.flak=2;assert.equal(defenseSlots(s.planets[0]),2);const before=structuredClone(s);const next=add(s,'flak',2);assert.equal(next.planets[0].orbitaljob.count,2);assert.equal(next.planets[0].ships.flak,2);assert.deepEqual(s,before);
 });
 test('An existing legacy job keeps its progress when a paid order is appended',()=>{
  const s=ready();s.time=T+30000;s.planets[0].shipjob={key:'falke',count:2,start:T,end:T+120000};const next=add(s,'transport');assert.equal(next.planets[0].shipjob.workRemaining,90000);assert.equal(next.planets[0].shipqueue[0].workRemaining,next.planets[0].shipqueue[0].workTotal);parseSave(JSON.stringify(next));advance(next,T+120000);assert.equal(next.planets[0].ships.falke,2);assert.equal(next.planets[0].shipjob.key,'transport');

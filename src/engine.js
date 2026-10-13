@@ -5,7 +5,7 @@ import {takeHulls,putHulls} from './combat.js';
 import {sharedFlight,ENGINE_SPEED_BONUS,FLIGHT_BASE_SCALE} from './flight.js';
 
 function planet(id,name,meta={}){
- return {id,name,coord:meta.coord||'1:1:4',kind:meta.kind||'Heimatwelt',mult:meta.mult||[1,1,1],color:meta.color||'#53add3',ocean:meta.ocean??true,energy:meta.energy||1,distance:meta.distance||0,reserves:vector([0,0,0]),resources:vector([0,0,0]),depot:vector([0,0,0]),buildings:Object.fromEntries(Object.keys(BUILDINGS).map(k=>[k,0])),ships:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,0])),build:null,shipjob:null};
+ return {id,name,coord:meta.coord||'1:1:4',kind:meta.kind||'Heimatwelt',mult:meta.mult||[1,1,1],color:meta.color||'#53add3',ocean:meta.ocean??true,energy:meta.energy||1,distance:meta.distance||0,reserves:vector([0,0,0]),resources:vector([0,0,0]),depot:vector([0,0,0]),buildings:Object.fromEntries(Object.keys(BUILDINGS).map(k=>[k,0])),ships:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,0])),build:null,shipjob:null,orbitaljob:null,orbitalqueue:[]};
 }
 export function newGame(name='Commander',now=Date.now()){
  const home=planet('home','Aurelia');
@@ -35,12 +35,12 @@ export function cargoPresent(cargo){return RES.some(k=>cargo[k]>0);}
 export function nextCargoSpaceEvent(s,p){return Math.min(p.build?.key==='warehouse'?p.build.end:Infinity,...s.missions.filter(m=>!m.paused&&!m.awaitingUnload).map(m=>m.due));}
 function waitingCargo(s){for(const m of [...s.missions])if(m.paused&&m.type==='route'){unloadCargo(getPlanet(s,m.home),m.cargo);}else if(m.awaitingUnload){const p=getPlanet(s,m.awaitingUnload);unloadCargo(p,m.cargo);m.due=s.time;if(!cargoPresent(m.cargo))parkFleet(s,m,p.id,m.finishTitle||'Flotte entladen');}}
 // Work is measured in milliseconds at full power; forecasts never replace earned progress.
-function forecastShipJobs(s){for(const p of s.planets){const j=p.shipjob;if(!j)continue;
+function forecastShipJobs(s){for(const p of s.planets)for(const kind of ['ship','orbital']){const j=p[kind+'job'];if(!j)continue;
  if(j.workRemaining===undefined){j.orderEnd=j.end;j.workTotal=j.end-j.start;j.workRemaining=Math.max(0,j.end-s.time);}
  const ratio=stats(s,p).ratio;j.paused=ratio===0&&j.workRemaining>0;
  // Keep paused saves finite. Their end is a placeholder, excluded from scheduling.
  j.end=s.time+Math.max(1,Math.ceil(j.workRemaining/(ratio||1)));
- let work=j.workRemaining;for(const queued of p.shipqueue||[]){work+=queued.workTotal;queued.paused=ratio===0;queued.end=s.time+Math.max(1,Math.ceil(work/(ratio||1)));}
+ let work=j.workRemaining;for(const queued of p[kind==='ship'?'shipqueue':'orbitalqueue']||[]){work+=queued.workTotal;queued.paused=ratio===0;queued.end=s.time+Math.max(1,Math.ceil(work/(ratio||1)));}
 }}
 export const SHIP_QUEUE_LIMIT=20;
 // Saves from 2026-10-11.04 may contain 50 already-paid orders; keep every one.
@@ -48,21 +48,26 @@ export const SHIP_QUEUE_LEGACY_LIMIT=50;
 export function shipQueueCapacity(p){return Math.min(SHIP_QUEUE_LIMIT,Math.max(0,p.buildings.shipyard));}
 export function shipQueueFullReason(p){return shipOrders(p).length>=shipQueueCapacity(p)?(shipQueueCapacity(p)<SHIP_QUEUE_LIMIT?`Alle Auftragsplätze belegt. Mehr Plätze ab Werftstufe ${shipQueueCapacity(p)+1}.`:`Alle ${SHIP_QUEUE_LIMIT} Auftragsplätze belegt. Maximale Warteschlangengröße erreicht.`):'';}
 export function shipOrders(p){return [p.shipjob,...p.shipqueue||[]].filter(Boolean);}
+export function orbitalOrders(p){return [p.orbitaljob,...p.orbitalqueue||[]].filter(Boolean);}
+export function orbitalQueueCapacity(p){return Math.min(SHIP_QUEUE_LIMIT,Math.max(0,p.buildings.orbital||0));}
+export function orbitalQueueFullReason(p){const cap=orbitalQueueCapacity(p);return orbitalOrders(p).length>=cap?`Alle ${cap} Auftragsplätze der Orbitalwerft belegt.`:'';}
 function nextShipOrder(p){p.shipjob=(p.shipqueue||[]).shift()||null;}
-function produce(s,ms){for(const p of s.planets){settle(p);const z=stats(s,p);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);if(p.shipjob)p.shipjob.workRemaining=Math.max(0,p.shipjob.workRemaining-ms*z.ratio);}}
+function nextOrbitalOrder(p){p.orbitaljob=(p.orbitalqueue||[]).shift()||null;}
+function produce(s,ms){for(const p of s.planets){settle(p);const z=stats(s,p);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);for(const kind of ['ship','orbital'])if(p[kind+'job'])p[kind+'job'].workRemaining=Math.max(0,p[kind+'job'].workRemaining-ms*z.ratio);}}
 function report(s,title,body){s.reports.unshift({id:++s.seq,time:s.time,title,body});s.reports=s.reports.slice(0,60);}
 export function need(s,p,req){if(!req)return '';if(req.tech&&s.tech[req.tech]<req.level)return `Benötigt ${TECHS[req.tech].name} Stufe ${req.level}.`;if(req.building&&p.buildings[req.building]<req.level)return `Benötigt ${BUILDINGS[req.building].name} Stufe ${req.level}.`;return '';}
 export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key];const cost=key==='orbital'&&l>=4?vector(b.cost.map(v=>Math.ceil(v*Math.pow(1.6,3)*Math.pow(1.08,l-3)))):costAt(b,l);return {cost,ms:Math.ceil(b.time*Math.pow(1.35,l)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000),reason:need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=(key==='bunker'?4:30)?'Maximale Gebäudestufe erreicht.':'')};}
 export function researchInfo(s,p,key){const t=TECHS[key];if(!t)throw Error('Unbekannte Forschung.');const l=s.tech[key];return {cost:costAt(t,l),ms:Math.ceil(t.time*Math.pow(1.5,l)*Math.pow(key==='military'?1.5:1,Math.max(0,l-4))/Math.max(1,1+(p.buildings.lab-1)*.15)*1000),reason:(key==='colonization'&&l>=3&&l<t.max?need(s,p,{tech:['ramjet','impulse','hyperspace'][l-3],level:1}):'')||(p.buildings.lab<t.lab?`Benötigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.`:need(s,p,t.requires)||(l>=t.max?'Maximale Forschungsstufe erreicht.':''))};}
 function pay(p,c){settle(p);for(const k of RES)if(!Number.isFinite(c[k])||c[k]<0||p.resources[k]+1e-8<c[k])throw Error('Nicht genügend lokale Ressourcen.');for(const k of RES)p.resources[k]=Math.max(0,p.resources[k]-c[k]);settle(p);}
-export function defenseSlots(p){return Object.entries(SHIPS).reduce((a,[k,sh])=>a+(sh.slots||0)*(p.ships[k]||0),0)+shipOrders(p).reduce((a,j)=>a+(SHIPS[j.key]?.slots||0)*j.count,0);}
+export function defenseSlots(p){return Object.entries(SHIPS).reduce((a,[k,sh])=>a+(sh.slots||0)*(p.ships[k]||0),0)+[...shipOrders(p),...orbitalOrders(p)].reduce((a,j)=>a+(SHIPS[j.key]?.slots||0)*j.count,0);}
 export function shipRefund(job){
  if(!job)return {resources:vector([0,0,0]),salvage:vector([0,0,0]),legacyDefense:false};
  if(job.payment)return {resources:{...job.payment.resources},salvage:{...job.payment.salvage},legacyDefense:false};
- const gross=vector(SHIPS[job.key].cost.map(v=>v*job.count)),legacyDefense=SHIPS[job.key].category==='defense';
+ const legacyDefense=SHIPS[job.key].category==='defense',legacyCosts={flak:[160,80,20],laser:[450,300,70],rail:[1400,1000,280],plasma:[4000,2800,900]},cost=legacyDefense?legacyCosts[job.key]:SHIPS[job.key].cost,gross=vector(cost.map(v=>v*job.count));
  return {resources:legacyDefense?vector([0,0,gross.fuel]):gross,salvage:legacyDefense?vector([gross.metal,gross.crystal,0]):vector([0,0,0]),legacyDefense};
 }
-export function shipInfo(s,p,key,count=1){const sh=SHIPS[key];if(!sh)throw Error('Unbekanntes Schiff.');if(sh.category==='defense')return {cost:vector(sh.cost.map(v=>v*count)),salvage:vector([0,0,0]),ms:0,ratio:stats(s,p).ratio,reason:'Die bisherigen Orbitalgeschütze sind stillgelegt. Die neue Orbitalwerft folgt mit dem nächsten Update.'};const gross=vector(sh.cost.map(v=>v*count)),salvage=vector(RES.map(k=>sh.category==='defense'?Math.min(gross[k],p.defenseSalvage?.[k]||0):0));return {cost:vector(RES.map(k=>gross[k]-salvage[k])),salvage,ms:Math.ceil(sh.time*count*1000*shipyardTimeFactor(p.buildings.shipyard)),ratio:stats(s,p).ratio,reason:sh.slots&&defenseSlots(p)+sh.slots*count>(p.buildings.orbital||0)*4?'Nicht genügend freie Plätze auf der Orbitalplattform.':p.buildings.shipyard<(sh.shipyard||1)?`Benötigt Schiffswerft Stufe ${sh.shipyard||1}.`:s.tech[sh.tech]<(sh.techLevel||1)?`Benötigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel||1}.`:(s.tech[sh.engine||'drive']||0)<(sh.engineLevel||0)?`Benötigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.`:''};}
+export function shipInfo(s,p,key,count=1){const sh=SHIPS[key];if(!sh)throw Error('Unbekanntes Schiff.');const defense=sh.category==='defense',yard=defense?(p.buildings.orbital||0):p.buildings.shipyard,gross=vector(sh.cost.map(v=>v*count));return {cost:gross,salvage:vector([0,0,0]),ms:Math.ceil(sh.time*count*1000*shipyardTimeFactor(yard)),ratio:stats(s,p).ratio,reason:yard<(sh.shipyard||1)?`Benötigt ${defense?'Orbitalwerft':'Schiffswerft'} Stufe ${sh.shipyard||1}.`:s.tech[sh.tech]<(sh.techLevel||1)?`Benötigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel||1}.`:(s.tech[sh.engine||'drive']||0)<(sh.engineLevel||0)?`Benötigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.`:''};}
+
 export function cargoCapacity(s,n=1,ship='transport'){return Math.floor((SHIPS[ship]?.cargo||0)*(1+s.tech.logistics*.15))*n;}
 export function flightInfo(s,from,to,n=1,probe=false,ship='transport'){if(from.system||to.system){const f=sharedFlight(s,from,to,n,probe?'probe':ship);return {...f,fuel:f.fuel*2};}const def=SHIPS[probe?'probe':ship];if(!def)throw Error('Unbekanntes Schiff.');const remote=(from.system||'tutorial')!==(to.system||'tutorial');const engine=shipFlightEngine(s,probe?'probe':ship,remote);const anchor=s.galaxy||{x:500,y:960};const a=from.system?from:anchor,b=to.system?to:anchor;const dist=remote?Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)/40):Math.max(1,Math.abs((from.distance||0)-(to.distance||0)));return {ms:Math.ceil((10+dist*8)*FLIGHT_BASE_SCALE*1000/((1+(s.tech[engine]||0)*ENGINE_SPEED_BONUS+(probe?s.tech.scout*.1:0))*def.speed)),fuel:Math.ceil(def.fuel*2*dist*n/(1+(s.tech[engine]||0)*.12))};}
 // Fleet fuel is prepaid for a complete itinerary; cargo never includes engine fuel.
@@ -119,12 +124,12 @@ export function advance(s,now){
  waitingCargo(s);let guard=0;
  while(true){
   forecastShipJobs(s);
-  const times=[];for(const p of s.planets){if(p.build)times.push(p.build.end);if(p.shipjob&&!p.shipjob.paused)times.push(p.shipjob.workRemaining===0?s.time:p.shipjob.end);}if(s.research)times.push(s.research.end);for(const m of s.missions)if(!m.paused&&!m.awaitingUnload)times.push(m.due);
+  const times=[];for(const p of s.planets){if(p.build)times.push(p.build.end);for(const kind of ['ship','orbital'])if(p[kind+'job']&&!p[kind+'job'].paused)times.push(p[kind+'job'].workRemaining===0?s.time:p[kind+'job'].end);}if(s.research)times.push(s.research.end);for(const m of s.missions)if(!m.paused&&!m.awaitingUnload)times.push(m.due);
   const next=Math.min(...times);if(next>now||!Number.isFinite(next))break;if(++guard>100000){for(const m of s.missions)if(m.type==='route'&&!m.stopping){m.stopping=true;report(s,'Handelsroute endet nach langer Abwesenheit',`${m.name}: Die aktuelle Runde wird noch abgeschlossen.`);}guard=0;}
   produce(s,Math.max(0,next-s.time));s.time=Math.max(s.time,next);
   // Fixed order: research, buildings, shipbuilding, then missions by id.
   if(s.research&&s.research.end<=s.time){const j=s.research;s.tech[j.key]=j.level;s.research=null;report(s,'Forschung abgeschlossen',`${TECHS[j.key].name} erreicht Stufe ${j.level}.`);}
-  for(const p of s.planets){if(p.build&&p.build.end<=s.time){const j=p.build;p.buildings[j.key]=j.level;p.build=null;report(s,'Ausbau abgeschlossen',`${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);}if(p.shipjob&&p.shipjob.workRemaining===0){const j=p.shipjob;p.ships[j.key]+=j.count;nextShipOrder(p);report(s,'Schiffbau abgeschlossen',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}}
+  for(const p of s.planets){if(p.build&&p.build.end<=s.time){const j=p.build;p.buildings[j.key]=j.level;p.build=null;report(s,'Ausbau abgeschlossen',`${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);}if(p.shipjob&&p.shipjob.workRemaining===0){const j=p.shipjob;p.ships[j.key]+=j.count;nextShipOrder(p);report(s,'Schiffbau abgeschlossen',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}if(p.orbitaljob&&p.orbitaljob.workRemaining===0){const j=p.orbitaljob;p.ships[j.key]+=j.count;nextOrbitalOrder(p);report(s,'Orbitalplattform fertiggestellt',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}}
   for(const m of [...s.missions].sort((a,b)=>a.id-b.id))if(!m.paused&&!m.awaitingUnload&&m.due<=s.time){
    if(m.type==='route'){routeArrival(s,m);}
    else if(m.type==='station'){parkFleet(s,m,m.to,'Flotte stationiert');}
@@ -143,12 +148,12 @@ export function act(s,action,now=Date.now()){
  const n=structuredClone(s);advance(n,now);const p=getPlanet(n,action.planet||n.active);
  if(action.type==='build'){const info=buildInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(p.build)throw Error('Auf diesem Planeten läuft bereits ein Bauauftrag.');pay(p,info.cost);p.build={key:action.key,level:p.buildings[action.key]+1,start:n.time,end:n.time+info.ms};}
  else if(action.type==='research'){const info=researchInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(n.research)throw Error('Es läuft bereits eine imperiumsweite Forschung.');pay(p,info.cost);n.research={key:action.key,level:n.tech[action.key]+1,start:n.time,end:n.time+info.ms,planet:p.id};}
- else if(action.type==='ship'){const count=action.count;if(!Number.isSafeInteger(count)||count<1)throw Error('Wähle eine positive ganze Anzahl Schiffe.');const info=shipInfo(n,p,action.key,count);if(info.reason)throw Error(info.reason);const full=shipQueueFullReason(p);if(full)throw Error(full);if(!Number.isSafeInteger(info.ms)||n.time+info.ms>8.64e15||RES.some(k=>!Number.isSafeInteger(info.cost[k])||info.cost[k]>1e12))throw Error('Dieser Bauauftrag ist zu groß.');if(p.defenseSalvage)for(const k of RES)p.defenseSalvage[k]-=info.salvage[k];pay(p,info.cost);const job={id:++n.seq,key:action.key,count,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{resources:{...info.cost},salvage:{...info.salvage}}};if(p.shipjob){p.shipqueue??=[];p.shipqueue.push(job);}else p.shipjob=job;}
+ else if(action.type==='ship'){const count=action.count;if(!Number.isSafeInteger(count)||count<1)throw Error('Wähle eine positive ganze Anzahl Schiffe.');const info=shipInfo(n,p,action.key,count);if(info.reason)throw Error(info.reason);const defense=SHIPS[action.key]?.category==='defense',full=defense?orbitalQueueFullReason(p):shipQueueFullReason(p);if(full)throw Error(full);if(!Number.isSafeInteger(info.ms)||n.time+info.ms>8.64e15||RES.some(k=>!Number.isSafeInteger(info.cost[k])||info.cost[k]>1e12))throw Error('Dieser Bauauftrag ist zu groß.');if(p.defenseSalvage)for(const k of RES)p.defenseSalvage[k]-=info.salvage[k];pay(p,info.cost);const job={id:++n.seq,key:action.key,count,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{resources:{...info.cost},salvage:{...info.salvage}}};if(defense){if(p.orbitaljob){p.orbitalqueue??=[];p.orbitalqueue.push(job);}else p.orbitaljob=job;}else if(p.shipjob){p.shipqueue??=[];p.shipqueue.push(job);}else p.shipjob=job;}
  else if(action.type==='cancel-ship'){
-  const o=action.order,j=o?.id!==undefined?shipOrders(p).find(j=>j.id===o.id):p.shipjob;
+  const o=action.order,j=o?.id!==undefined?[...shipOrders(p),...orbitalOrders(p)].find(j=>j.id===o.id):p.shipjob;
   if(!j)throw Error('Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen. Der Bauauftrag hat sich geändert. Bitte die Ansicht aktualisieren.');
   if(!o||['key','count','start'].some(k=>o[k]!==j[k])||(j.id!==undefined?o.id!==j.id:o.end!==(j.orderEnd??j.end)))throw Error('Der Bauauftrag hat sich geändert. Bitte die Ansicht aktualisieren.');
-  const refund=shipRefund(j);for(const k of RES){p.depot[k]+=refund.resources[k];p.defenseSalvage??=vector([0,0,0]);p.defenseSalvage[k]+=refund.salvage[k];}settle(p);if(j===p.shipjob)nextShipOrder(p);else p.shipqueue=p.shipqueue.filter(q=>q!==j);
+  const refund=shipRefund(j);for(const k of RES){p.depot[k]+=refund.resources[k];p.defenseSalvage??=vector([0,0,0]);p.defenseSalvage[k]+=refund.salvage[k];}settle(p);if(j===p.shipjob)nextShipOrder(p);else if(j===p.orbitaljob)nextOrbitalOrder(p);else if((p.orbitalqueue||[]).includes(j))p.orbitalqueue=p.orbitalqueue.filter(q=>q!==j);else p.shipqueue=p.shipqueue.filter(q=>q!==j);
   report(n,'Schiffsbau abgebrochen',p.name+': '+j.count+' × '+SHIPS[j.key].name+'. Rohstoffe zurückerstattet; Überschüsse bleiben im Lieferdepot.'+(refund.legacyDefense?' Metall und Kristall des alten Verteidigungsauftrags bleiben als Reparaturmaterial verfügbar.':''));
  }
  else if(action.type==='probe'||action.type==='colony'||action.type==='transport'){
