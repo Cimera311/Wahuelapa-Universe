@@ -6,11 +6,11 @@ import {battleLogView} from '../src/combat-ui.js';
 
 test('200 Falken versus Titan: both rounds reproduce the actual damage and losses',()=>{
  const {trace}=resolveBattle({fleet:{falke:200}},{fleet:{titan:1}},'200-falken-vs-titan');
- const first=summarizeRound(trace,trace.rounds[0]);
+ const first=summarizeRound(trace,trace.rounds.find(q=>q.round===1));
  assert.deepEqual(first.pairs.map(p=>[p.shots,p.damage]),[[200,7500],[4,1100]]);
  const titan=first.outcomes.find(o=>o.target.key==='titan');
  assert.equal(titan.shield,1400);assert.equal(titan.hull,6100);assert.equal(titan.hpAfter,400);assert.equal(titan.destroyed,0);
- const second=summarizeRound(trace,trace.rounds[1]);
+ const second=summarizeRound(trace,trace.rounds.find(q=>q.round===2));
  assert.equal(second.outcomes.find(o=>o.target.key==='titan').destroyed,1);
  assert.equal(second.outcomes.find(o=>o.target.key==='falke').destroyed,4);
 });
