@@ -10,7 +10,7 @@ export const BUILDINGS = {
  lab:{name:'Forschungslabor',icon:'⚗',cost:[150,100,0],time:12,description:'Schaltet imperiumsweite Forschung frei.'},
  shipyard:{name:'Schiffswerft',icon:'⚒',cost:[200,100,0],time:12,description:'Ab Stufe 2 verkürzt jede weitere Stufe die Bauzeit neuer Aufträge um 8 % gegenüber der vorherigen Stufe. Verbraucht dauerhaft Strom; Strommangel bremst den Schiffbau.',requires:{building:'lab',level:1}},
  robotics:{name:'Arbeitsroboter',icon:'⚙',cost:[400,300,60],time:20,description:'Verkürzen neue Bauaufträge um 8 % je Stufe.',requires:{tech:'engineering',level:1}},
- orbital:{asset:'./assets/pvp-resource-v1/buildings/orbital.webp',name:'Orbitalplattform',icon:'◎',cost:[600,400,120],time:60,description:'Je Stufe vier Plätze für orbitale Verteidigung; maximal Stufe 4.',requires:{tech:'military',level:1}},
+ orbital:{asset:'./assets/pvp-resource-v1/buildings/orbital.webp',name:'Orbitalwerft',icon:'◎',cost:[200,100,0],time:12,description:'Baut und repariert bewaffnete Orbitalplattformen. Eigene Warteschlange: ein Platz pro Werftstufe, maximal 20. Wie die Schiffswerft 8 % schneller je weiterer Stufe und dauerhafter Strombedarf.',requires:{tech:'military',level:1}},
  bunker:{asset:'./assets/pvp-resource-v1/buildings/bunker.webp',name:'Ressourcenbunker',icon:'▣',cost:[450,300,80],time:45,description:'Je Stufe schützt er 2,5 % der Lagerkapazität, insgesamt maximal 2000 je Rohstoff.',requires:{tech:'military',level:1}},
  tidal:{name:'Gezeitenkraftwerk',icon:'≈',cost:[700,450,80],time:30,description:'Liefert 180 Energie je Stufe auf Ozeanwelten.',requires:{tech:'energy',level:3},ocean:true}
 };
@@ -43,10 +43,10 @@ export const SHIPS = {
  falke:{name:'Falke',icon:'✧',category:'military',tier:1,role:'Abfangjäger für schnelle Verlegungen.',cost:[240,150,60],time:60,tech:'military',techLevel:1,shipyard:1,cargo:0,speed:1.5,fuel:6},
  waechter:{name:'Wächter',icon:'✧',category:'military',tier:2,role:'Eskortfregatte als Grundlage für späteren Geleitschutz.',cost:[900,600,220],time:180,tech:'military',techLevel:2,shipyard:2,engine:'ramjet',engineLevel:1,cargo:0,speed:1.1,fuel:16},
  donner:{name:'Donner',icon:'✧',category:'military',tier:3,role:'Angriffskreuzer für die spätere Kampfflotte.',cost:[3000,1800,700],time:480,tech:'military',techLevel:3,shipyard:4,engine:'impulse',engineLevel:1,cargo:0,speed:.85,fuel:40},
- flak:{asset:'./assets/pvp-resource-v1/defense/flak.webp',name:'Orbitalflak',icon:'✣',category:'defense',role:'Abwehr gegen Falken.',cost:[160,80,20],time:60,tech:'military',techLevel:1,shipyard:2,slots:1,cargo:0,speed:0,fuel:0},
- laser:{asset:'./assets/pvp-resource-v1/defense/laser.webp',name:'Laserbatterie',icon:'⊕',category:'defense',role:'Universelle orbitale Abwehr.',cost:[450,300,70],time:180,tech:'military',techLevel:2,shipyard:3,slots:2,cargo:0,speed:0,fuel:0},
- rail:{asset:'./assets/pvp-resource-v1/defense/rail.webp',name:'Railgun',icon:'⌖',category:'defense',role:'Abwehr gegen schwere Kriegsschiffe.',cost:[1400,1000,280],time:480,tech:'military',techLevel:3,shipyard:4,slots:3,cargo:0,speed:0,fuel:0},
- plasma:{asset:'./assets/pvp-resource-v1/defense/plasma.webp',name:'Plasmageschütz',icon:'✺',category:'defense',role:'Schwere Abwehr gegen Titanen.',cost:[4000,2800,900],time:1200,tech:'military',techLevel:4,shipyard:6,slots:4,cargo:0,speed:0,fuel:0},
+ flak:{asset:'./assets/pvp-resource-v1/defense/flak.webp',name:'Leichte Plattform · Flak',icon:'✣',category:'defense',role:'Leichte Orbitalplattform mit Flak gegen schnelle Angreifer.',cost:[240,150,60],time:60,tech:'military',techLevel:1,orbital:1,cargo:0,speed:0,fuel:0},
+ laser:{asset:'./assets/pvp-resource-v1/defense/laser.webp',name:'Mittlere Plattform · Laser',icon:'⊕',category:'defense',role:'Mittlere Orbitalplattform mit universeller Laserbatterie.',cost:[900,600,220],time:180,tech:'military',techLevel:2,orbital:2,cargo:0,speed:0,fuel:0},
+ rail:{asset:'./assets/pvp-resource-v1/defense/rail.webp',name:'Schwere Plattform · Railgun',icon:'⌖',category:'defense',role:'Schwere Orbitalplattform gegen große Kriegsschiffe.',cost:[3000,1800,700],time:480,tech:'military',techLevel:3,orbital:4,cargo:0,speed:0,fuel:0},
+ plasma:{asset:'./assets/pvp-resource-v1/defense/plasma.webp',name:'Großplattform · Plasma',icon:'✺',category:'defense',role:'Große Orbitalplattform mit Titan-Abwehrgeschütz.',cost:[9500,6500,2500],time:1200,tech:'military',techLevel:4,orbital:6,cargo:0,speed:0,fuel:0},
  titan:{name:'Titan',icon:'✧',category:'military',tier:4,role:'Schlachtschiff als Kern einer schweren Flotte.',cost:[9500,6500,2500],time:1200,tech:'military',techLevel:4,shipyard:6,engine:'hyperspace',engineLevel:1,cargo:0,speed:.6,fuel:100}
 };
 export function isFreighter(key){return SHIPS[key]?.category==='freighter';}
