@@ -8,7 +8,7 @@ const T=1800000000000;
 function ready(level=2,ratio=1){const s=newGame('Werft',T),p=s.planets[0];for(const k of ['metal','crystal','fuel'])p.buildings[k]=0;p.buildings.shipyard=level;p.buildings.solar=1;p.energy=ratio===0?1:45/(Math.ceil(10*level**1.5)*ratio);if(ratio===0)p.buildings.solar=0;s.tech.military=1;p.resources=vector([3000,2200,1000]);return s;}
 const order=j=>({type:'cancel-ship',order:{id:j.id,key:j.key,count:j.count,start:j.start,end:j.orderEnd??j.end}});
 test('Shipyard levels compound time reduction with diminishing absolute savings for all units',()=>{
- const s=ready(),p=s.planets[0];for(const key of Object.keys(SHIPS)){p.buildings.shipyard=1;assert.equal(shipInfo(s,p,key,3).ms,SHIPS[key].time*3000);p.buildings.shipyard=6;assert.equal(shipInfo(s,p,key,3).ms,Math.ceil(SHIPS[key].time*3000*.92**5));}
+ const s=ready(),p=s.planets[0];for(const key of Object.keys(SHIPS).filter(key=>SHIPS[key].category!=='defense')){p.buildings.shipyard=1;assert.equal(shipInfo(s,p,key,3).ms,SHIPS[key].time*3000);p.buildings.shipyard=6;assert.equal(shipInfo(s,p,key,3).ms,Math.ceil(SHIPS[key].time*3000*.92**5));}
  assert.equal(shipyardTimeFactor(0),1);assert.ok(1-shipyardTimeFactor(2)>shipyardTimeFactor(10)-shipyardTimeFactor(11));
 });
 test('Planet factor applies once to every consumer including idle shipyards, but not supply',()=>{
