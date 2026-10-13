@@ -1,4 +1,11 @@
 export const GAME_NEWS=[
+ {date:'13.10.2026',title:'Orbitalwerft: Ein Heimvorteil mit Zähnen',status:'Verteidigungs-Update',items:[
+ 'Die Orbitalplattform wird zur eigenständigen Orbitalwerft: baue auf jedem Planeten beliebig viele Flak-, Laser-, Railgun- oder Plasmaplattformen. Die Kosten für Plattform und Waffe entsprechen dem jeweiligen Kriegsschiff.',
+ 'Die Orbitalwerft besitzt eine eigene Bauwarteschlange, baut mit jeder Stufe schneller und verbraucht auch im Leerlauf dauerhaft Energie.',
+ 'In Runde 0 feuern Orbitalgeschütze zuerst. Erst danach kämpfen die überlebenden Schiffe und Verteidigungen bis zu sechs Runden gleichzeitig.',
+ 'Zerstörte Orbitalplattformen bleiben als Wracks und können für 70 % Metall und Kristall sowie den vollen Treibstoffpreis wiederhergestellt werden. Zerstörte Kriegsschiffe bleiben verloren.',
+ 'Bestehende Verteidigungen und bezahlte Aufträge bleiben erhalten. Waffentechnik, Schilde und Panzerung gelten weiterhin für die Orbitalverteidigung.'
+ ]},
  {date:'13.10.2026',title:'Berichte jetzt auch mobil übersichtlich',status:'Berichte-Update',items:[
  'Neue kompakte Berichtskarten mit Icons, klaren Ergebnissen und besser lesbaren Details – besonders auf dem Smartphone.',
  'Auswahl, Archiv und Kampfprotokolle bleiben erreichbar. Der Darstellungsfehler mit den riesigen leeren Karten wurde behoben.'
