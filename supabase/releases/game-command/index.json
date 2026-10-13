@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-12.02",
+  "latest": "2026-10-13.01",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -113,6 +113,13 @@
       "sourceCommit": "23b3add3facab9f79214dec2eea645f0c548a77e",
       "description": "Realm-Konfiguration: Galaxiefluege x3 fuer neue Flugabschnitte; Tutorial, Treibstoff und bereits gestartete Fluege bleiben unveraendert.",
       "sha256": "f4b4f795378daaef742366b9ac3ab86422020635ff9acaaec41a1b3dfc6fec2f"
+    },
+    {
+      "version": "2026-10-13.01",
+      "createdAt": "2026-10-13T16:05:51.484Z",
+      "sourceCommit": "f5f1d861f13226d979a36682d17cb3a2fbc16e8b",
+      "description": "Orbitalwerft, Plattformen, Reparatur und Erstschlag in Runde 0",
+      "sha256": "c943a1b4308588405ad80649537a1592697093ecdd440874559a236b197c1117"
     }
   ]
 }
