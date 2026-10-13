@@ -59,9 +59,10 @@ function resolveAttack(w,m,time){
  const hostBefore=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,before[k]+parked.reduce((n,g)=>n+(g.fleet[k]||0),0)]));
  const hostAfter=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,(homeResult.fleet[k]||0)+pausedRoutes.reduce((n,r)=>n+(r.fleet[k]||0),0)+dockedRaids.reduce((n,r)=>n+(r.survivors[k]||0),0)]));
  const supportReports=[];for(const group of supporting){const after=result.defenderGroups.find(g=>g.id===group.id),mission=w.socialMissions.find(x=>x.id===group.id);mission.fleet=after.fleet;mission.hulls=after.hulls;let cargoRoom=fleetCapacity(stateOf(w,mission.owner),mission.fleet);for(const k of RES){mission.cargo[k]=Math.min(mission.cargo[k],cargoRoom);cargoRoom-=mission.cargo[k];}mission.shieldUntil=time+300000;if(!Object.keys(after.fleet).length){mission.status='lost';delete mission.awaitingUnload;}supportReports.push({owner:group.owner,commander:group.commander,before:group.fleet,after:after.fleet});log(stateOf(w,group.owner),time,'PvP-Kampfbericht','Deine Unterstützung auf '+p.name+' hat mitverteidigt. Übrig: '+fleetText(after.fleet));}
+ p.orbitalWrecks??={};if((m.ruleVersion||1)>=3)for(const [key,sh] of Object.entries(SHIPS))if(sh.category==='defense')p.orbitalWrecks[key]=(p.orbitalWrecks[key]||0)+Math.max(0,(before[key]||0)-(homeResult.fleet[key]||0));
  for(const key of Object.keys(SHIPS))p.ships[key]=homeResult.fleet[key]||0;
  p.hulls=homeResult.hulls;p.shieldUntil=time+300000;
- p.defenseSalvage??=zero();for(const k of RES)p.defenseSalvage[k]+=result.defenseRepair[k];
+ p.defenseSalvage??=zero();if((m.ruleVersion||1)<3)for(const k of RES)p.defenseSalvage[k]+=result.defenseRepair[k];
  const bunker=Math.min(2000,capacity(p)*.025*(p.buildings.bunker||0));
  const cap=fleetCapacity({tech:m.combat.tech},result.attacker.fleet);
  const field=vector(RES.map(k=>(target.debris?.[k]||0)+result.debris[k]));
@@ -156,7 +157,7 @@ export function processWorld(snapshot,uid,request){
  const s=stateOf(w,uid),start=w.starts.find(x=>x.user_id===uid);
  if(start)s.galaxy={x:start.x,y:start.y};
  if(type==='command'){
-  if(!['build','research','ship','probe','colony','transport','reserve','edit-route','cancel-route-edit','stop-route','pause-route','resume-route','cancel-route-pause','station','collect','route','deliver','repair','cancel-ship'].includes(action.type))throw Error('Unbekannte Spielaktion.');
+  if(!['build','research','ship','probe','colony','transport','reserve','edit-route','cancel-route-edit','stop-route','pause-route','resume-route','cancel-route-pause','station','collect','route','deliver','repair','cancel-ship','repair-orbital'].includes(action.type))throw Error('Unbekannte Spielaktion.');
   const updated=act(s,action,w.now);w.saves.find(r=>r.user_id===uid).state=updated;
  }else if(type==='social')socialAction(w,uid,action,request.eventId||request.requestId);
  else if(type==='galaxy')launchGalaxy(w,uid,action,request.eventId||request.requestId);
@@ -169,7 +170,7 @@ export function processWorld(snapshot,uid,request){
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{shipQueue:true,partnerOrigins:true,cargoRetention:true,attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{shipQueue:true,partnerOrigins:true,cargoRetention:true,attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,cancelShip:true,orbitalShipyard:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,awaitingUnload:!!m.awaitingUnload,cargo:{...m.cargo||zero()},arrival:m.arrival_at,returnAt:m.return_at})),
  incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),
