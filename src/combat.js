@@ -76,7 +76,7 @@ export function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION
  const snapshot=u=>({...(u.owner?{owner:u.owner,groupId:u.groupId,commander:u.commander}:{}),id:u.id,key:u.key,side:u.id[0]==='A'?'attacker':'defender',category:SHIPS[u.key].category,name:SHIPS[u.key].name,definition:{...COMBAT[u.key],cost:[...SHIPS[u.key].cost]},hp:Math.max(0,u.hp),maxHp:u.maxHp,shield:u.shield,maxShield:u.maxShield??combatStats(u.key,u.id[0]==='A'?attacker.tech:defender.tech).shield,attack:u.attack,shots:u.shots,bonus:{...u.bonus}});
  const initial=[...a,...d].map(snapshot);
  const total=list=>({count:list.filter(u=>u.hp>1e-8).length,hp:list.reduce((n,u)=>n+Math.max(0,u.hp),0),shield:list.filter(u=>u.hp>1e-8).reduce((n,u)=>n+u.shield,0)});
- for(let round=version===3?0:1;round<=6;round++){
+ for(let round=version===3&&d.some(u=>SHIPS[u.key].category==='defense')?0:1;round<=6;round++){
   const aa=a.filter(u=>u.hp>1e-8),dd=d.filter(u=>u.hp>1e-8);if(!aa.length||!dd.length)break;
   const damage=new Map(),shots=[];
   function fire(shooters,targets){
