@@ -1,4 +1,8 @@
 export const GAME_NEWS=[
+ {date:'13.10.2026',title:'Berichte jetzt auch mobil übersichtlich',status:'Berichte-Update',items:[
+ 'Neue kompakte Berichtskarten mit Icons, klaren Ergebnissen und besser lesbaren Details – besonders auf dem Smartphone.',
+ 'Auswahl, Archiv und Kampfprotokolle bleiben erreichbar. Der Darstellungsfehler mit den riesigen leeren Karten wurde behoben.'
+ ]},
  {date:'12.10.2026',title:'Längere Flugzeiten in der Galaxie',status:'Flugzeiten',items:[
  'Flüge innerhalb der gemeinsamen Galaxie dauern ab sofort dreimal so lange. Die Flugzeiten deiner Tutorial-Planeten bleiben unverändert.',
  'Bereits gestartete Flüge behalten ihre bisherigen Ankunftszeiten.'
