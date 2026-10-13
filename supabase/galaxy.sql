@@ -191,6 +191,15 @@ begin
   end loop;
  end loop;
  for m in select value from jsonb_array_elements(missions) limit 200 loop
+  -- Attack fleets live in public.pvp_attacks, not in planetary hangars.
+  -- The leaderboard appends each active attack as a mission with a fleet object.
+  for item in select key,value from jsonb_each(case when jsonb_typeof(m->'fleet')='object' then m->'fleet' else '{}'::jsonb end) loop
+   if costs->'ships' ? item.key and item.key not in ('flak','laser','rail','plasma') then
+    for base in select value from jsonb_array_elements(costs->'ships'->item.key) loop
+     fleet_total := fleet_total + (base #>> '{}')::numeric * public.imperium_rank_int(item.value,1000000);
+    end loop;
+   end if;
+  end loop;
   for base in select value from jsonb_array_elements(coalesce(costs->'ships'->(m->>'ship'),'[]'::jsonb)) loop
    fleet_total := fleet_total + (base #>> '{}')::numeric * public.imperium_rank_int(m->'count',100);
   end loop;
