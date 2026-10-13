@@ -9,14 +9,14 @@ var BUILDINGS = {
   metal: { name: "Metallmine", icon: "\u26CF", cost: [80, 35, 0], time: 8, description: "F\xF6rdert Metall f\xFCr Geb\xE4ude und Schiffe." },
   crystal: { name: "Kristallmine", icon: "\u25C6", cost: [65, 60, 0], time: 9, description: "Kristalle f\xFCr Forschung und Elektronik." },
   fuel: { name: "Treibstoffanlage", icon: "\u25B0", cost: [90, 50, 0], time: 10, description: "Versorgt deine Flotten mit Treibstoff." },
-  solar: { name: "Solarkraftwerk", icon: "\u2600", cost: [75, 40, 0], time: 8, description: "Liefert 45 Energie je Stufe." },
+  solar: { name: "Solarkraftwerk", icon: "\u2600", cost: [75, 40, 0], time: 8, description: "Liefert 45 \xD7 Stufe^Realm-Faktor Energie." },
   warehouse: { name: "Lagerkomplex", icon: "\u25A4", cost: [120, 60, 0], time: 10, description: "Erweitert alle lokalen Ressourcenlager." },
   lab: { name: "Forschungslabor", icon: "\u2697", cost: [150, 100, 0], time: 12, description: "Schaltet imperiumsweite Forschung frei." },
   shipyard: { name: "Schiffswerft", icon: "\u2692", cost: [200, 100, 0], time: 12, description: "Ab Stufe 2 verk\xFCrzt jede weitere Stufe die Bauzeit neuer Auftr\xE4ge um 8 % gegen\xFCber der vorherigen Stufe. Verbraucht dauerhaft Strom; Strommangel bremst den Schiffbau.", requires: { building: "lab", level: 1 } },
   robotics: { name: "Arbeitsroboter", icon: "\u2699", cost: [400, 300, 60], time: 20, description: "Verk\xFCrzen neue Bauauftr\xE4ge um 8 % je Stufe.", requires: { tech: "engineering", level: 1 } },
   orbital: { asset: "./assets/pvp-resource-v1/buildings/orbital.webp", name: "Orbitalwerft", icon: "\u25CE", cost: [600, 400, 120], time: 60, description: "Eigenst\xE4ndige Werft f\xFCr k\xFCnftige Verteidigungsplattformen. Verbraucht dauerhaft Energie. Jede Ausbaustufe wird die Bauzeit verk\xFCrzen und einen zus\xE4tzlichen Auftragsplatz erm\xF6glichen (maximal 20).", requires: { tech: "military", level: 1 } },
   bunker: { asset: "./assets/pvp-resource-v1/buildings/bunker.webp", name: "Ressourcenbunker", icon: "\u25A3", cost: [450, 300, 80], time: 45, description: "Je Stufe sch\xFCtzt er 2,5 % der Lagerkapazit\xE4t, insgesamt maximal 2000 je Rohstoff.", requires: { tech: "military", level: 1 } },
-  tidal: { name: "Gezeitenkraftwerk", icon: "\u2248", cost: [700, 450, 80], time: 30, description: "Liefert 180 Energie je Stufe auf Ozeanwelten.", requires: { tech: "energy", level: 3 }, ocean: true }
+  tidal: { name: "Gezeitenkraftwerk", icon: "\u2248", cost: [700, 450, 80], time: 30, description: "Liefert 180 \xD7 Stufe^Realm-Faktor Energie auf Ozeanwelten.", requires: { tech: "energy", level: 3 }, ocean: true }
 };
 var TECHS = {
   scout: { name: "Sensortechnik", description: "Stufe 1: Sonden. Weitere Stufen: k\xFCrzere Sondenfl\xFCge und fr\xFChere PvP-Warnungen. Je Stufe sinkt die Zeit bis zur Erkennung um weitere 10 % (abnehmender absoluter Effekt).", cost: [100, 100, 30], time: 10, lab: 1, max: 100 },
@@ -81,9 +81,18 @@ function attackSlots(level) {
 
 // src/realm-config.js
 var REALM_CONFIG = Object.freeze({
-  galaxyFlightTimeFactor: 3
-  // 1 = bisherige Zeit, 2 = doppelt, 3 = dreifach
+  galaxyFlightTimeFactor: 3,
+  powerExponents: Object.freeze({
+    default: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
+    Heimatwelt: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
+    Gesteinsplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
+    Eisplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
+    Ozeanplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 })
+  })
 });
+function powerExponent(kind, plant) {
+  return (REALM_CONFIG.powerExponents[kind] || REALM_CONFIG.powerExponents.default)[plant] ?? REALM_CONFIG.powerExponents.default[plant];
+}
 
 // src/flight.js
 var GALAXY_FLIGHT_RULE_VERSION = 4;
@@ -346,7 +355,7 @@ function energyDemand(p) {
   return Object.fromEntries(Object.entries(consumers).map(([key, value2]) => [key, value2 * p.energy]));
 }
 function stats(s, p) {
-  const supply = (p.buildings.solar * 45 + p.buildings.tidal * 180) * (1 + s.tech.energy * 0.1);
+  const supply = (45 * Math.pow(p.buildings.solar || 0, powerExponent(p.kind, 'solar')) + 180 * Math.pow(p.buildings.tidal || 0, powerExponent(p.kind, 'tidal'))) * (1 + s.tech.energy * 0.1);
   const consumers = energyDemand(p), demand = Object.values(consumers).reduce((a, b) => a + b, 0);
   const ratio = demand ? Math.min(1, supply / demand) : 1;
   const rates = vector(RES.map((k, i) => p.buildings[k] ? [300, 220, 140][i] * p.buildings[k] * Math.pow(1.12, p.buildings[k] - 1) * p.mult[i] * ratio : 0));
