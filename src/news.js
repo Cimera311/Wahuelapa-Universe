@@ -1,4 +1,9 @@
 export const GAME_NEWS=[
+ {date:'13.10.2026',title:'Orbitalverteidigung im Umbau – Rohstoffe erstattet',status:'Orbital-Update',items:[
+ 'Die bisherigen Orbitalgeschütze (Flak, Laser, Railgun und Plasma) wurden vorübergehend aus dem Dienst genommen. Der Bau neuer Geschütze ist pausiert.',
+ 'Die investierten Rohstoffe wurden den betroffenen Kommandanten vollständig erstattet. Bestehende Ausbaustufen der Orbitalanlage bleiben erhalten.',
+ 'Wir bauen die Orbitalverteidigung als eigenständige Orbitalwerft mit neuen Plattformen wieder auf. Weitere Informationen folgen mit den nächsten Updates.'
+ ]},
  {date:'13.10.2026',title:'Berichte jetzt auch mobil übersichtlich',status:'Berichte-Update',items:[
  'Neue kompakte Berichtskarten mit Icons, klaren Ergebnissen und besser lesbaren Details – besonders auf dem Smartphone.',
  'Auswahl, Archiv und Kampfprotokolle bleiben erreichbar. Der Darstellungsfehler mit den riesigen leeren Karten wurde behoben.'
