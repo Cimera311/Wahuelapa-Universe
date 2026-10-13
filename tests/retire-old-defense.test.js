@@ -23,7 +23,7 @@ test('Legacy paid defense orders and archived defense units survive the retireme
  assert.equal(s.planets[0].ships.plasma,1);
 });
 test('Old orbital weapon build cards are hidden in the shipyard',t=>{
- const {doc,api}=ui(t);api.show('hangar');
+ const {doc,api}=ui(t);api.show('hangar');doc.querySelector('[data-category="military"]').click();
  for(const key of ['flak','laser','rail','plasma'])assert.equal(doc.querySelector('[data-ship-card="'+key+'"]'),null);
  assert.equal(doc.querySelector('[data-category="defense"]'),null);
  assert.ok(doc.querySelector('[data-ship-card="falke"]'));
