@@ -10,7 +10,7 @@ import {processWorld} from '../src/server-world.js';
 const ready=()=>{
  const s=newGame('Orbital',1800000000000),p=s.planets[0];
  for(const [k,t] of Object.entries(TECHS))s.tech[k]=t.max;
- Object.assign(p.buildings,{orbital:6,shipyard:6,solar:60,warehouse:10,metal:0,crystal:0,fuel:0});
+ Object.assign(p.buildings,{orbital:6,shipyard:6,solar:60,warehouse:16,metal:0,crystal:0,fuel:0});
  p.resources=vector([1000000,1000000,1000000]);return s;
 };
 test('Each armed orbital platform matches its warship exactly by resource type',()=>{
@@ -57,7 +57,7 @@ test('Round zero is defense-only; old attacks retain pinned rule version',()=>{
 test('New PvP battle stores wrecks for destroyed defensive platforms',()=>{
  let w=fixture(),d=w.saves[1].state.planets[1];
  d.ships.plasma=1;d.buildings.orbital=6;
- const a=w.saves[0].state.planets[1];a.ships.titan=40;
+ const a=w.saves[0].state.planets[1];a.ships.titan=40;a.buildings.warehouse=22;a.resources.fuel=10000000;
  w=processWorld(w,A,{type:'attack',requestId:'10000000-0000-0000-0000-000000001111',action:{from:a.id,to:d.id,fleet:{titan:40}}});
  const m=w.attacks[0];w.now=m.arrival_at;w=processWorld(w,B,{type:'sync'});
  assert.equal(w.attacks[0].ruleVersion,3);
