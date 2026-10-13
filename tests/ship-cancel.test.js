@@ -18,7 +18,7 @@ test('Refund overflow goes to the depot without disappearing or overflowing stor
  assert.deepEqual(s.planets[0].resources,vector([4000,4000,4000]));assert.deepEqual(s.planets[0].depot,vector([480,300,120]));
 });
 test('Orbital cancellations return paid material and restore a reserved wreck',()=>{
- const s=ready(),p=s.planets[0];p.buildings.orbital=6;p.resources=vector([50000,40000,20000]);p.orbitalWrecks={flak:2};
+ const s=ready(),p=s.planets[0];p.buildings.orbital=6;p.buildings.warehouse=8;p.resources=vector([50000,40000,20000]);p.orbitalWrecks={flak:2};
  let n=act(s,{type:'orbital-repair',key:'flak',count:1,mode:'wreck'},T);
  const j=n.planets[0].orbitaljob;assert.deepEqual(j.payment,vector([168,105,60]));assert.equal(n.planets[0].orbitalWrecks.flak,1);
  n=act(n,{type:'orbital-cancel',id:j.id},T+1);
