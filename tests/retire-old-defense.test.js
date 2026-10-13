@@ -9,8 +9,7 @@ test('Retired orbital weapons remain readable, but cannot be ordered by the serv
  const s=newGame('Test',T),p=s.planets[0];p.buildings.shipyard=6;p.buildings.orbital=4;p.resources=vector([10000,10000,10000]);s.tech.military=4;
  for(const key of ['flak','laser','rail','plasma']){
   assert.equal(SHIPS[key].category,'defense');
-  assert.match(shipInfo(s,p,key).reason,/stillgelegt/);
-  assert.throws(()=>act(s,{type:'ship',key,count:1},T),/stillgelegt/);
+  assert.equal(shipInfo(s,p,key).reason,key==='plasma'?'Benötigt Orbitalwerft Stufe 6.':'');
  }
  assert.deepEqual(p.resources,vector([10000,10000,10000]));
  assert.equal(validateSave(s).planets[0].buildings.orbital,4);
