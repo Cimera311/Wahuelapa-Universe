@@ -1,4 +1,12 @@
 export const GAME_NEWS=[
+ {date:'13.10.2026',title:'🛡️ Orbitalverteidigung ist zurück! Vier Plattformen, eine eigene Werft 🚀',status:'🛠️ Orbital-Update',items:[
+ '🎉 Kommandanten, die Orbitalwerft hat ihre Tore geöffnet! Ab sofort könnt ihr wieder stationäre Verteidigung bauen: 💥 Flakplattform, 🔴 Laserplattform, ⚙️ Railgunplattform und 💜 Plasmaplattform.',
+ '🏗️ Eure Orbitalwerft produziert unabhängig von der normalen Schiffswerft. Jede Werftstufe bringt einen Auftragsplatz – bis zu 20 gleichzeitig vorgemerkte Bauaufträge. Auch größere Stückzahlen sind möglich!',
+ '⚡ Achtet auf eure Energieversorgung: Bei Strommangel dauert der Bau länger. Höhere Orbitalwerft-Stufen verkürzen dagegen die Bauzeit. Und ja, die Werft verbraucht auch dann Energie, wenn sie gerade nichts baut! 😁',
+ '🏆 Für die Rangliste zählen Orbitalplattformen jetzt zu den Gebäudepunkten, nicht zur Flotte. Die Orbitalwerft selbst bleibt ebenfalls ein Gebäude.',
+ '📦 Die neuen Plattformen sind vollständige Einheiten samt Bewaffnung. Ihre Baukosten entsprechen jeweils den vergleichbaren Kriegsschiffen. Die alten Rohstofferstattungen und vorhandenen Werftstufen bleiben unberührt.',
+ '⚔️ Noch feuern die Plattformen nach den bisherigen Kampfregeln. Ein eigener orbitaler Erstschlag in Runde 0 und das neue Reparatursystem folgen mit späteren Updates. More to come! 🌌💜'
+ ]},
  {date:'13.10.2026',title:'☀️ Energie-Update: Volle Power für eure Kolonien! ⚡',status:'⚡ Energie-Balancing',items:[
  '🚀 Unsere Kraftwerke haben ein ordentliches Upgrade bekommen! Bisher stiegen die Baukosten mit jeder Stufe gewaltig, während die zusätzliche Energieproduktion gleich blieb. Das haben wir geändert!',
  '☀️ Solarkraftwerke produzieren mit höheren Ausbaustufen deutlich mehr Energie. 🌊 Gezeitenkraftwerke profitieren ebenfalls von der neuen Berechnung.',
