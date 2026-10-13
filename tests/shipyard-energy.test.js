@@ -8,11 +8,11 @@ const T=1800000000000;
 function ready(level=2,ratio=1){const s=newGame('Werft',T),p=s.planets[0];for(const k of ['metal','crystal','fuel'])p.buildings[k]=0;p.buildings.shipyard=level;p.buildings.solar=1;p.energy=ratio===0?1:45/(Math.ceil(10*level**1.5)*ratio);if(ratio===0)p.buildings.solar=0;s.tech.military=1;p.resources=vector([3000,2200,1000]);return s;}
 const order=j=>({type:'cancel-ship',order:{id:j.id,key:j.key,count:j.count,start:j.start,end:j.orderEnd??j.end}});
 test('Shipyard levels compound time reduction with diminishing absolute savings for all units',()=>{
- const s=ready(),p=s.planets[0];for(const key of Object.keys(SHIPS)){p.buildings.shipyard=1;assert.equal(shipInfo(s,p,key,3).ms,SHIPS[key].time*3000);p.buildings.shipyard=6;assert.equal(shipInfo(s,p,key,3).ms,Math.ceil(SHIPS[key].time*3000*.92**5));}
- assert.equal(shipyardTimeFactor(0),1);assert.ok(1-shipyardTimeFactor(2)>shipyardTimeFactor(10)-shipyardTimeFactor(11));
+ const s=ready(),p=s.planets[0];for(const key of Object.keys(SHIPS).filter(k=>SHIPS[k].category!=='defense')){p.buildings.shipyard=1;assert.equal(shipInfo(s,p,key,3).ms,SHIPS[key].time*3000);p.buildings.shipyard=6;assert.equal(shipInfo(s,p,key,3).ms,Math.ceil(SHIPS[key].time*3000*.92**5));}
+ p.buildings.orbital=1;assert.equal(shipInfo(s,p,'plasma',3).ms,SHIPS.plasma.time*3000);p.buildings.orbital=6;assert.equal(shipInfo(s,p,'plasma',3).ms,Math.ceil(SHIPS.plasma.time*3000*.92**5));assert.equal(shipyardTimeFactor(0),1);assert.ok(1-shipyardTimeFactor(2)>shipyardTimeFactor(10)-shipyardTimeFactor(11));
 });
 test('Planet factor applies once to every consumer including idle shipyards, but not supply',()=>{
- const s=ready(10),p=s.planets[0];p.energy=1.4;Object.assign(p.buildings,{metal:3,crystal:2,fuel:1});assert.deepEqual(energyDemand(p),{metal:45*1.4,crystal:36*1.4,fuel:20*1.4,shipyard:317*1.4});assert.equal(stats(s,p).supply,45);assert.equal(stats(s,p).demand,(45+36+20+317)*1.4);p.buildings.shipyard=0;assert.equal(energyDemand(p).shipyard,0);
+ const s=ready(10),p=s.planets[0];p.energy=1.4;Object.assign(p.buildings,{metal:3,crystal:2,fuel:1});assert.deepEqual(energyDemand(p),{metal:45*1.4,crystal:36*1.4,fuel:20*1.4,shipyard:317*1.4,orbital:0});assert.equal(stats(s,p).supply,45);assert.equal(stats(s,p).demand,(45+36+20+317)*1.4);p.buildings.shipyard=0;assert.equal(energyDemand(p).shipyard,0);p.buildings.orbital=6;assert.ok(energyDemand(p).orbital>0);
 });
 test('Half power doubles shipbuilding time and earned progress survives storage',()=>{
  let s=act(ready(2,.5),{type:'ship',key:'falke',count:1},T);const j=s.planets[0].shipjob;assert.equal(j.end,T+j.workTotal*2);advance(s,T+30000);assert.equal(s.planets[0].shipjob.workRemaining,40200);s=parseSave(JSON.stringify(s));advance(s,T+110399);assert.equal(s.planets[0].ships.falke,0);advance(s,T+110400);assert.equal(s.planets[0].ships.falke,1);advance(s,T+200000);assert.equal(s.planets[0].ships.falke,1);
