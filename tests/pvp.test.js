@@ -187,7 +187,7 @@ test('Large shipbuilding and transport fleets preserve save validation and resou
 test('Combat records all units and shots above the former 5000-unit cap',()=>{
  const r=resolveBattle({fleet:{falke:5001},tech:{}},{fleet:{falke:1,atlas:1},tech:{}},'large-fleet');
  assert.equal(r.trace.initial.filter(u=>u.side==='attacker').length,5001);
- assert.equal(r.trace.rounds[0].shots.filter(s=>s.shooter.startsWith('A-')).length,5001);
- assert.ok(r.trace.rounds[0].shots.filter(s=>s.shooter.startsWith('A-')).every(s=>s.target==='D-falke-001'));
+ assert.equal(r.trace.rounds.find(q=>q.round===1).shots.filter(s=>s.shooter.startsWith('A-')).length,5001);
+ assert.ok(r.trace.rounds.find(q=>q.round===1).shots.filter(s=>s.shooter.startsWith('A-')).every(s=>s.target==='D-falke-001'));
  assert.equal(r.trace.final.length,5003);
 });
