@@ -57,7 +57,8 @@ export function orbitalJobInfo(s,p,key,count=1,mode='build'){
  if(mode==='wreck')parts=sh.cost.map((v,i)=>Math.ceil(v*(i===2?1:.7)*count));
  else if(mode==='damaged'){amount=damaged.length;const missing=damaged.reduce((t,h)=>t+1-h,0);parts=sh.cost.map((v,i)=>Math.ceil(v*(i===2?1:.7)*missing));}
  else parts=sh.cost.map(v=>v*count);
- const cost=vector(parts);
+ const salvage=vector(parts.map((v,i)=>mode==='build'||i===2?0:Math.min(v,p.defenseSalvage?.[RES[i]]||0)));
+ const cost=vector(parts.map((v,i)=>v-salvage[RES[i]]));
  const reason=!Number.isSafeInteger(count)||count<1||count>100000?'Ungültige Stückzahl.'
   :!(p.buildings.orbital||0)?'Baue zuerst eine Orbitalwerft.'
   :mode==='build'&&(s.tech[sh.tech]||0)<sh.techLevel?'Benötigt Militärtechnik '+sh.techLevel+'.'
@@ -65,7 +66,7 @@ export function orbitalJobInfo(s,p,key,count=1,mode='build'){
   :mode==='wreck'&&count>wreck?'Nicht genügend zerstörte Plattformen.'
   :mode==='damaged'&&!damaged.length?'Keine beschädigte Plattform dieser Art.'
   :orbitalQueueFullReason(p);
- return {cost,count:amount,ms:Math.ceil(sh.time*amount*1000*shipyardTimeFactor(p.buildings.orbital||0)),ratio:stats(s,p).ratio,reason};
+ return {cost,salvage,count:amount,ms:Math.ceil(sh.time*amount*1000*shipyardTimeFactor(p.buildings.orbital||0)),ratio:stats(s,p).ratio,reason};
 }
 export function shipQueueFullReason(p){return shipOrders(p).length>=shipQueueCapacity(p)?(shipQueueCapacity(p)<SHIP_QUEUE_LIMIT?`Alle Auftragsplätze belegt. Mehr Plätze ab Werftstufe ${shipQueueCapacity(p)+1}.`:`Alle ${SHIP_QUEUE_LIMIT} Auftragsplätze belegt. Maximale Warteschlangengröße erreicht.`):'';}
 export function shipOrders(p){return [p.shipjob,...p.shipqueue||[]].filter(Boolean);}
@@ -171,6 +172,7 @@ export function act(s,action,now=Date.now()){
    const j=orbitalOrders(p).find(q=>q.id===action.id);
    if(!j)throw Error('Orbitalauftrag nicht gefunden. Bitte neu laden.');
    for(const k of RES)p.depot[k]+=(j.payment?.[k]||0);
+   if(j.salvage)for(const k of RES)p.defenseSalvage[k]=(p.defenseSalvage[k]||0)+j.salvage[k];
    if(j.mode==='wreck')p.orbitalWrecks[j.key]=(p.orbitalWrecks[j.key]||0)+j.count;
    if(j.mode==='damaged'){p.ships[j.key]+=j.count;p.hulls[j.key]=[...(p.hulls[j.key]||[]),...j.damagedHulls];}
    if(j===p.orbitaljob)nextOrbitalOrder(p);else p.orbitalqueue=p.orbitalqueue.filter(q=>q.id!==j.id);
@@ -181,7 +183,8 @@ export function act(s,action,now=Date.now()){
    if(info.reason)throw Error(info.reason);
    if(!Number.isSafeInteger(info.ms)||info.ms<1||n.time+info.ms>8.64e15)throw Error('Orbitalauftrag zu groß.');
    pay(p,info.cost);
-   const job={id:++n.seq,key,count:info.count,mode,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{...info.cost},paused:stats(n,p).ratio===0};
+   p.defenseSalvage??=vector([0,0,0]);for(const k of RES)p.defenseSalvage[k]-=info.salvage[k];
+   const job={id:++n.seq,key,count:info.count,mode,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{...info.cost},salvage:{...info.salvage},paused:stats(n,p).ratio===0};
    if(mode==='wreck')p.orbitalWrecks[key]-=info.count;
    if(mode==='damaged'){job.damagedHulls=[...(p.hulls[key]||[])];p.ships[key]-=info.count;delete p.hulls[key];}
    if(p.orbitaljob)p.orbitalqueue.push(job);else p.orbitaljob=job;
