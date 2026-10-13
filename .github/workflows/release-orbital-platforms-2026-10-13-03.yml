@@ -32,9 +32,9 @@ jobs:
       - run: npm run build
       - name: Commit synchronized dashboard and release archive
         run: |
-          if git diff --quiet; then echo "No generated changes"; exit 0; fi
+          git add supabase/dashboard/ supabase/releases/game-command/ START_HERE.html news.html
+          if git diff --cached --quiet; then echo "No generated release or build artifacts"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add supabase/dashboard/ supabase/releases/game-command/
           git commit -m "Archive Game Command 2026-10-13.03 orbital platform production"
           git push origin HEAD:feat/orbital-platform-production-stage2
