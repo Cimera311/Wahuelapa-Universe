@@ -10,7 +10,7 @@ export const BUILDINGS = {
  lab:{name:'Forschungslabor',icon:'⚗',cost:[150,100,0],time:12,description:'Schaltet imperiumsweite Forschung frei.'},
  shipyard:{name:'Schiffswerft',icon:'⚒',cost:[200,100,0],time:12,description:'Ab Stufe 2 verkürzt jede weitere Stufe die Bauzeit neuer Aufträge um 8 % gegenüber der vorherigen Stufe. Verbraucht dauerhaft Strom; Strommangel bremst den Schiffbau.',requires:{building:'lab',level:1}},
  robotics:{name:'Arbeitsroboter',icon:'⚙',cost:[400,300,60],time:20,description:'Verkürzen neue Bauaufträge um 8 % je Stufe.',requires:{tech:'engineering',level:1}},
- orbital:{asset:'./assets/pvp-resource-v1/buildings/orbital.webp',name:'Orbitalplattform',icon:'◎',cost:[600,400,120],time:60,description:'Je Stufe vier Plätze für orbitale Verteidigung; maximal Stufe 4.',requires:{tech:'military',level:1}},
+ orbital:{asset:'./assets/pvp-resource-v1/buildings/orbital.webp',name:'Orbitalwerft',icon:'◎',cost:[600,400,120],time:60,description:'Eigenständige Werft für künftige Verteidigungsplattformen. Verbraucht dauerhaft Energie. Jede Ausbaustufe wird die Bauzeit verkürzen und einen zusätzlichen Auftragsplatz ermöglichen (maximal 20).',requires:{tech:'military',level:1}},
  bunker:{asset:'./assets/pvp-resource-v1/buildings/bunker.webp',name:'Ressourcenbunker',icon:'▣',cost:[450,300,80],time:45,description:'Je Stufe schützt er 2,5 % der Lagerkapazität, insgesamt maximal 2000 je Rohstoff.',requires:{tech:'military',level:1}},
  tidal:{name:'Gezeitenkraftwerk',icon:'≈',cost:[700,450,80],time:30,description:'Liefert 180 Energie je Stufe auf Ozeanwelten.',requires:{tech:'energy',level:3},ocean:true}
 };

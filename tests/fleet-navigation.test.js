@@ -35,8 +35,8 @@ test('Orders keep unsent amounts when navigating through another group',t=>{
 test('Group navigation uses the same direct sections and keyboard behavior at every width',t=>{
  const {doc,w,api}=ui(t);api.show('hangar');
  doc.getElementById('fleet-tab-hangar').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
- assert.equal(doc.getElementById('fleet-pane-overview').hidden,false);
- assert.equal(doc.activeElement.id,'fleet-tab-overview');
+ assert.equal(doc.getElementById('fleet-pane-orbital').hidden,false);
+ assert.equal(doc.activeElement.id,'fleet-tab-orbital');
  assert.equal(doc.querySelector('[data-action="fleet-more"]'),null);
  group(doc,'pvp');assert.deepEqual([...doc.querySelectorAll('.fleet-nav-sections button')].map(b=>b.dataset.section),['pvp','defense','partners']);
  doc.getElementById('fleet-tab-pvp').dispatchEvent(new w.KeyboardEvent('keydown',{key:'End',bubbles:true}));
