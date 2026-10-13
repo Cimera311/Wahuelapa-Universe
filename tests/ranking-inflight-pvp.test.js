@@ -10,7 +10,8 @@ test('PvP fleets in transit retain points, survivors count on return, orbital un
    create or replace function public.imperium_rank_int(value jsonb, maximum integer) returns integer language sql immutable as $$select case when value is null or jsonb_typeof(value)!='number' then 0 else greatest(0,least(maximum,(value #>> '{}')::numeric))::integer end$$;`);
   const sql=readFileSync('supabase/fix-ranking-inflight-pvp.sql','utf8');
   const rank=sql.slice(sql.indexOf('create or replace function public.imperium_rank_points'),sql.indexOf('create or replace function public.imperium_leaderboard'));
-  await db.exec(rank);
+  // PGlite has no Supabase auth roles; role grants are unrelated to point calculation.
+  await db.exec(rank.replace(/revoke all on function public\.imperium_rank_points\(jsonb\) from public,anon,authenticated;/g,''));
   const tech={};const planet={buildings:{},ships:{flak:2,atlas:1}};
   const state=(missions)=>JSON.stringify({planets:[planet],tech,missions});
   const score=async missions=>(await db.query('select building_points,research_points,fleet_points from public.imperium_rank_points($1::jsonb)',[state(missions)])).rows[0];
