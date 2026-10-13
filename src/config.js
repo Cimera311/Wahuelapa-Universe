@@ -5,14 +5,14 @@ export const BUILDINGS = {
  metal:{name:'Metallmine',icon:'⛏',cost:[80,35,0],time:8,description:'Fördert Metall für Gebäude und Schiffe.'},
  crystal:{name:'Kristallmine',icon:'◆',cost:[65,60,0],time:9,description:'Kristalle für Forschung und Elektronik.'},
  fuel:{name:'Treibstoffanlage',icon:'▰',cost:[90,50,0],time:10,description:'Versorgt deine Flotten mit Treibstoff.'},
- solar:{name:'Solarkraftwerk',icon:'☀',cost:[75,40,0],time:8,description:'Liefert 45 Energie je Stufe.'},
+ solar:{name:'Solarkraftwerk',icon:'☀',cost:[75,40,0],time:8,description:'Liefert 45 × Stufe^Realm-Faktor Energie.'},
  warehouse:{name:'Lagerkomplex',icon:'▤',cost:[120,60,0],time:10,description:'Erweitert alle lokalen Ressourcenlager.'},
  lab:{name:'Forschungslabor',icon:'⚗',cost:[150,100,0],time:12,description:'Schaltet imperiumsweite Forschung frei.'},
  shipyard:{name:'Schiffswerft',icon:'⚒',cost:[200,100,0],time:12,description:'Ab Stufe 2 verkürzt jede weitere Stufe die Bauzeit neuer Aufträge um 8 % gegenüber der vorherigen Stufe. Verbraucht dauerhaft Strom; Strommangel bremst den Schiffbau.',requires:{building:'lab',level:1}},
  robotics:{name:'Arbeitsroboter',icon:'⚙',cost:[400,300,60],time:20,description:'Verkürzen neue Bauaufträge um 8 % je Stufe.',requires:{tech:'engineering',level:1}},
  orbital:{asset:'./assets/pvp-resource-v1/buildings/orbital.webp',name:'Orbitalwerft',icon:'◎',cost:[600,400,120],time:60,description:'Eigenständige Werft für künftige Verteidigungsplattformen. Verbraucht dauerhaft Energie. Jede Ausbaustufe wird die Bauzeit verkürzen und einen zusätzlichen Auftragsplatz ermöglichen (maximal 20).',requires:{tech:'military',level:1}},
  bunker:{asset:'./assets/pvp-resource-v1/buildings/bunker.webp',name:'Ressourcenbunker',icon:'▣',cost:[450,300,80],time:45,description:'Je Stufe schützt er 2,5 % der Lagerkapazität, insgesamt maximal 2000 je Rohstoff.',requires:{tech:'military',level:1}},
- tidal:{name:'Gezeitenkraftwerk',icon:'≈',cost:[700,450,80],time:30,description:'Liefert 180 Energie je Stufe auf Ozeanwelten.',requires:{tech:'energy',level:3},ocean:true}
+ tidal:{name:'Gezeitenkraftwerk',icon:'≈',cost:[700,450,80],time:30,description:'Liefert 180 × Stufe^Realm-Faktor Energie auf Ozeanwelten.',requires:{tech:'energy',level:3},ocean:true}
 };
 export const TECHS = {
  scout:{name:'Sensortechnik',description:'Stufe 1: Sonden. Weitere Stufen: kürzere Sondenflüge und frühere PvP-Warnungen. Je Stufe sinkt die Zeit bis zur Erkennung um weitere 10 % (abnehmender absoluter Effekt).',cost:[100,100,30],time:10,lab:1,max:100},
