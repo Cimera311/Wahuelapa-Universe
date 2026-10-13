@@ -25,7 +25,7 @@ test('Every shot is accounted for; simultaneous damage conserves shield, hull an
  assert.deepEqual(resolveBattle(side({titan:2},{tech:{weapons:3}}),side({falke:3,laser:1}),'trace'),r);
 });
 test('Protected civilians become targets next round, and legacy version remains available',()=>{
- const r=resolveBattle(side({titan:1}),side({falke:1,atlas:1},{hulls:{falke:[.01]},shieldFactor:0}),'next');assert.ok(r.trace.rounds.find(q=>q.round===1).shots.filter(s=>s.shooter.startsWith('A')).every(s=>s.target.includes('falke')));assert.ok(r.trace.rounds[1].shots.some(s=>s.target.includes('atlas')));
+ const r=resolveBattle(side({titan:1}),side({falke:1,atlas:1},{hulls:{falke:[.01]},shieldFactor:0}),'next');assert.ok(r.trace.rounds.find(q=>q.round===1).shots.filter(s=>s.shooter.startsWith('A')).every(s=>s.target.includes('falke')));assert.ok(r.trace.rounds.find(q=>q.round===2).shots.some(s=>s.target.includes('atlas')));
  const old=resolveBattle(side({titan:1}),side({atlas:1}),'old',1);assert.equal(old.trace,undefined);assert.throws(()=>resolveBattle(side({falke:1}),side({falke:1}),'x',999),/regelversion/);
 });
 test('Replay UI escapes stored names and explains simultaneous shots, with paged details',()=>{
