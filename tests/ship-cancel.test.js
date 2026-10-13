@@ -18,14 +18,14 @@ test('Refund overflow goes to the depot without disappearing or overflowing stor
  assert.deepEqual(s.planets[0].resources,vector([4000,4000,4000]));assert.deepEqual(s.planets[0].depot,vector([480,300,120]));
 });
 test('Defense cancellations return normal payment and protected material separately',()=>{
- const base=ready();base.planets[0].defenseSalvage=vector([100,50,0]);let s=act(base,{type:'ship',key:'flak',count:2},T),j=s.planets[0].shipjob;
+ const base=ready();base.planets[0].defenseSalvage=vector([100,50,0]);let s=act(base,{type:'ship',key:'flak',count:2},T),j=s.planets[0].orbitaljob;
  assert.deepEqual(j.payment.resources,vector([220,110,40]));assert.equal(defenseSlots(s.planets[0]),2);
  s=act(s,cancel(j),T+1);assert.deepEqual(s.planets[0].resources,base.planets[0].resources);assert.deepEqual(s.planets[0].defenseSalvage,base.planets[0].defenseSalvage);assert.equal(defenseSlots(s.planets[0]),0);
 });
 test('Legacy ship jobs refund their original fixed cost; defense jobs preserve protected material',()=>{
  let s=act(ready(),{type:'ship',key:'falke',count:2},T);delete s.planets[0].shipjob.payment;delete s.planets[0].shipjob.id;let j=s.planets[0].shipjob;
  s=act(s,cancel(j),T+1);assert.deepEqual(s.planets[0].resources,ready().planets[0].resources);
- s=act(ready(),{type:'ship',key:'flak',count:2},T);delete s.planets[0].shipjob.payment;j=s.planets[0].shipjob;assert.ok(shipRefund(j).legacyDefense);
+ s=act(ready(),{type:'ship',key:'flak',count:2},T);s.planets[0].shipjob=s.planets[0].orbitaljob;s.planets[0].orbitaljob=null;delete s.planets[0].shipjob.payment;j=s.planets[0].shipjob;assert.ok(shipRefund(j).legacyDefense);
  s=act(s,cancel(j),T+1);assert.deepEqual(s.planets[0].defenseSalvage,vector([320,160,0]));assert.equal(s.planets[0].resources.fuel,1000);
 });
 test('Stale cancellation cannot cancel a replacement order or refund a completed batch',()=>{
