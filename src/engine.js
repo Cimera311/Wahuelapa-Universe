@@ -1,4 +1,5 @@
 import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,ROUTE_ECONOMY,vector,costAt,isFreighter,shipFlightEngine,canFlyInterstellar} from './config.js';
+import {powerExponent} from './realm-config.js';
 
 import {takeHulls,putHulls} from './combat.js';
 import {sharedFlight,ENGINE_SPEED_BONUS,FLIGHT_BASE_SCALE} from './flight.js';
@@ -19,7 +20,7 @@ export function energyDemand(p){
  return Object.fromEntries(Object.entries(consumers).map(([key,value])=>[key,value*p.energy]));
 }
 export function stats(s,p){
- const supply=(p.buildings.solar*45+p.buildings.tidal*180)*(1+s.tech.energy*.1);
+ const supply=(45*Math.pow(p.buildings.solar||0,powerExponent(p.kind,'solar'))+180*Math.pow(p.buildings.tidal||0,powerExponent(p.kind,'tidal')))*(1+s.tech.energy*.1);
  const consumers=energyDemand(p),demand=Object.values(consumers).reduce((a,b)=>a+b,0);
  const ratio=demand?Math.min(1,supply/demand):1;
  const rates=vector(RES.map((k,i)=>p.buildings[k]?([300,220,140][i]*p.buildings[k]*Math.pow(1.12,p.buildings[k]-1)*p.mult[i]*ratio):0));

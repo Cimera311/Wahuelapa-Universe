@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-13.01",
+  "latest": "2026-10-13.02",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -120,6 +120,14 @@
       "sourceCommit": "49e6c20fbe1f3a93c1eecbffecd8a79cca369cdb",
       "description": "Orbitalwerft: permanenter Strombedarf, Erweiterung der Werftstufen; alte Orbitalwaffen gesperrt",
       "sha256": "4e0cd52b0dbbb9dac3dfd5f8149cb5d6b20ee2578c3893422ed1b86f4e1bb0d8"
+    },
+    {
+      "version": "2026-10-13.02",
+      "createdAt": "2026-10-13T18:05:58.860Z",
+      "sourceCommit": "73324322a217368868c53eb8624aa1127154a3cd",
+      "description": "Planetenspezifische Energie-Exponenten fuer Solar- und Gezeitenkraftwerke, Treibstoffkraftwerk vorbereitet; Orbitalwerft bleibt erhalten.",
+      "sha256": "ee8e417918d2eb78cd63772e3210f3ccdd18f65f5c5b00c91a172edd2c29c9fb"
     }
   ]
 }
+
