@@ -1,4 +1,10 @@
 export const GAME_NEWS=[
+ {date:'13.10.2026',title:'Orbitale Verteidigung bekommt eine eigene Werft',status:'Verteidigung',items:[
+ 'Die Orbitalwerft baut unabhängig von der Schiffswerft bewaffnete Flak-, Laser-, Railgun- und Plasmaplattformen. Ihre eigenen Warteschlangen und der dauerhafte Energiebedarf funktionieren wie bei der Schiffswerft.',
+ 'Jede Plattform kostet inklusive Bewaffnung so viel wie ein vergleichbares Kriegsschiff. Ein festes Limit für Verteidigungsplattformen entfällt.',
+ 'Bei Angriffen eröffnen die Orbitalgeschütze in Runde 0 das Feuer. Ab Runde 1 kämpfen Schiffe und Geschütze gleichzeitig.',
+ 'Zerstörte Plattformen bleiben als Wracks erhalten und können repariert werden. Bestehende Geschütze und bereits bezahlte Aufträge bleiben erhalten.'
+ ]},
  {date:'13.10.2026',title:'Berichte jetzt auch mobil übersichtlich',status:'Berichte-Update',items:[
  'Neue kompakte Berichtskarten mit Icons, klaren Ergebnissen und besser lesbaren Details – besonders auf dem Smartphone.',
  'Auswahl, Archiv und Kampfprotokolle bleiben erreichbar. Der Darstellungsfehler mit den riesigen leeren Karten wurde behoben.'
