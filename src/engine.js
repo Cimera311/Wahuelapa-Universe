@@ -15,7 +15,7 @@ export function getPlanet(s,id){const p=s.planets.find(p=>p.id===id);if(!p)throw
 export function capacity(p){return 4000*Math.pow(1.7,p.buildings.warehouse);}
 export function shipyardTimeFactor(level){return Math.pow(.92,Math.max(0,level-1));}
 export function energyDemand(p){
- const consumers={metal:p.buildings.metal*15,crystal:p.buildings.crystal*18,fuel:p.buildings.fuel*20,shipyard:Math.ceil(10*Math.pow(p.buildings.shipyard,1.5))};
+ const consumers={metal:p.buildings.metal*15,crystal:p.buildings.crystal*18,fuel:p.buildings.fuel*20,shipyard:Math.ceil(10*Math.pow(p.buildings.shipyard,1.5)),orbital:Math.ceil(10*Math.pow((p.buildings.orbital||0),1.5))};
  return Object.fromEntries(Object.entries(consumers).map(([key,value])=>[key,value*p.energy]));
 }
 export function stats(s,p){
@@ -51,7 +51,7 @@ function nextShipOrder(p){p.shipjob=(p.shipqueue||[]).shift()||null;}
 function produce(s,ms){for(const p of s.planets){settle(p);const z=stats(s,p);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);if(p.shipjob)p.shipjob.workRemaining=Math.max(0,p.shipjob.workRemaining-ms*z.ratio);}}
 function report(s,title,body){s.reports.unshift({id:++s.seq,time:s.time,title,body});s.reports=s.reports.slice(0,60);}
 export function need(s,p,req){if(!req)return '';if(req.tech&&s.tech[req.tech]<req.level)return `Benötigt ${TECHS[req.tech].name} Stufe ${req.level}.`;if(req.building&&p.buildings[req.building]<req.level)return `Benötigt ${BUILDINGS[req.building].name} Stufe ${req.level}.`;return '';}
-export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key];return {cost:costAt(b,l),ms:Math.ceil(b.time*Math.pow(1.35,l)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000),reason:need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=(['orbital','bunker'].includes(key)?4:30)?'Maximale Gebäudestufe erreicht.':'')};}
+export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key];const cost=key==='orbital'&&l>=4?vector(b.cost.map(v=>Math.ceil(v*Math.pow(1.6,3)*Math.pow(1.08,l-3)))):costAt(b,l);return {cost,ms:Math.ceil(b.time*Math.pow(1.35,l)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000),reason:need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=(key==='bunker'?4:30)?'Maximale Gebäudestufe erreicht.':'')};}
 export function researchInfo(s,p,key){const t=TECHS[key];if(!t)throw Error('Unbekannte Forschung.');const l=s.tech[key];return {cost:costAt(t,l),ms:Math.ceil(t.time*Math.pow(1.5,l)*Math.pow(key==='military'?1.5:1,Math.max(0,l-4))/Math.max(1,1+(p.buildings.lab-1)*.15)*1000),reason:(key==='colonization'&&l>=3&&l<t.max?need(s,p,{tech:['ramjet','impulse','hyperspace'][l-3],level:1}):'')||(p.buildings.lab<t.lab?`Benötigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.`:need(s,p,t.requires)||(l>=t.max?'Maximale Forschungsstufe erreicht.':''))};}
 function pay(p,c){settle(p);for(const k of RES)if(!Number.isFinite(c[k])||c[k]<0||p.resources[k]+1e-8<c[k])throw Error('Nicht genügend lokale Ressourcen.');for(const k of RES)p.resources[k]=Math.max(0,p.resources[k]-c[k]);settle(p);}
 export function defenseSlots(p){return Object.entries(SHIPS).reduce((a,[k,sh])=>a+(sh.slots||0)*(p.ships[k]||0),0)+shipOrders(p).reduce((a,j)=>a+(SHIPS[j.key]?.slots||0)*j.count,0);}
