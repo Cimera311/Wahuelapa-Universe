@@ -1,22 +1,22 @@
 // Newspaper text is deterministic per battle: refreshing never changes a published story.
 const headlines={
  loot:[
- ['Galaktischer Selbstbedienungsladen eröffnet!','{a} marschierte mit einer {af} auf {p} ein. {d} und die {df} hatten dagegen wenig einzuwenden. Die Rohstoffe wechselten daraufhin unfreiwillig den Besitzer.','Eine Quittung gab es selbstverständlich nicht.'],
+ ['Galaktischer Selbstbedienungsladen eröffnet!','{a} marschierte mit einer {af} auf {p} ein. {d} und die Verteidigung hatten dagegen wenig einzuwenden. Die Rohstoffe wechselten daraufhin unfreiwillig den Besitzer.','Eine Quittung gab es selbstverständlich nicht.'],
  ['Erst Kanonen, dann Einkaufswagen!','{a} gewann auf {p} gegen {d}. Nach dem Auftritt der {af} war von der {df} nicht mehr viel Widerstand zu erwarten.','Die örtliche Handelskammer nennt es einen sehr einseitigen Einkauf.'],
  ['Raubzug mit Abholgarantie!','Mit einer {af} machte {a} auf {p} bei {d} einen Abstecher. Die Verteidigung scheiterte, Rohstoffe wurden abtransportiert.','Der Eigentümer hat den Lieferschein bis heute nicht unterschrieben.'],
  ['Diebstahl? Nein, spontane Umverteilung!','{a} erschien mit einer {af} über {p}, besiegte {d} und transportierte Beute ab.','Das Finanzamt bittet um die korrekte Verbuchung des Überfalls.']
  ],
  empty:[
- ['Sieg errungen – Konto trotzdem leer!','{a} überwand mit einer {af} die {df} von {d} auf {p}. Zum Mitnehmen gab es nichts.','Die Finanzabteilung beantragt eine vorherige Lagerkontrolle.'],
+ ['Sieg errungen – Konto trotzdem leer!','{a} überwand mit einer {af} die Verteidigung von {d} auf {p}. Zum Mitnehmen gab es nichts.','Die Finanzabteilung beantragt eine vorherige Lagerkontrolle.'],
  ['Großangriff auf leere Regale!','Auf {p} setzte sich {a} mit einer {af} gegen {d} durch. Die Rohstoffsuche verlief deutlich weniger erfolgreich.','Die Expedition gilt jetzt als kostenpflichtige Besichtigung.'],
- ['Kanonen sprechen, Geldbeutel schweigt!','{a} siegte auf {p} gegen die {df} von {d}. Der erhoffte Reichtum blieb aus.','Der zuständige Admiral verweist auf wertvolle Lebenserfahrung.'],
+ ['Kanonen sprechen, Geldbeutel schweigt!','{a} siegte auf {p} gegen die Verteidigung von {d}. Der erhoffte Reichtum blieb aus.','Der zuständige Admiral verweist auf wertvolle Lebenserfahrung.'],
  ['Erfolgreich erobert: exakt gar nichts!','{a} schlug mit einer {af} die Verteidigung von {d} auf {p}. Beute blieb aus.','Ein Gutschein für den nächsten Überfall wurde abgelehnt.']
  ],
  defense:[
  ['Zutritt verweigert!','{a} erschien mit einer {af} über {p}. {d} begrüßte die Besucher mit einer {df} und schickte sie wieder weg.','Die Parkgebühren für feindliche Flotten wurden trotzdem berechnet.'],
- ['Großer Auftritt, kleiner Abgang!','{a} wollte mit einer {af} auf {p} Eindruck machen. {d} und die {df} waren leider ein wenig schwer zu beeindrucken.','Offiziell heißt das jetzt strategische Umorientierung.'],
+ ['Großer Auftritt, kleiner Abgang!','{a} wollte mit einer {af} auf {p} Eindruck machen. {d} und die Verteidigung waren leider ein wenig schwer zu beeindrucken.','Offiziell heißt das jetzt strategische Umorientierung.'],
  ['Hier fliegt heute niemand durch!','{d} verteidigte {p} mit einer {df} gegen {a} und dessen {af}. Der Angriff scheiterte.','Die örtlichen Geschützmannschaften verlangen einen Feiertag.'],
- ['Invasion? Nicht mit uns!','{a} brachte eine {af} nach {p}. Dort hatte {d} schon eine {df} als Antwort vorbereitet.','Die diplomatischen Beziehungen gelten weiterhin als ausbaufähig.']
+ ['Invasion? Nicht mit uns!','{a} brachte eine {af} nach {p}. Dort hatte {d} schon seine {df} als Antwort vorbereitet.','Die diplomatischen Beziehungen gelten weiterhin als ausbaufähig.']
  ],
  wipe:[
  ['Rückflug ersatzlos gestrichen!','{a} schickte eine {af} gegen {d} auf {p}. Die {df} vernichtete alle Angreifer.','Die Fluggesellschaft bittet, von Rückerstattungsanfragen abzusehen.'],
@@ -26,7 +26,7 @@ const headlines={
  ],
  draw:[
  ['Beide erklären sich zum Sieger!','{a} und {d} gerieten über {p} mit einer {af} und einer {df} aneinander. Niemand konnte sich durchsetzen.','Beide Presseabteilungen haben trotzdem schon Pokale bestellt.'],
- ['Viel Lärm, wenig Ergebnis!','Auf {p} traf die {af} von {a} auf die {df} von {d}. Das Gefecht endete ohne Sieger.','Die Munitionshersteller melden einen erfolgreichen Geschäftstag.'],
+ ['Viel Lärm, wenig Ergebnis!','Auf {p} traf die {af} von {a} auf die Verteidigung von {d}. Das Gefecht endete ohne Sieger.','Die Munitionshersteller melden einen erfolgreichen Geschäftstag.'],
  ['Patt im All!','{a} und {d} stritten auf {p} mit militärischen Argumenten. Eine Entscheidung fiel nicht.','Ein Schiedsrichter war leider nicht verfügbar.'],
  ['Galaktischer Streit endet mit Achselzucken!','{a} griff {d} auf {p} an. Beide Seiten schossen, doch niemand gewann.','Man einigte sich darauf, uneinig zu bleiben.']
  ]};
