@@ -8,7 +8,7 @@ import {validateSave} from '../src/storage.js';
 const T=1800000000000;
 const ready=()=>{
  const s=newGame('Verteidigung',T),p=s.planets[0];
- p.buildings.shipyard=6;p.buildings.orbital=6;p.buildings.solar=30;
+ p.buildings.shipyard=6;p.buildings.orbital=6;p.buildings.solar=30;p.buildings.warehouse=10;
  p.resources=vector([500000,500000,500000]);p.depot=vector([0,0,0]);
  s.tech.military=4;return s;
 };
