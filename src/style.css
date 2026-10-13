@@ -305,3 +305,15 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .auth-status{margin:16px 0 0;padding:12px 14px;border:1px solid #327d97;border-radius:9px;background:#102f43;color:#b3edff;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
 .auth-status.auth-error{border-color:#9b7445;background:#342719;color:#ffe0ae}
 .auth-status[hidden]{display:none}
+
+/* Wish discussions */
+.wish-thread{margin-top:14px;padding:14px;border:1px solid #31546a;border-radius:12px;background:#071827;}
+.wish-comment{padding:12px 0;border-bottom:1px solid #264457;overflow-wrap:anywhere;}
+.wish-comment .community-meta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.wish-comment p{margin:7px 0;white-space:pre-wrap;line-height:1.55;}
+.wish-comment-form{display:grid;gap:9px;margin-top:15px;}
+.wish-comment-form textarea{width:100%;resize:vertical;min-height:68px;box-sizing:border-box;}
+.wish-comment-form button{justify-self:start;min-height:44px;}
+.wish-comment-error{color:#ffaaa9;overflow-wrap:anywhere;}
+.community-wish-actions{flex-wrap:wrap;}
+@media(max-width:540px){.wish-thread{padding:10px}.wish-comment-form button{width:100%}}
