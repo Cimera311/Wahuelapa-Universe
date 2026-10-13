@@ -104,7 +104,7 @@ test('Stationing permits hangars above the former 5000-unit limit',()=>{
 });
 test('Local defense salvage reduces displayed and paid costs without becoming ordinary cargo',()=>{
  const w=fixture();let s=w.saves[0].state,p=s.planets[1];p.buildings.shipyard=2;p.defenseSalvage=vector([112,56,0]);p.resources=vector([48,24,20]);
- s=act(s,{type:'ship',planet:p.id,key:'flak',count:1},T);p=s.planets[1];assert.deepEqual(p.defenseSalvage,vector([0,0,0]));assert.deepEqual(p.resources,vector([0,0,0]));advance(s,p.shipjob.end);assert.equal(p.ships.flak,1);
+ s=act(s,{type:'ship',planet:p.id,key:'flak',count:1},T);p=s.planets[1];assert.deepEqual(p.defenseSalvage,vector([0,0,0]));assert.deepEqual(p.resources,vector([0,0,0]));advance(s,p.orbitaljob.end);assert.equal(p.ships.flak,1);
 });
 
 test('A failed raid returns no loot and cannot remove target resources',()=>{
