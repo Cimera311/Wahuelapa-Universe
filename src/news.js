@@ -1,4 +1,12 @@
 export const GAME_NEWS=[
+ {date:'13.10.2026',title:'☀️ Energie-Update: Volle Power für eure Kolonien! ⚡',status:'⚡ Energie-Balancing',items:[
+ '🚀 Unsere Kraftwerke haben ein ordentliches Upgrade bekommen! Bisher stiegen die Baukosten mit jeder Stufe gewaltig, während die zusätzliche Energieproduktion gleich blieb. Das haben wir geändert!',
+ '☀️ Solarkraftwerke produzieren mit höheren Ausbaustufen deutlich mehr Energie. 🌊 Gezeitenkraftwerke profitieren ebenfalls von der neuen Berechnung.',
+ '🪐 Jeder Planetentyp besitzt jetzt eigene Effizienzfaktoren für die Kraftwerkstypen. Aktuell stehen diese Werte noch überall auf 1,25 – das wird sich ändern!',
+ '🔋 Beispiel Solarkraftwerk Stufe 20: vorher 900 Energie, jetzt rund 1.903 Energie! Bestehende Kraftwerke profitieren automatisch, die Baukosten bleiben unverändert.',
+ '⚠️ Ja, vermutlich habt ihr jetzt alle viel zu viel Energie. 😁 Genießt den Überschuss, solange er anhält! Wir werden die planetenspezifischen Faktoren weiter ausbalancieren.',
+ '⛽ Ein weiterer Kraftwerkstyp ist bereits vorbereitet. More to come! 🚀💜'
+ ]},
  {date:'13.10.2026',title:'Orbitalverteidigung im Umbau – Rohstoffe erstattet',status:'Orbital-Update',items:[
  'Die bisherigen Orbitalgeschütze (Flak, Laser, Railgun und Plasma) wurden vorübergehend aus dem Dienst genommen. Der Bau neuer Geschütze ist pausiert.',
  'Die investierten Rohstoffe wurden den betroffenen Kommandanten vollständig erstattet. Bestehende Ausbaustufen der Orbitalanlage bleiben erhalten.',
