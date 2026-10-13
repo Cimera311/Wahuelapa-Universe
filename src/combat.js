@@ -9,10 +9,10 @@ export const COMBAT={
  waechter:{hp:650,shield:180,attack:100,shots:2,bonus:{falke:.5}},
  donner:{hp:2000,shield:400,attack:350,shots:2,bonus:{flak:.5,laser:.5,rail:.5,plasma:.5}},
  titan:{hp:6500,shield:1400,attack:1100,shots:4,bonus:{waechter:.25,donner:.25}},
- flak:{hp:180,shield:30,attack:35,shots:2,bonus:{falke:.75}},
- laser:{hp:600,shield:150,attack:100,shots:2},
- rail:{hp:1600,shield:300,attack:300,shots:1,bonus:{donner:.25,titan:.25}},
- plasma:{hp:4500,shield:800,attack:800,shots:2,bonus:{titan:.25}}
+ flak:{hp:140,shield:60,attack:35,shots:2,bonus:{falke:.75}},
+ laser:{hp:550,shield:230,attack:100,shots:2},
+ rail:{hp:1450,shield:700,attack:300,shots:1,bonus:{donner:.25,titan:.25}},
+ plasma:{hp:5100,shield:1800,attack:800,shots:2,bonus:{titan:.25}}
 };
 export function combatStats(key,tech={}){
  const c=COMBAT[key];if(!c)throw Error('Unbekannte Kampfeinheit.');
@@ -56,7 +56,8 @@ function resolveBattleLegacy(attacker,defender,seed){
   const aa=a.filter(u=>u.hp>1e-8),dd=d.filter(u=>u.hp>1e-8);if(!aa.length||!dd.length)break;
   const damage=new Map();
   function fire(shooters,targets){for(const u of shooters)if(u.attack)for(let shot=0;shot<u.shots;shot++){const target=targets[Math.floor(random()*targets.length)],hit=u.attack/u.shots*(1+(u.bonus?.[target.key]||0));damage.set(target,(damage.get(target)||0)+hit);}}
-  fire(aa,dd);fire(dd,aa);
+  if(round===0)fire(dd.filter(u=>SHIPS[u.key].category==='defense'),aa);
+  else {fire(aa,dd);fire(dd,aa);}
   for(const [u,hit] of damage){const shield=Math.min(u.shield,hit);u.shield-=shield;u.hp-=hit-shield;}
   rounds.push({round:i,attacker:a.filter(u=>u.hp>1e-8).length,defender:d.filter(u=>u.hp>1e-8).length});
  }
@@ -67,16 +68,16 @@ function resolveBattleLegacy(attacker,defender,seed){
  return {outcome:ac&&!dc?'attacker':dc&&!ac?'defender':'draw',attacker:aa,defender:dd,debris,defenseRepair,rounds,...combatGroups(defender,d)};
 }
 
-export const COMBAT_RULE_VERSION=2;
+export const COMBAT_RULE_VERSION=3;
 export function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION){
  if(version===1)return resolveBattleLegacy(attacker,defender,seed);
- if(version!==2)throw Error('Unbekannte Kampfregelversion.');
+ if(version!==2&&version!==3)throw Error('Unbekannte Kampfregelversion.');
  const a=combatSide(attacker),d=combatSide(defender),random=rng(String(seed)),rounds=[],logs=[];
  for(const [side,list] of [['A',a],['D',d]]){const counts={};for(const u of list){counts[u.key]=(counts[u.key]||0)+1;u.id=side+'-'+u.key+'-'+String(counts[u.key]).padStart(3,'0');}}
  const snapshot=u=>({...(u.owner?{owner:u.owner,groupId:u.groupId,commander:u.commander}:{}),id:u.id,key:u.key,side:u.id[0]==='A'?'attacker':'defender',category:SHIPS[u.key].category,name:SHIPS[u.key].name,definition:{...COMBAT[u.key],cost:[...SHIPS[u.key].cost]},hp:Math.max(0,u.hp),maxHp:u.maxHp,shield:u.shield,maxShield:u.maxShield??combatStats(u.key,u.id[0]==='A'?attacker.tech:defender.tech).shield,attack:u.attack,shots:u.shots,bonus:{...u.bonus}});
  const initial=[...a,...d].map(snapshot);
  const total=list=>({count:list.filter(u=>u.hp>1e-8).length,hp:list.reduce((n,u)=>n+Math.max(0,u.hp),0),shield:list.filter(u=>u.hp>1e-8).reduce((n,u)=>n+u.shield,0)});
- for(let round=1;round<=6;round++){
+ for(let round=version===3?0:1;round<=6;round++){
   const aa=a.filter(u=>u.hp>1e-8),dd=d.filter(u=>u.hp>1e-8);if(!aa.length||!dd.length)break;
   const damage=new Map(),shots=[];
   function fire(shooters,targets){
@@ -107,7 +108,7 @@ export function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION
  const debris=vector([0,0,0]),defenseRepair=vector([0,0,0]);
  for(const u of [...a,...d])if(u.hp<=1e-8){const sh=SHIPS[u.key],out=sh.category==='defense'?defenseRepair:debris,rate=sh.category==='defense'?.7:.3;out.metal+=sh.cost[0]*rate;out.crystal+=sh.cost[1]*rate;}
  for(const k of RES){debris[k]=Math.floor(debris[k]);defenseRepair[k]=Math.floor(defenseRepair[k]);}
- return {outcome,attacker:aa,defender:dd,debris,defenseRepair,rounds,...combatGroups(defender,d),trace:{...(defender.groups?{defenderGroups:structuredClone(defender.groups)}:{}),version:1,ruleVersion:2,seed:String(seed),tech:{attacker:{...attacker.tech},defender:{...defender.tech}},shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},initial,final:[...a,...d].map(snapshot),rounds:logs}};
+ return {outcome,attacker:aa,defender:dd,debris,defenseRepair,rounds,...combatGroups(defender,d),trace:{...(defender.groups?{defenderGroups:structuredClone(defender.groups)}:{}),version:1,ruleVersion:version,seed:String(seed),tech:{attacker:{...attacker.tech},defender:{...defender.tech}},shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},initial,final:[...a,...d].map(snapshot),rounds:logs}};
 }
 
 export function loadPlunder(stock,depot,bunker,capacity,debris,victory){
