@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-13.02",
+  "latest": "2026-10-13.03",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -127,7 +127,13 @@
       "sourceCommit": "73324322a217368868c53eb8624aa1127154a3cd",
       "description": "Planetenspezifische Energie-Exponenten fuer Solar- und Gezeitenkraftwerke, Treibstoffkraftwerk vorbereitet; Orbitalwerft bleibt erhalten.",
       "sha256": "ee8e417918d2eb78cd63772e3210f3ccdd18f65f5c5b00c91a172edd2c29c9fb"
+    },
+    {
+      "version": "2026-10-13.03",
+      "createdAt": "2026-10-13T18:36:59.644Z",
+      "sourceCommit": "427f3f729d780390fea0265869b40da9310dcaad",
+      "description": "Vier bewaffnete Orbitalplattformen; eigene stromabhaengige Orbitalwerft-Warteschlange; Kampfregel v2 unveraendert",
+      "sha256": "a31acf8b38d7613ca99e00f40f551ae8952b6efc867c35173563a327da038fd8"
     }
   ]
 }
-
