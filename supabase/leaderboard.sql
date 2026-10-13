@@ -29,7 +29,11 @@ begin
   end loop;
   for item in select key,value from jsonb_each(costs->'ships') loop
    for base in select value from jsonb_array_elements(item.value) loop
-    fleet_total := fleet_total + (base #>> '{}')::numeric * public.imperium_rank_int(p->'ships'->item.key,1000000);
+    if item.key in ('flak','laser','rail','plasma') then
+     buildings_total := buildings_total + (base #>> '{}')::numeric * public.imperium_rank_int(p->'ships'->item.key,1000000);
+    else
+     fleet_total := fleet_total + (base #>> '{}')::numeric * public.imperium_rank_int(p->'ships'->item.key,1000000);
+    end if;
    end loop;
   end loop;
  end loop;
