@@ -80,7 +80,7 @@ export function defenseSlots(p){return Object.entries(SHIPS).reduce((a,[k,sh])=>
 export function shipRefund(job){
  if(!job)return {resources:vector([0,0,0]),salvage:vector([0,0,0]),legacyDefense:false};
  if(job.payment)return {resources:{...job.payment.resources},salvage:{...job.payment.salvage},legacyDefense:false};
- const gross=vector(SHIPS[job.key].cost.map(v=>v*job.count)),legacyDefense=SHIPS[job.key].category==='defense';
+ const legacyDefense=SHIPS[job.key].category==='defense',oldDefense={flak:[160,80,20],laser:[450,300,70],rail:[1400,1000,280],plasma:[4000,2800,900]},gross=vector((legacyDefense?oldDefense[job.key]:SHIPS[job.key].cost).map(v=>v*job.count));
  return {resources:legacyDefense?vector([0,0,gross.fuel]):gross,salvage:legacyDefense?vector([gross.metal,gross.crystal,0]):vector([0,0,0]),legacyDefense};
 }
 export function shipInfo(s,p,key,count=1){const sh=SHIPS[key];if(!sh)throw Error('Unbekanntes Schiff.');if(sh.category==='defense')throw Error('Verteidigungsplattformen werden in der Orbitalwerft gebaut.');const gross=vector(sh.cost.map(v=>v*count)),salvage=vector(RES.map(k=>sh.category==='defense'?Math.min(gross[k],p.defenseSalvage?.[k]||0):0));return {cost:vector(RES.map(k=>gross[k]-salvage[k])),salvage,ms:Math.ceil(sh.time*count*1000*shipyardTimeFactor(p.buildings.shipyard)),ratio:stats(s,p).ratio,reason:p.buildings.shipyard<(sh.shipyard||1)?`Benötigt Schiffswerft Stufe ${sh.shipyard||1}.`:s.tech[sh.tech]<(sh.techLevel||1)?`Benötigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel||1}.`:(s.tech[sh.engine||'drive']||0)<(sh.engineLevel||0)?`Benötigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.`:''};}
