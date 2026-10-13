@@ -7,12 +7,13 @@ returns jsonb language sql stable security definer set search_path='' as $$
   select b.mission_id, b.occurred_at, a.return_at,
    coalesce(nullif(left(sa.state->>'name',30),''),'Unbekannt') attacker,
    coalesce(nullif(left(sd.state->>'name',30),''),'Unbekannt') defender,
-   coalesce(nullif(left(a.data->>'to',80),''),'Unbekannter Planet') planet,
+   coalesce(nullif(left(gp.meta->>'name',80),''),nullif(left(a.data->>'to',80),''),'Unbekannter Planet') planet,
    b.header->'summary' summary
   from public.pvp_battle_logs b
   join public.pvp_attacks a on a.id=b.mission_id
   left join public.game_saves sa on sa.user_id=b.attacker_id
   left join public.game_saves sd on sd.user_id=b.defender_id
+  left join public.galaxy_planets gp on gp.id=a.data->>'to'
   where auth.uid() is not null and now()>=a.return_at and a.status in ('returning','returned')
   order by b.occurred_at desc limit 100
  ), classified as (
