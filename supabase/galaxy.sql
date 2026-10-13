@@ -183,10 +183,10 @@ begin
   end loop;
  end loop;
  for item in select key,value from jsonb_each(costs->'tech') loop
-  lvl := public.imperium_rank_int(s->'tech'->item.key,case when item.key='colonization' then 6 when item.key='military' then 4 else 5 end);
+  lvl := public.imperium_rank_int(s->'tech'->item.key,case when item.key='scout' then 100 when item.key in ('drive','ramjet','impulse','hyperspace','military') then 10 when item.key='colonization' then 6 when item.key='assaultDrive' then 1 else 5 end);
   for i in 0..lvl-1 loop
    for base in select value from jsonb_array_elements(item.value) loop
-    research_total := research_total + ceil((base #>> '{}')::numeric * power(1.6::numeric,i));
+    research_total := research_total + least(1000000000000::numeric,ceil((base #>> '{}')::numeric * power(1.6::numeric,i) * power(1.5::numeric,case when item.key='military' then greatest(0,i-4) else 0 end)));
    end loop;
   end loop;
  end loop;
