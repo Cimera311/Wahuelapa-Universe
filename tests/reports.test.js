@@ -26,6 +26,28 @@ test('Report rows escape all user text, preserve open details and filter archive
  assert.equal(filterReports([r],{archived:false,kind:'battle',outcome:'win',days:'1',search:'script'},T+1).length,1);assert.equal(filterReports([r],{archived:true},T).length,0);assert.equal(filterReports([r],{days:'1'},T+86400001).length,0);
  assert.doesNotMatch(reportsPage({items:[],total:0},{archived:false,search:''},s,null,{error:'<script>'}),/<script>/);
 });
+test('Report cards remain compact and readable on mobile without changing the report data',()=>{
+ const s=newGame('A',T);
+ const items=[
+  {id:'transport-1',time:T,kind:'transport',title:'Transport abgeschlossen',archived:false,payload:{to:'g-orion-p1'}},
+  {id:'event-2',time:T-60000,kind:'custom-unsafe',title:'Ereignis',archived:false,payload:{}}
+ ];
+ const html=reportRows(items,s,null,{selectable:true});
+ assert.match(html,/class="report-list-row report-kind-transport"/);
+ assert.match(html,/class="report-row-symbol" aria-hidden="true"><svg/);
+ assert.match(html,/class="report-date-full"/);
+ assert.match(html,/class="report-date-short"/);
+ assert.match(html,/class="report-select" type="checkbox"/);
+ assert.match(html,/Transport abgeschlossen/);
+ assert.match(html,/class="report-list-row report-kind-other"/);
+ assert.doesNotMatch(html,/report-kind-custom-unsafe/);
+ const css=readFileSync('src/style.css','utf8');
+ assert.match(css,/\.report-list-row>input\.report-select\[type="checkbox"\]\{[^}]*min-width:18px;[^}]*min-height:18px/);
+ assert.match(css,/\.report-list-row>details>summary\{[^}]*grid-template-areas:"symbol copy when badge chevron"/);
+ assert.match(css,/grid-template-areas:"symbol copy copy chevron" "symbol when badge chevron"/);
+ assert.match(css,/\.fleet-navigation\[data-active-section="reports"\]\{position:relative;top:auto/);
+});
+
 test('Persistent report SQL backfills, stays private, preserves archives and exposes no premature defense event or seed',async t=>{
  const db=new PGlite();t.after(()=>db.close());
  await db.exec("create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create role anon;create role authenticated;create role service_role;");
