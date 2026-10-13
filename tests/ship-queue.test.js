@@ -35,9 +35,16 @@ test('Cancelling active or waiting jobs refunds only their own payment and prese
 test('Cancellation at a completion boundary cannot refund a finished order or remove its successor',()=>{
  let s=add(add(ready()),'transport');const first=s.planets[0].shipjob,second=s.planets[0].shipqueue[0];assert.throws(()=>act(s,cancel(first),first.end),/abgeschlossen/);advance(s,first.end);assert.equal(s.planets[0].ships.falke,1);assert.equal(s.planets[0].shipjob.id,second.id);
 });
-test('Defense orders reserve all queued orbital slots and return salvage separately',()=>{
- let s=ready();s.planets[0].defenseSalvage=vector([400,200,0]);s=add(add(s),'flak',2);assert.equal(defenseSlots(s.planets[0]),2);s=add(s,'flak',2);assert.equal(defenseSlots(s.planets[0]),4);const before=structuredClone(s);assert.throws(()=>add(s,'flak'),/Orbitalplattform/);assert.deepEqual(s,before);
- const j=s.planets[0].shipqueue[0];s=act(s,cancel(j),s.time);assert.equal(defenseSlots(s.planets[0]),2);assert.equal(s.planets[0].defenseSalvage.metal,320);assert.equal(s.planets[0].defenseSalvage.crystal,160);s=add(s,'flak',2);assert.equal(s.planets[0].shipqueue.at(-1).payment.resources.metal,0);
+test('Defense orders use independent orbital queue capacity without a platform quantity cap',()=>{
+ let s=ready();const p=s.planets[0];p.buildings.orbital=3;p.defenseSalvage=vector([400,200,0]);
+ s=add(s,'flak',2);assert.equal(defenseSlots(s.planets[0]),2);
+ s=add(s,'flak',2);assert.equal(defenseSlots(s.planets[0]),4);
+ s=add(s,'flak',2);assert.equal(defenseSlots(s.planets[0]),6);
+ const before=structuredClone(s);assert.throws(()=>add(s,'flak'),/Orbitalwerft belegt/);assert.deepEqual(s,before);
+ const j=s.planets[0].orbitalqueue[0];s=act(s,cancel(j),s.time);
+ assert.equal(defenseSlots(s.planets[0]),4);
+ assert.equal(s.planets[0].orbitalqueue.length,1);
+ s=add(s,'flak',2);assert.equal(defenseSlots(s.planets[0]),6);
 });
 test('An existing legacy job keeps its progress when a paid order is appended',()=>{
  const s=ready();s.time=T+30000;s.planets[0].shipjob={key:'falke',count:2,start:T,end:T+120000};const next=add(s,'transport');assert.equal(next.planets[0].shipjob.workRemaining,90000);assert.equal(next.planets[0].shipqueue[0].workRemaining,next.planets[0].shipqueue[0].workTotal);parseSave(JSON.stringify(next));advance(next,T+120000);assert.equal(next.planets[0].ships.falke,2);assert.equal(next.planets[0].shipjob.key,'transport');
