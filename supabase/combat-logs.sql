@@ -23,7 +23,7 @@ returns trigger language plpgsql security definer set search_path='' as $$
 declare trace jsonb:=new.data->'report'->'trace'; q jsonb; old_header jsonb; h jsonb;
 begin
  if trace is null then return new;end if;
- if (trace->>'version')::integer<>1 or (trace->>'ruleVersion')::integer not in (2,3) or jsonb_typeof(trace->'rounds')<>'array' or jsonb_array_length(trace->'rounds')>case when (trace->>'ruleVersion')::integer=3 then 7 else 6 end then raise exception 'INVALID_BATTLE_TRACE';end if;
+ if (trace->>'version')::integer<>1 or (trace->>'ruleVersion')::integer not in (2,3) or jsonb_typeof(trace->'rounds')<>'array' or ((trace->>'ruleVersion')::integer=2 and jsonb_array_length(trace->'rounds')>6) or ((trace->>'ruleVersion')::integer=3 and jsonb_array_length(trace->'rounds')>7) then raise exception 'INVALID_BATTLE_TRACE';end if;
  h=(trace-'rounds')||jsonb_build_object('summary',(new.data->'report')-'trace','from',new.data->>'from','to',new.data->>'to');
  select header into old_header from public.pvp_battle_logs where mission_id=new.id;
  if old_header is not null and old_header is distinct from h then raise exception 'BATTLE_LOG_IMMUTABLE';end if;
