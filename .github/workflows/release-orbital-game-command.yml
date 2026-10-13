@@ -25,10 +25,10 @@ jobs:
       - name: Verify orbital yard is included, obsolete weapons remain disabled
         run: |
           node --input-type=module -e "import{readFileSync as r}from'node:fs';const s=r('supabase/dashboard/game-command.ts','utf8');for(const phrase of ['Orbitalwerft','stillgelegt','orbital: Math.ceil(10 * Math.pow'])if(!s.includes(phrase))throw Error('Expected new game-command element missing: '+phrase);"
-      - run: npm test
       - name: Archive immutable release
         run: |
           if git diff --quiet -- supabase/dashboard/game-command.ts; then echo 'Game-command unchanged'; else node scripts/archive-game-command.mjs 2026-10-13.01 "Orbitalwerft: permanenter Strombedarf, Erweiterung der Werftstufen; alte Orbitalwaffen gesperrt"; fi
+      - run: npm test
       - name: Commit generated bundle and immutable archive
         run: |
           if git diff --quiet; then echo 'Already current'; exit 0; fi
