@@ -10,7 +10,7 @@ import {processWorld} from '../src/server-world.js';
 const ready=()=>{
  const s=newGame('Orbital',1800000000000),p=s.planets[0];
  for(const [k,t] of Object.entries(TECHS))s.tech[k]=t.max;
- Object.assign(p.buildings,{orbital:6,shipyard:6,solar:60,warehouse:16,metal:0,crystal:0,fuel:0});
+ Object.assign(p.buildings,{orbital:6,shipyard:6,solar:30,warehouse:16,metal:0,crystal:0,fuel:0});
  p.resources=vector([1000000,1000000,1000000]);return s;
 };
 test('Each armed orbital platform matches its warship exactly by resource type',()=>{
