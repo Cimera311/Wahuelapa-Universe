@@ -24,6 +24,8 @@ Ab `2026-10-11.04` speichert die Werft ihre bezahlten Folgeaufträge. [Deploymen
 
 Ab `2026-10-11.05` richtet sich die Zahl neuer Werftaufträge nach der Werftstufe, maximal 20. Bereits bezahlte Aufträge bis zur früheren Grenze von 50 bleiben gültig. [Deployment-Hinweise](../../dashboard/SHIP_QUEUE_LEVELS_DEPLOYMENT.md).
 
+Ab `2026-10-13.03` gilt die neue Orbitalwerft mit separater Bau- und Reparaturwarteschlange, dauerhaftem Energiebedarf und Erstschlag in Runde 0. Vor einem Serverdeploy zuerst die additiven Migrationen [orbital-first-strike.sql](../../orbital-first-strike.sql) und [orbital-ranking.sql](../../orbital-ranking.sql) ausführen. [Deployment-Hinweise](../../dashboard/ORBITAL_DEFENSE_DEPLOYMENT.md) erläutern Alteinheiten, erhaltene Aufträge und die Rückwechselbedingungen.
+
 ## Neue Version erstellen
 
 Änderungen gehören in die ursprünglichen Module, nicht in ein archiviertes Bundle. Nach dem Bündeln zuerst beide Dashboard-TXT-Dateien bytegleich aktualisieren und anschließend archivieren:
@@ -31,7 +33,7 @@ Ab `2026-10-11.05` richtet sich die Zahl neuer Werftaufträge nach der Werftstuf
 ```sh
 cp supabase/dashboard/game-command.ts supabase/dashboard/game-command-gesamt.txt
 cp supabase/dashboard/game-command.ts supabase/dashboard/game-command-werft.txt
-npm run game-command:archive -- 2026-10-12.03 "Beschreibung der Backend-Änderung"
+npm run game-command:archive -- 2026-10-13.04 "Beschreibung der Backend-Änderung"
 npm test
 ```
 
