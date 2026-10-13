@@ -12,11 +12,11 @@
 
 1. **Zuerst Datenbank**: Im Supabase SQL Editor `supabase/orbital-first-strike.sql` ausführen. Das erweitert den gespeicherten Kampfverlauf um Runde **0** und erlaubt PvP-Regelversion **3**. Das Script setzt die bereits installierten `combat-logs.sql` und `combat-log-pagination.sql` voraus.
 2. **Ranglistenwertung**: `supabase/orbital-ranking.sql` ausführen. Nur die Kostenwertung für die neuen Plattform- und Werftpreise wird aktualisiert. **Nicht die älteren `leaderboard.sql` oder `ship-tiers.sql` erneut auf Live ausführen.**
-3. **Supabase Edge Function**: Das vollständige `supabase/dashboard/game-command-gesamt.txt` des Release `2026-10-13.01` in **Edge Functions → swift-handler → index.ts** kopieren und deployen. Bestehende Function, Secrets und Auth-Einstellungen beibehalten.
+3. **Supabase Edge Function**: Das vollständige `supabase/dashboard/game-command-gesamt.txt` des Release `2026-10-13.03` in **Edge Functions → swift-handler → index.ts** kopieren und deployen. Bestehende Function, Secrets und Auth-Einstellungen beibehalten.
 4. **Zuletzt Frontend**: PR #45 mergen. Nach GitHub-Pages-Veröffentlichung den Browser aktualisieren.
 5. Kurz kontrollieren: Orbitalwerft bei Verteidigung vorhanden, Bau und Wiederherstellung funktionieren, Aufträge laufen auch offline, neue Kämpfe zeigen Runde 0 im vollständigen Kampfprotokoll und in der SQL-Rundentabelle.
 
-**Kein zusätzliches Save-SQL notwendig.** Die Save-Validierung erweitert alte Spielstände beim Laden um die neuen Orbitalfelder. Altbestände und bezahlte alte Werftaufträge bleiben erhalten. Alte angesparte Verteidigungs-Reparaturmaterialien werden beibehalten; sie sind nicht identisch mit neuen Wracks.
+**Kein zusätzliches Save-SQL notwendig.** Die Save-Validierung erweitert alte Spielstände beim Laden um die neuen Orbitalfelder. Altbestände und bezahlte alte Werftaufträge bleiben erhalten. Alte angesparte Verteidigungs-Reparaturmaterialien werden beibehalten und bei neuen Orbitalreparaturen als zusätzliche Metall-/Kristallgutschrift verbraucht; sie sind nicht identisch mit neuen Wracks.
 
 ## Rollback
 
