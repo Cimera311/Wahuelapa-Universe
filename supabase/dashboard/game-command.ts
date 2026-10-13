@@ -14,7 +14,7 @@ var BUILDINGS = {
   lab: { name: "Forschungslabor", icon: "\u2697", cost: [150, 100, 0], time: 12, description: "Schaltet imperiumsweite Forschung frei." },
   shipyard: { name: "Schiffswerft", icon: "\u2692", cost: [200, 100, 0], time: 12, description: "Ab Stufe 2 verk\xFCrzt jede weitere Stufe die Bauzeit neuer Auftr\xE4ge um 8 % gegen\xFCber der vorherigen Stufe. Verbraucht dauerhaft Strom; Strommangel bremst den Schiffbau.", requires: { building: "lab", level: 1 } },
   robotics: { name: "Arbeitsroboter", icon: "\u2699", cost: [400, 300, 60], time: 20, description: "Verk\xFCrzen neue Bauauftr\xE4ge um 8 % je Stufe.", requires: { tech: "engineering", level: 1 } },
-  orbital: { asset: "./assets/pvp-resource-v1/buildings/orbital.webp", name: "Orbitalplattform", icon: "\u25CE", cost: [600, 400, 120], time: 60, description: "Je Stufe vier Pl\xE4tze f\xFCr orbitale Verteidigung; maximal Stufe 4.", requires: { tech: "military", level: 1 } },
+  orbital: { asset: "./assets/pvp-resource-v1/buildings/orbital.webp", name: "Orbitalwerft", icon: "\u25CE", cost: [600, 400, 120], time: 60, description: "Eigenst\xE4ndige Werft f\xFCr k\xFCnftige Verteidigungsplattformen. Verbraucht dauerhaft Energie. Jede Ausbaustufe wird die Bauzeit verk\xFCrzen und einen zus\xE4tzlichen Auftragsplatz erm\xF6glichen (maximal 20).", requires: { tech: "military", level: 1 } },
   bunker: { asset: "./assets/pvp-resource-v1/buildings/bunker.webp", name: "Ressourcenbunker", icon: "\u25A3", cost: [450, 300, 80], time: 45, description: "Je Stufe sch\xFCtzt er 2,5 % der Lagerkapazit\xE4t, insgesamt maximal 2000 je Rohstoff.", requires: { tech: "military", level: 1 } },
   tidal: { name: "Gezeitenkraftwerk", icon: "\u2248", cost: [700, 450, 80], time: 30, description: "Liefert 180 Energie je Stufe auf Ozeanwelten.", requires: { tech: "energy", level: 3 }, ocean: true }
 };
@@ -82,6 +82,7 @@ function attackSlots(level) {
 // src/realm-config.js
 var REALM_CONFIG = Object.freeze({
   galaxyFlightTimeFactor: 3
+  // 1 = bisherige Zeit, 2 = doppelt, 3 = dreifach
 });
 
 // src/flight.js
@@ -341,7 +342,7 @@ function shipyardTimeFactor(level) {
   return Math.pow(0.92, Math.max(0, level - 1));
 }
 function energyDemand(p) {
-  const consumers = { metal: p.buildings.metal * 15, crystal: p.buildings.crystal * 18, fuel: p.buildings.fuel * 20, shipyard: Math.ceil(10 * Math.pow(p.buildings.shipyard, 1.5)) };
+  const consumers = { metal: p.buildings.metal * 15, crystal: p.buildings.crystal * 18, fuel: p.buildings.fuel * 20, shipyard: Math.ceil(10 * Math.pow(p.buildings.shipyard, 1.5)), orbital: Math.ceil(10 * Math.pow(p.buildings.orbital || 0, 1.5)) };
   return Object.fromEntries(Object.entries(consumers).map(([key, value2]) => [key, value2 * p.energy]));
 }
 function stats(s, p) {
@@ -446,7 +447,8 @@ function buildInfo(s, p, key) {
   const b = BUILDINGS[key];
   if (!b) throw Error("Unbekanntes Geb\xE4ude.");
   const l = p.buildings[key];
-  return { cost: costAt(b, l), ms: Math.ceil(b.time * Math.pow(1.35, l) * Math.pow(0.95, s.tech.engineering) * Math.pow(0.92, p.buildings.robotics) * 1e3), reason: need(s, p, b.requires) || (b.ocean && !p.ocean ? "Ben\xF6tigt einen Ozeanplaneten." : "") || (l >= (["orbital", "bunker"].includes(key) ? 4 : 30) ? "Maximale Geb\xE4udestufe erreicht." : "") };
+  const cost = key === "orbital" && l >= 4 ? vector(b.cost.map((v) => Math.ceil(v * Math.pow(1.6, 3) * Math.pow(1.08, l - 3)))) : costAt(b, l);
+  return { cost, ms: Math.ceil(b.time * Math.pow(1.35, l) * Math.pow(0.95, s.tech.engineering) * Math.pow(0.92, p.buildings.robotics) * 1e3), reason: need(s, p, b.requires) || (b.ocean && !p.ocean ? "Ben\xF6tigt einen Ozeanplaneten." : "") || (l >= (key === "bunker" ? 4 : 30) ? "Maximale Geb\xE4udestufe erreicht." : "") };
 }
 function researchInfo(s, p, key) {
   const t = TECHS[key];
@@ -472,6 +474,7 @@ function shipRefund(job) {
 function shipInfo(s, p, key, count = 1) {
   const sh = SHIPS[key];
   if (!sh) throw Error("Unbekanntes Schiff.");
+  if (sh.category === "defense") return { cost: vector(sh.cost.map((v) => v * count)), salvage: vector([0, 0, 0]), ms: 0, ratio: stats(s, p).ratio, reason: "Die bisherigen Orbitalgesch\xFCtze sind stillgelegt. Die neue Orbitalwerft folgt mit dem n\xE4chsten Update." };
   const gross = vector(sh.cost.map((v) => v * count)), salvage = vector(RES.map((k) => sh.category === "defense" ? Math.min(gross[k], p.defenseSalvage?.[k] || 0) : 0));
   return { cost: vector(RES.map((k) => gross[k] - salvage[k])), salvage, ms: Math.ceil(sh.time * count * 1e3 * shipyardTimeFactor(p.buildings.shipyard)), ratio: stats(s, p).ratio, reason: sh.slots && defenseSlots(p) + sh.slots * count > (p.buildings.orbital || 0) * 4 ? "Nicht gen\xFCgend freie Pl\xE4tze auf der Orbitalplattform." : p.buildings.shipyard < (sh.shipyard || 1) ? `Ben\xF6tigt Schiffswerft Stufe ${sh.shipyard || 1}.` : s.tech[sh.tech] < (sh.techLevel || 1) ? `Ben\xF6tigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel || 1}.` : (s.tech[sh.engine || "drive"] || 0) < (sh.engineLevel || 0) ? `Ben\xF6tigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.` : "" };
 }
@@ -1277,7 +1280,6 @@ function galaxyFlight(s, from, target, start, ship = "longProbe") {
 }
 
 // src/server-world.js
-var DAY = 864e5;
 var COLONY_PROTECTION = 36e5;
 var ms = (v) => typeof v === "number" ? v : Date.parse(v);
 var zero = () => vector([0, 0, 0]);

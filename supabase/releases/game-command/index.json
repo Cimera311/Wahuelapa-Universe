@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-12.02",
+  "latest": "2026-10-13.01",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -113,6 +113,13 @@
       "sourceCommit": "23b3add3facab9f79214dec2eea645f0c548a77e",
       "description": "Realm-Konfiguration: Galaxiefluege x3 fuer neue Flugabschnitte; Tutorial, Treibstoff und bereits gestartete Fluege bleiben unveraendert.",
       "sha256": "f4b4f795378daaef742366b9ac3ab86422020635ff9acaaec41a1b3dfc6fec2f"
+    },
+    {
+      "version": "2026-10-13.01",
+      "createdAt": "2026-10-13T17:23:10.280Z",
+      "sourceCommit": "49e6c20fbe1f3a93c1eecbffecd8a79cca369cdb",
+      "description": "Orbitalwerft: permanenter Strombedarf, Erweiterung der Werftstufen; alte Orbitalwaffen gesperrt",
+      "sha256": "4e0cd52b0dbbb9dac3dfd5f8149cb5d6b20ee2578c3893422ed1b86f4e1bb0d8"
     }
   ]
 }
