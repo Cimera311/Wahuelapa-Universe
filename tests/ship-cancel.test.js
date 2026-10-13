@@ -26,7 +26,7 @@ test('Legacy ship jobs refund their original fixed cost; defense jobs preserve p
  let s=act(ready(),{type:'ship',key:'falke',count:2},T);delete s.planets[0].shipjob.payment;delete s.planets[0].shipjob.id;let j=s.planets[0].shipjob;
  s=act(s,cancel(j),T+1);assert.deepEqual(s.planets[0].resources,ready().planets[0].resources);
  s=ready();s.planets[0].resources.fuel=960;s.planets[0].shipjob={key:'flak',count:2,start:T,end:T+60000};j=s.planets[0].shipjob;assert.ok(shipRefund(j).legacyDefense);
- s=act(s,cancel(j),T+1);assert.deepEqual(s.planets[0].defenseSalvage,vector([480,300,0]));assert.equal(s.planets[0].resources.fuel,1000);
+ s=act(s,cancel(j),T+1);assert.deepEqual(s.planets[0].defenseSalvage,vector([320,160,0]));assert.equal(s.planets[0].resources.fuel,1000);
 });
 test('Stale cancellation cannot cancel a replacement order or refund a completed batch',()=>{
  let s=act(ready(),{type:'ship',key:'falke',count:1},T),old=s.planets[0].shipjob;s=act(s,cancel(old),T);s=act(s,{type:'ship',key:'falke',count:1},T);const before=structuredClone(s);
