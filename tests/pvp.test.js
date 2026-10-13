@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,act,advance} from '../src/engine.js';
+import {newGame,act,advance,shipInfo} from '../src/engine.js';
 import {SHIPS,TECHS,vector} from '../src/config.js';
 import {validateSave} from '../src/storage.js';
 import {processWorld,prepareWorld,advanceWorld,projectPvP,DAY,COLONY_PROTECTION} from '../src/server-world.js';
@@ -71,7 +71,7 @@ test('Draws and cargo exhaustion do not plunder; warehouse overflow is included 
 test('Destroyed freighters lose their cargo capacity; debris excludes fuel and defense salvage stays local',()=>{
  const b=resolveBattle({fleet:{falke:1,karawane:1},tech:{},shieldFactor:0},{fleet:{titan:10,flak:1},tech:{}},ID);
  assert.equal(b.attacker.fleet.karawane||0,0);assert.equal(b.debris.fuel,0);
- const defense=resolveBattle({fleet:{titan:30},tech:{}},{fleet:{flak:1},tech:{}},ID);assert.equal(defense.defenseRepair.metal,112);assert.equal(defense.debris.metal,0);
+ const defense=resolveBattle({fleet:{titan:30},tech:{}},{fleet:{flak:1},tech:{}},ID);assert.equal(defense.defenseRepair.metal,0);assert.equal(defense.debris.metal,0);assert.equal(resolveBattle({fleet:{titan:30},tech:{}},{fleet:{flak:1},tech:{}},ID,2).defenseRepair.metal,112);
 });
 test('Every successful raid takes up to 25% of current unprotected stock without a daily budget',()=>{
  let w=fixture();
@@ -90,7 +90,7 @@ test('Damage survives stationing, saving and repair; defense slots prevent overs
  s=act(s,{type:'station',planet:p.id,to:'home',ship:'waechter',count:1},T);s=validateSave(s);advance(s,s.missions[0].due);
  assert.deepEqual(s.planets[0].hulls.waechter,[.5]);const metal=s.planets[0].resources.metal,crystal=s.planets[0].resources.crystal;
  s=act(s,{type:'repair',planet:'home'},s.time);assert.deepEqual(s.planets[0].hulls,{});assert.equal(s.planets[0].resources.metal,metal-135);assert.equal(s.planets[0].resources.crystal,crystal-90);
- p=s.planets[1];p.buildings.shipyard=6;p.buildings.orbital=1;assert.throws(()=>act(s,{type:'ship',planet:p.id,key:'plasma',count:2},s.time),/Plätze/);assert.throws(()=>act(s,{type:'station',planet:p.id,to:'home',ship:'flak',count:1},s.time),/Verteidigung/);
+ p=s.planets[1];p.buildings.shipyard=6;p.buildings.orbital=1;assert.throws(()=>act(s,{type:'ship',planet:p.id,key:'plasma',count:2},s.time),/Orbitalwerft Stufe 6/);p.buildings.orbital=6;assert.equal(shipInfo(s,p,'plasma',200).reason,'');assert.throws(()=>act(s,{type:'station',planet:p.id,to:'home',ship:'flak',count:1},s.time),/Verteidigung/);
 });
 test('PvP UI exposes the switch only to admins, escapes names and supports public unknown target labels',()=>{
  const w=fixture(),data=projectPvP(w,A);assert.match(pvpSettings(data),/role="switch"/);assert.doesNotMatch(pvpSettings(projectPvP(w,B)),/role="switch"/);
@@ -103,8 +103,8 @@ test('Stationing permits hangars above the former 5000-unit limit',()=>{
  const n=processWorld(w,A,{type:'command',action:{type:'station',planet:source.id,to:'home',ship:'waechter',count:100}});assert.equal(n.saves[0].state.missions[0].count,100);const m=n.saves[0].state.missions[0];n.now=m.due;const arrived=advanceWorld(n);assert.equal(arrived.saves[0].state.planets[0].ships.waechter,100);assert.ok(Object.values(arrived.saves[0].state.planets[0].ships).reduce((a,b)=>a+b,0)>5000);
 });
 test('Local defense salvage reduces displayed and paid costs without becoming ordinary cargo',()=>{
- const w=fixture();let s=w.saves[0].state,p=s.planets[1];p.buildings.shipyard=2;p.defenseSalvage=vector([112,56,0]);p.resources=vector([48,24,20]);
- s=act(s,{type:'ship',planet:p.id,key:'flak',count:1},T);p=s.planets[1];assert.deepEqual(p.defenseSalvage,vector([0,0,0]));assert.deepEqual(p.resources,vector([0,0,0]));advance(s,p.shipjob.end);assert.equal(p.ships.flak,1);
+ const w=fixture();let s=w.saves[0].state,p=s.planets[1];p.buildings.orbital=2;p.defenseSalvage=vector([112,56,0]);p.resources=vector([128,94,60]);
+ s=act(s,{type:'ship',planet:p.id,key:'flak',count:1},T);p=s.planets[1];assert.deepEqual(p.defenseSalvage,vector([0,0,0]));assert.deepEqual(p.resources,vector([0,0,0]));advance(s,p.orbitaljob.end);assert.equal(p.ships.flak,1);
 });
 
 test('A failed raid returns no loot and cannot remove target resources',()=>{
@@ -160,8 +160,8 @@ test('Home planner matches server flight estimate and distinguishes loading, mis
  assert.ok(pvpEstimate(s,g,'g-orion-p1',request().action.fleet).includes(f.fuel+' Treibstoff'));
 });
 
-test('New attacks pin v2, legacy launches stay v1, and full traces never enter sync projections',()=>{
- const launched=processWorld(fixture(),A,attack());assert.equal(launched.attacks[0].ruleVersion,2);
+test('New attacks pin v3, legacy launches stay v1, and full traces never enter sync projections',()=>{
+ const launched=processWorld(fixture(),A,attack());assert.equal(launched.attacks[0].ruleVersion,3);
  const resolved=processWorld({...structuredClone(launched),now:launched.attacks[0].arrival_at},B,{type:'sync'});assert.ok(resolved.attacks[0].report.trace);assert.equal(projectPvP(resolved,B).reports[0].trace,undefined);assert.equal(projectPvP(resolved,B).reports[0].traceAvailable,true);
  const legacy=structuredClone(launched);delete legacy.attacks[0].ruleVersion;legacy.now=legacy.attacks[0].arrival_at;const old=processWorld(legacy,B,{type:'sync'});assert.equal(old.attacks[0].report.ruleVersion,1);assert.equal(old.attacks[0].report.trace,undefined);
 });
