@@ -90,7 +90,7 @@ test('Damage survives stationing, saving and repair; defense slots prevent overs
  s=act(s,{type:'station',planet:p.id,to:'home',ship:'waechter',count:1},T);s=validateSave(s);advance(s,s.missions[0].due);
  assert.deepEqual(s.planets[0].hulls.waechter,[.5]);const metal=s.planets[0].resources.metal,crystal=s.planets[0].resources.crystal;
  s=act(s,{type:'repair',planet:'home'},s.time);assert.deepEqual(s.planets[0].hulls,{});assert.equal(s.planets[0].resources.metal,metal-135);assert.equal(s.planets[0].resources.crystal,crystal-90);
- p=s.planets[1];p.buildings.shipyard=6;p.buildings.orbital=1;assert.throws(()=>act(s,{type:'ship',planet:p.id,key:'plasma',count:2},s.time),/Plätze/);assert.throws(()=>act(s,{type:'station',planet:p.id,to:'home',ship:'flak',count:1},s.time),/Verteidigung/);
+ p=s.planets[1];p.buildings.shipyard=6;p.buildings.orbital=1;assert.throws(()=>act(s,{type:'ship',planet:p.id,key:'plasma',count:2},s.time),/stillgelegt/);assert.throws(()=>act(s,{type:'station',planet:p.id,to:'home',ship:'flak',count:1},s.time),/Verteidigung/);
 });
 test('PvP UI exposes the switch only to admins, escapes names and supports public unknown target labels',()=>{
  const w=fixture(),data=projectPvP(w,A);assert.match(pvpSettings(data),/role="switch"/);assert.doesNotMatch(pvpSettings(projectPvP(w,B)),/role="switch"/);
@@ -104,7 +104,7 @@ test('Stationing permits hangars above the former 5000-unit limit',()=>{
 });
 test('Local defense salvage reduces displayed and paid costs without becoming ordinary cargo',()=>{
  const w=fixture();let s=w.saves[0].state,p=s.planets[1];p.buildings.shipyard=2;p.defenseSalvage=vector([112,56,0]);p.resources=vector([48,24,20]);
- s=act(s,{type:'ship',planet:p.id,key:'flak',count:1},T);p=s.planets[1];assert.deepEqual(p.defenseSalvage,vector([0,0,0]));assert.deepEqual(p.resources,vector([0,0,0]));advance(s,p.shipjob.end);assert.equal(p.ships.flak,1);
+ assert.throws(()=>act(s,{type:'ship',planet:p.id,key:'flak',count:1},T),/stillgelegt/);p=s.planets[1];assert.deepEqual(p.defenseSalvage,vector([112,56,0]));assert.deepEqual(p.resources,vector([48,24,20]));
 });
 
 test('A failed raid returns no loot and cannot remove target resources',()=>{
