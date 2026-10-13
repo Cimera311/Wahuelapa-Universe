@@ -317,3 +317,53 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .wish-comment-error{color:#ffaaa9;overflow-wrap:anywhere;}
 .community-wish-actions{flex-wrap:wrap;}
 @media(max-width:540px){.wish-thread{padding:10px}.wish-comment-form button{width:100%}}
+
+
+/* Compact community wishboard — 2026-10-13 */
+.community-dialog.community-dialog--wish{width:min(820px,calc(100vw - 28px));max-height:min(92dvh,900px);padding:24px 28px;overflow-y:auto;overflow-x:hidden;border:1px solid #315369;border-radius:18px;box-shadow:0 24px 80px #0009}
+.community-dialog--wish .page-heading{margin-bottom:8px;padding-right:52px}
+.community-dialog--wish .page-heading h1{font-size:clamp(22px,3vw,27px);line-height:1.2;margin:5px 0 7px}
+.community-dialog--wish .page-heading p{font-size:13px;line-height:1.45;margin:0;color:#9bb6c7}
+.community-dialog--wish .community-identity{font-size:12px;margin:12px 0 5px}
+.community-dialog--wish .community-toolbar{gap:10px;margin-bottom:8px}
+.community-dialog--wish .community-toolbar button{padding:8px 13px;min-height:36px;font-size:13px}
+.community-dialog--wish .community-toolbar .fine{font-size:11px}
+.community-dialog--wish .community-error:empty{display:none}
+.community-dialog--wish .community-error{margin:4px 0}
+.community-dialog--wish .community-feed{max-height:none;overflow:visible;scrollbar-gutter:auto;padding:0;gap:10px}
+.community-dialog--wish .community-entry{padding:15px 17px;border-radius:12px;background:linear-gradient(145deg,#0b2332,#0a1d2b);border-color:#29495c}
+.community-dialog--wish .community-meta{gap:8px;font-size:11px}
+.community-dialog--wish .community-meta strong{font-size:12px}
+.community-dialog--wish .community-entry h2{font-size:17px;line-height:1.3;margin:11px 0 7px}
+.community-dialog--wish .community-status{padding:3px 9px;font-size:10px}
+.community-dialog--wish .community-body{font-size:13px;line-height:1.5;margin:9px 0 0}
+.community-dialog--wish .community-wish-actions{justify-content:flex-start;gap:8px 12px;margin-top:12px}
+.community-dialog--wish .community-wish-actions button{min-height:36px;padding:7px 11px;font-size:12px;border-radius:8px}
+.community-dialog--wish .community-wish-actions label{font-size:11px;gap:5px;margin-left:auto}
+.community-dialog--wish .community-wish-actions select{min-height:35px;font-size:12px;padding:5px 8px}
+.community-dialog--wish .community-remove{padding:3px 5px;min-height:28px}
+.community-dialog--wish .wish-thread{margin-top:12px;padding:12px 14px;border-radius:10px}
+.community-dialog--wish .wish-comment{padding:9px 0;font-size:12px}
+.community-dialog--wish .wish-comment p{font-size:13px;line-height:1.45;margin:5px 0}
+.community-dialog--wish .wish-comment-form{gap:7px;margin-top:11px}
+.community-dialog--wish .wish-comment-form label{font-size:12px}
+.community-dialog--wish .wish-comment-form textarea{min-height:64px;font-size:13px;padding:9px}
+.community-dialog--wish .wish-comment-form button{min-height:36px;padding:7px 12px;font-size:12px}
+.community-dialog--wish .community-compose{gap:9px;margin-top:14px;padding-top:14px}
+.community-dialog--wish .community-compose label{font-size:12px;gap:5px}
+.community-dialog--wish .community-compose input,.community-dialog--wish .community-compose textarea{width:100%;box-sizing:border-box;font-size:13px;border:1px solid #315767;border-radius:8px;background:#081b29;color:#e7f3fa;padding:10px 12px;min-height:40px}
+.community-dialog--wish .community-compose textarea{min-height:78px}
+.community-dialog--wish .community-compose-footer{gap:9px}
+.community-dialog--wish .community-compose-footer .fine{font-size:11px}
+.community-dialog--wish .community-compose-footer button{font-size:13px;padding:9px 14px;min-height:38px}
+@media(max-width:600px){
+ .community-dialog.community-dialog--wish{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:16px 14px;border-radius:14px}
+ .community-dialog--wish .page-heading{padding-right:45px}
+ .community-dialog--wish .page-heading h1{font-size:22px}
+ .community-dialog--wish .community-entry{padding:12px}
+ .community-dialog--wish .community-wish-actions{display:grid;grid-template-columns:1fr 1fr}
+ .community-dialog--wish .community-wish-actions button{width:100%;min-width:0}
+ .community-dialog--wish .community-wish-actions label{grid-column:1/-1;margin:0;justify-content:flex-end}
+ .community-dialog--wish .wish-thread{padding:10px}
+ .community-dialog--wish .community-compose-footer button{width:100%}
+}
