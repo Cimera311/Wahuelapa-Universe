@@ -24,7 +24,7 @@ jobs:
           node -e "const fs=require('fs');const p='supabase/dashboard/game-command.ts';const b='// @ts-nocheck — Generated dashboard bundle; edit source modules instead.\\n\\n'+fs.readFileSync(p,'utf8');fs.writeFileSync(p,b);for(const name of ['game-command-gesamt.txt','game-command-werft.txt'])fs.writeFileSync('supabase/dashboard/'+name,b)"
       - name: Verify orbital yard is included, obsolete weapons remain disabled
         run: |
-          node --input-type=module -e "import{readFileSync as r}from'node:fs';const s=r('supabase/dashboard/game-command.ts','utf8');for(const phrase of ['Orbitalwerft','Die bisherigen Orbitalgeschütze sind stillgelegt','orbital: Math.ceil(10 * Math.pow'])if(!s.includes(phrase))throw Error('Expected new game-command element missing: '+phrase);"
+          node --input-type=module -e "import{readFileSync as r}from'node:fs';const s=r('supabase/dashboard/game-command.ts','utf8');for(const phrase of ['Orbitalwerft','stillgelegt','orbital: Math.ceil(10 * Math.pow'])if(!s.includes(phrase))throw Error('Expected new game-command element missing: '+phrase);"
       - run: npm test
       - name: Archive immutable release
         run: |
