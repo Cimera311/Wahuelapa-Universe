@@ -699,8 +699,9 @@ function routeArrival(s, m) {
     leaveRoute(s, m, (m.index + 1) % m.stops.length);
   }
 }
-function advance(s, now) {
+function advance(s, now, collectDebris) {
   if (!Number.isFinite(now)) throw Error("Ung\xFCltige Zeit.");
+  if (!collectDebris) now = Math.min(now, ...s.missions.filter((m) => m.type === "salvage" && m.phase === "outbound").map((m) => m.due - 1));
   now = Math.max(now, s.time);
   waitingCargo(s);
   let guard = 0;
@@ -755,6 +756,12 @@ function advance(s, now) {
         routeArrival(s, m);
       } else if (m.type === "station") {
         parkFleet(s, m, m.to, "Flotte stationiert");
+      } else if (m.type === "salvage" && m.phase === "outbound") {
+        if (!collectDebris) throw Error("Tr\xFCmmerbergung ben\xF6tigt den Spielserver.");
+        collectDebris(s, m);
+        m.phase = "return";
+        m.due = s.time + m.duration;
+        report(s, "Tr\xFCmmer geborgen", `${getPlanet(s, m.to).name}: ${Math.floor(m.cargo.metal)} Metall und ${Math.floor(m.cargo.crystal)} Kristall auf dem R\xFCckweg.`);
       } else if (m.type === "collect" && m.phase === "outbound") {
         loadCargo(s, getPlanet(s, m.to), m.cargo, m.order, m.count, m.ship, m.fleet);
         m.phase = "return";
@@ -924,7 +931,7 @@ function act(s, action, now = Date.now()) {
       m.stopping = true;
       report(n, "Route endet nach dieser Runde", m.name);
     }
-  } else if (["station", "collect", "route", "deliver"].includes(action.type)) {
+  } else if (["station", "collect", "salvage", "route", "deliver"].includes(action.type)) {
     if (n.missions.length >= 100) throw Error("Zu viele Flotten unterwegs.");
     if (!action.fleet && action.type !== "route" && action.type !== "station" && !isFreighter(action.ship || "transport")) throw Error("Liefern, Abholen und Handelsrouten ben\xF6tigen Transporter.");
     const manifest = action.type === "route" ? checkedFleet(action.fleet || { [action.ship || "transport"]: action.count }) : action.fleet ? missionFleet(action.fleet, action.type === "station") : null;
@@ -963,7 +970,9 @@ function act(s, action, now = Date.now()) {
       const fuel = f.fuel * (action.type === "station" ? 1 : 2);
       if (p.resources.fuel - (p.reserves?.fuel || 0) < fuel) throw Error("Nicht gen\xFCgend Treibstoff einschlie\xDFlich Reserve.");
       pay(p, vector([0, 0, fuel]));
-      if (action.type !== "collect") {
+      if (action.type === "salvage") {
+        if (!dest.system) throw Error("Tr\xFCmmer liegen an einer gemeinsamen Galaxiekolonie.");
+      } else if (action.type !== "collect") {
         const exact = RES.reduce((a, k) => a + (order[k] === "max" ? 0 : order[k]), 0);
         if (exact > (manifest ? fleetCapacity(n, manifest) : cargoCapacity(n, count, ship)) || RES.some((k) => order[k] !== "max" && order[k] > Math.floor(Math.max(0, p.resources[k] + p.depot[k] - (p.reserves?.[k] || 0))))) throw Error("Die gew\xE4hlte Ladung passt nicht oder lokale Ressourcen fehlen.");
         loadCargo(n, p, cargo, order, count, ship, manifest);
@@ -1273,7 +1282,7 @@ function validateSave(input) {
   const eventIds = [...shipIds];
   const order = (o) => o && RES.every((k) => o[k] === "max" || integer(o[k], 1e12));
   for (const m of s.missions) {
-    check(integer(m.id, s.seq) && m.id > 0 && ids.includes(m.from) && ["probe", "colony", "transport", "deliver", "collect", "station", "route"].includes(m.type) && Object.hasOwn(SHIPS, m.ship) && integer(m.count, Number.MAX_SAFE_INTEGER) && m.count > 0 && cargo(m.cargo) && ["outbound", "return"].includes(m.phase) && isNum(m.start, 864e13) && m.start <= s.time && isNum(m.due, 864e13) && m.due >= s.time && isNum(m.duration, 864e5) && m.duration > 0);
+    check(integer(m.id, s.seq) && m.id > 0 && ids.includes(m.from) && ["probe", "colony", "transport", "deliver", "collect", "salvage", "station", "route"].includes(m.type) && Object.hasOwn(SHIPS, m.ship) && integer(m.count, Number.MAX_SAFE_INTEGER) && m.count > 0 && cargo(m.cargo) && ["outbound", "return"].includes(m.phase) && isNum(m.start, 864e13) && m.start <= s.time && isNum(m.due, 864e13) && m.due >= s.time && isNum(m.duration, 864e5) && m.duration > 0);
     if (["probe", "colony"].includes(m.type)) {
       check(m.ship === m.type && TARGETS.some((t) => t.id === m.to));
       check(m.type !== "colony" || m.phase === "outbound" && m.count === 1 && !ids.includes(m.to));
@@ -1289,8 +1298,9 @@ function validateSave(input) {
     if (m.awaitingUnload !== void 0) check(ids.includes(m.awaitingUnload) && m.awaitingUnload === (m.type === "station" ? m.to : m.type === "route" ? m.home : m.from) && !["probe", "colony"].includes(m.type) && RES.some((k) => m.cargo[k] > 0) && (m.type === "station" || m.type === "route" && m.index === 0 || m.phase === "return"));
     if (m.finishTitle !== void 0) check(text(m.finishTitle, 80));
     if (m.type === "collect") check(order(m.order));
+    if (m.type === "salvage") check(!!s.planets.find((p) => p.id === m.to)?.system && (!m.fleet || fleetOK(m.fleet)) && (m.phase !== "outbound" || RES.every((k) => m.cargo[k] === 0)));
     if (m.type === "station") check(m.phase === "outbound");
-    if (m.fleet) check(["transport", "route", "deliver", "collect", "station"].includes(m.type) && fleetOK(m.fleet, m.type === "station") && m.fleet[m.ship] === m.count);
+    if (m.fleet) check(["transport", "route", "deliver", "collect", "salvage", "station"].includes(m.type) && fleetOK(m.fleet, m.type === "station") && m.fleet[m.ship] === m.count);
     if (m.pending) check(m.type === "route" && fleetOK(m.pending.fleet) && text(m.pending.name, 40) && m.pending.name.trim().length > 0 && typeof m.pending.repeat === "boolean" && Array.isArray(m.pending.stops) && m.pending.stops.length >= 2 && m.pending.stops.length <= 12 && m.pending.stops[0].planet === m.home && m.pending.stops.every((stop, i) => ids.includes(stop.planet) && stop.planet !== m.pending.stops[(i + 1) % m.pending.stops.length].planet && order(stop.load) && order(stop.unload)));
     if (m.paused !== void 0) check(m.type === "route" && typeof m.paused === "boolean" && (!m.paused || m.index === 0));
     if (m.pauseRequested !== void 0) check(m.type === "route" && typeof m.pauseRequested === "boolean");
@@ -1503,10 +1513,23 @@ function returnAttack(w, m, time) {
 function settleRaidCargo(w, time) {
   for (const m of w.attacks) if (m.awaitingUnload && m.status === "returning") returnAttack(w, m, time);
 }
+function collectWorldDebris(w, uid, s, m) {
+  const target = w.planets.find((p) => p.id === m.to);
+  if (!target || target.owner_id !== uid || target.reserved) return;
+  target.debris ??= zero();
+  let room = fleetCapacity(s, m.fleet || { [m.ship]: m.count });
+  for (const k of RES) {
+    const amount = Math.min(room, Math.floor(target.debris[k] || 0));
+    m.cargo[k] = amount;
+    target.debris[k] -= amount;
+    room -= amount;
+  }
+}
 function advanceWorld(w) {
   let guard = 0;
   while (true) {
     const events = socialEvents(w);
+    for (const row of w.saves) for (const m of row.state.missions) if (m.type === "salvage" && m.phase === "outbound") events.push({ time: m.due, id: row.user_id + ":" + String(m.id).padStart(12, "0"), kind: "salvage", order: -1 });
     for (const m of w.missions) if (!m.completed) {
       if (m.kind === "scan" && !w.surveys.some((q) => q.user_id === m.user_id && q.planet_id === m.planet_id)) events.push({ time: m.arrival_at, id: m.id, kind: "survey", mission: m, order: 0 });
       events.push({ time: m.finish_at, id: m.id, kind: "galaxy", mission: m, order: 1 });
@@ -1524,7 +1547,7 @@ function advanceWorld(w) {
     const e = events[0];
     if (!e || e.time > w.now) break;
     if (++guard > 1e4) throw Error("Zu viele f\xE4llige Ereignisse.");
-    for (const row of w.saves) advance(row.state, e.time);
+    for (const row of w.saves) advance(row.state, e.time, (s, m) => collectWorldDebris(w, row.user_id, s, m));
     if (e.kind === "survey") survey(w, e.mission);
     if (e.kind === "galaxy") finishGalaxy(w, e.mission, e.time);
     if (e.kind === "battle") resolveAttack(w, e.mission, e.time);
@@ -1533,7 +1556,7 @@ function advanceWorld(w) {
     settleSocialCargo(w, e.time);
     settleRaidCargo(w, e.time);
   }
-  for (const row of w.saves) advance(row.state, w.now);
+  for (const row of w.saves) advance(row.state, w.now, (s, m) => collectWorldDebris(w, row.user_id, s, m));
   settleSocialCargo(w, w.now);
   settleRaidCargo(w, w.now);
   return w;
@@ -1591,7 +1614,12 @@ function processWorld(snapshot, uid, request) {
   const s = stateOf(w, uid), start = w.starts.find((x) => x.user_id === uid);
   if (start) s.galaxy = { x: start.x, y: start.y };
   if (type === "command") {
-    if (!["build", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "route", "deliver", "repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
+    if (!["build", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "salvage", "route", "deliver", "repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
+    if (action.type === "salvage") {
+      const target = w.planets.find((p) => p.id === action.to);
+      if (!target || target.owner_id !== uid || target.reserved) throw Error("W\xE4hle eine eigene besiedelte Galaxiekolonie mit Tr\xFCmmern.");
+      if (!RES.some((k) => (target.debris?.[k] || 0) > 0)) throw Error("An diesem Planeten liegen keine Tr\xFCmmer.");
+    }
     const updated = act(s, action, w.now);
     w.saves.find((r) => r.user_id === uid).state = updated;
   } else if (type === "social") socialAction(w, uid, action, request.eventId || request.requestId);
@@ -1619,10 +1647,11 @@ function projectPvP(w, uid) {
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
     social: socialProjection(w, uid),
-    features: { shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
+    features: { debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,
+    debris: w.planets.filter((p) => p.owner_id === uid && !p.reserved).map((p) => ({ planet: p.id, ...p.debris || zero() })),
     colonies: w.planets.filter((p) => p.owner_id && !p.reserved).map((p) => ({ id: p.id, protectedUntil: p.protection_ended ? 0 : (p.colonized_at || w.now) + COLONY_PROTECTION })),
     outgoing: w.attacks.filter((m) => m.attacker_id === uid && m.status !== "returned").map((m) => ({ id: m.id, from: m.from, to: m.to, fleet: m.status === "outbound" ? m.fleet : m.survivors, status: m.status, awaitingUnload: !!m.awaitingUnload, cargo: { ...m.cargo || zero() }, arrival: m.arrival_at, returnAt: m.return_at })),
     incoming: w.attacks.filter((m) => m.defender_id === uid && m.status === "outbound" && m.warning_at <= w.now).map((m) => ({ id: m.id, to: m.to, commander: w.saves.find((r) => r.user_id === m.attacker_id)?.state.name || "Commander", arrival: m.arrival_at })),

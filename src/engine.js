@@ -119,8 +119,11 @@ function routeArrival(s,m){
   resumeRoute(s,m);
  }else{stopCargo(s,m,m.stops[m.index]);report(s,'Handelsstopp',`${m.name}: ${getPlanet(s,m.to).name} · Runde ${m.rounds+1}.`);leaveRoute(s,m,(m.index+1)%m.stops.length);}
 }
-export function advance(s,now){
- if(!Number.isFinite(now))throw Error('Ungültige Zeit.');now=Math.max(now,s.time);
+export function advance(s,now,collectDebris){
+ if(!Number.isFinite(now))throw Error('Ungültige Zeit.');
+ // Browser prediction waits for the authoritative shared-field arrival.
+ if(!collectDebris)now=Math.min(now,...s.missions.filter(m=>m.type==='salvage'&&m.phase==='outbound').map(m=>m.due-1));
+ now=Math.max(now,s.time);
  waitingCargo(s);let guard=0;
  while(true){
   forecastShipJobs(s);
@@ -133,6 +136,7 @@ export function advance(s,now){
   for(const m of [...s.missions].sort((a,b)=>a.id-b.id))if(!m.paused&&!m.awaitingUnload&&m.due<=s.time){
    if(m.type==='route'){routeArrival(s,m);}
    else if(m.type==='station'){parkFleet(s,m,m.to,'Flotte stationiert');}
+   else if(m.type==='salvage'&&m.phase==='outbound'){if(!collectDebris)throw Error('Trümmerbergung benötigt den Spielserver.');collectDebris(s,m);m.phase='return';m.due=s.time+m.duration;report(s,'Trümmer geborgen',`${getPlanet(s,m.to).name}: ${Math.floor(m.cargo.metal)} Metall und ${Math.floor(m.cargo.crystal)} Kristall auf dem Rückweg.`);}
    else if(m.type==='collect'&&m.phase==='outbound'){loadCargo(s,getPlanet(s,m.to),m.cargo,m.order,m.count,m.ship,m.fleet);m.phase='return';m.due=s.time+m.duration;report(s,'Material abgeholt',`${getPlanet(s,m.to).name}: Ladung auf dem Rückweg.`);}
    else if(m.phase==='return'){parkFleet(s,m,m.from,'Flotte zurückgekehrt');}
    else if(m.type==='probe'){if(!s.discovered.includes(m.to))s.discovered.push(m.to);const t=TARGETS.find(t=>t.id===m.to);report(s,'Sondenbericht',`${t.name} [${t.coord}] · ${t.kind}. Metall ×${t.mult[0]}, Kristall ×${t.mult[1]}, Treibstoff ×${t.mult[2]}. Energiebedarf ×${t.energy}.`);m.phase='return';m.due=s.time+m.duration;}
@@ -173,7 +177,7 @@ export function act(s,action,now=Date.now()){
  else{if(!m.paused)throw Error('Route ist nicht pausiert.');resumeRoute(n,m);report(n,'Route fortgesetzt',m.name);}
  }
  else if(action.type==='stop-route'){const m=n.missions.find(m=>m.id===action.id&&m.type==='route');if(!m)throw Error('Route nicht gefunden.');if(m.paused)parkFleet(n,m,m.home,'Handelsroute beendet');else{m.stopping=true;report(n,'Route endet nach dieser Runde',m.name);}}
- else if(['station','collect','route','deliver'].includes(action.type)){
+ else if(['station','collect','salvage','route','deliver'].includes(action.type)){
   if(n.missions.length>=100)throw Error('Zu viele Flotten unterwegs.');
   if(!action.fleet&&action.type!=='route'&&action.type!=='station'&&!isFreighter(action.ship||'transport'))throw Error('Liefern, Abholen und Handelsrouten benötigen Transporter.');
   const manifest=action.type==='route'?checkedFleet(action.fleet||{[action.ship||'transport']:action.count}):action.fleet?missionFleet(action.fleet,action.type==='station'):null;const ship=manifest?Object.keys(manifest)[0]:action.ship||'transport',count=manifest?manifest[ship]:action.count;
@@ -191,7 +195,8 @@ export function act(s,action,now=Date.now()){
    const order=action.order||action.cargo||vector([0,0,0]);if(!validOrder(order))throw Error('Ladung: ganze Mengen oder Maximum wählen.');
    if(!(manifest?Object.keys(manifest).some(isFreighter):isFreighter(ship))&&RES.some(k=>order[k]!==0))throw Error('Material benötigt Transporter.');
    const fuel=f.fuel*(action.type==='station'?1:2);if(p.resources.fuel-(p.reserves?.fuel||0)<fuel)throw Error('Nicht genügend Treibstoff einschließlich Reserve.');pay(p,vector([0,0,fuel]));
-   if(action.type!=='collect'){const exact=RES.reduce((a,k)=>a+(order[k]==='max'?0:order[k]),0);if(exact>(manifest?fleetCapacity(n,manifest):cargoCapacity(n,count,ship))||RES.some(k=>order[k]!=='max'&&order[k]>Math.floor(Math.max(0,p.resources[k]+p.depot[k]-(p.reserves?.[k]||0)))))throw Error('Die gewählte Ladung passt nicht oder lokale Ressourcen fehlen.');loadCargo(n,p,cargo,order,count,ship,manifest);if(action.type==='deliver'&&!RES.some(k=>cargo[k]>0))throw Error('Wähle verfügbare Ladung.');}else {if(!RES.some(k=>order[k]==='max'||order[k]>0))throw Error('Wähle Material zum Abholen.');m.order={...order};}
+   if(action.type==='salvage'){if(!dest.system)throw Error('Trümmer liegen an einer gemeinsamen Galaxiekolonie.');}
+   else if(action.type!=='collect'){const exact=RES.reduce((a,k)=>a+(order[k]==='max'?0:order[k]),0);if(exact>(manifest?fleetCapacity(n,manifest):cargoCapacity(n,count,ship))||RES.some(k=>order[k]!=='max'&&order[k]>Math.floor(Math.max(0,p.resources[k]+p.depot[k]-(p.reserves?.[k]||0)))))throw Error('Die gewählte Ladung passt nicht oder lokale Ressourcen fehlen.');loadCargo(n,p,cargo,order,count,ship,manifest);if(action.type==='deliver'&&!RES.some(k=>cargo[k]>0))throw Error('Wähle verfügbare Ladung.');}else {if(!RES.some(k=>order[k]==='max'||order[k]>0))throw Error('Wähle Material zum Abholen.');m.order={...order};}
    Object.assign(m,{to:dest.id,duration:f.ms,due:n.time+f.ms});
   }
   for(const [k,v] of Object.entries(fleetManifest(m)))p.ships[k]-=v;m.hulls=takeHulls(p,fleetManifest(m));n.missions.push(m);

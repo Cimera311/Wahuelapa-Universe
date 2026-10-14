@@ -85,10 +85,18 @@ function returnAttack(w,m,time){
 function settleRaidCargo(w,time){for(const m of w.attacks)if(m.awaitingUnload&&m.status==='returning')returnAttack(w,m,time);}
 // Every externally shared event is processed in time order, with the existing engine
 // advancing research, construction and local fleets up to that exact cutoff first.
+function collectWorldDebris(w,uid,s,m){
+ const target=w.planets.find(p=>p.id===m.to);
+ // Ownership is checked again at arrival; an unavailable field sends the fleet home empty.
+ if(!target||target.owner_id!==uid||target.reserved)return;
+ target.debris??=zero();let room=fleetCapacity(s,m.fleet||{[m.ship]:m.count});
+ for(const k of RES){const amount=Math.min(room,Math.floor(target.debris[k]||0));m.cargo[k]=amount;target.debris[k]-=amount;room-=amount;}
+}
 export function advanceWorld(w){
  let guard=0;
  while(true){
   const events=socialEvents(w);
+  for(const row of w.saves)for(const m of row.state.missions)if(m.type==='salvage'&&m.phase==='outbound')events.push({time:m.due,id:row.user_id+':'+String(m.id).padStart(12,'0'),kind:'salvage',order:-1});
   for(const m of w.missions)if(!m.completed){
    if(m.kind==='scan'&&!w.surveys.some(q=>q.user_id===m.user_id&&q.planet_id===m.planet_id))events.push({time:m.arrival_at,id:m.id,kind:'survey',mission:m,order:0});
    events.push({time:m.finish_at,id:m.id,kind:'galaxy',mission:m,order:1});
@@ -97,7 +105,7 @@ export function advanceWorld(w){
   events.sort((a,b)=>a.time-b.time||a.order-b.order||a.id.localeCompare(b.id));
   const e=events[0];if(!e||e.time>w.now)break;
   if(++guard>10000)throw Error('Zu viele fällige Ereignisse.');
-  for(const row of w.saves)advance(row.state,e.time);
+  for(const row of w.saves)advance(row.state,e.time,(s,m)=>collectWorldDebris(w,row.user_id,s,m));
   if(e.kind==='survey')survey(w,e.mission);
   if(e.kind==='galaxy')finishGalaxy(w,e.mission,e.time);
   if(e.kind==='battle')resolveAttack(w,e.mission,e.time);
@@ -105,7 +113,7 @@ export function advanceWorld(w){
   if(e.kind==='return')returnAttack(w,e.mission,e.time);
   settleSocialCargo(w,e.time);settleRaidCargo(w,e.time);
  }
- for(const row of w.saves)advance(row.state,w.now);
+ for(const row of w.saves)advance(row.state,w.now,(s,m)=>collectWorldDebris(w,row.user_id,s,m));
  settleSocialCargo(w,w.now);settleRaidCargo(w,w.now);
  return w;
 }
@@ -156,7 +164,8 @@ export function processWorld(snapshot,uid,request){
  const s=stateOf(w,uid),start=w.starts.find(x=>x.user_id===uid);
  if(start)s.galaxy={x:start.x,y:start.y};
  if(type==='command'){
-  if(!['build','research','ship','probe','colony','transport','reserve','edit-route','cancel-route-edit','stop-route','pause-route','resume-route','cancel-route-pause','station','collect','route','deliver','repair','cancel-ship'].includes(action.type))throw Error('Unbekannte Spielaktion.');
+  if(!['build','research','ship','probe','colony','transport','reserve','edit-route','cancel-route-edit','stop-route','pause-route','resume-route','cancel-route-pause','station','collect','salvage','route','deliver','repair','cancel-ship'].includes(action.type))throw Error('Unbekannte Spielaktion.');
+  if(action.type==='salvage'){const target=w.planets.find(p=>p.id===action.to);if(!target||target.owner_id!==uid||target.reserved)throw Error('Wähle eine eigene besiedelte Galaxiekolonie mit Trümmern.');if(!RES.some(k=>(target.debris?.[k]||0)>0))throw Error('An diesem Planeten liegen keine Trümmer.');}
   const updated=act(s,action,w.now);w.saves.find(r=>r.user_id===uid).state=updated;
  }else if(type==='social')socialAction(w,uid,action,request.eventId||request.requestId);
  else if(type==='galaxy')launchGalaxy(w,uid,action,request.eventId||request.requestId);
@@ -169,7 +178,8 @@ export function processWorld(snapshot,uid,request){
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{shipQueue:true,partnerOrigins:true,cargoRetention:true,attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,orbitalProduction:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{debrisSalvage:true,shipQueue:true,partnerOrigins:true,cargoRetention:true,attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,orbitalProduction:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ debris:w.planets.filter(p=>p.owner_id===uid&&!p.reserved).map(p=>({planet:p.id,...p.debris||zero()})),
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,awaitingUnload:!!m.awaitingUnload,cargo:{...m.cargo||zero()},arrival:m.arrival_at,returnAt:m.return_at})),
  incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),
