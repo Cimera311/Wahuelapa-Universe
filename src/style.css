@@ -374,3 +374,34 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 @media(max-width:600px){.notice-count{min-width:16px;height:16px;font-size:9px;padding:0 3px}}
 .fleet-stock-entry{border-bottom:1px solid #244352;padding-bottom:12px;margin-bottom:12px}.fleet-stock-entry .fleet-stock-row{border-bottom:0;padding-bottom:8px}.orbit-condition{font-size:13px;margin:0 0 4px;line-height:1.5}.orbit-condition p{margin:3px 0 8px}.healthy{color:#8be2a7}.hull-label,.hull-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}.hull-bar,.repair-progress{height:8px;background:#173140;border:1px solid #315261;border-radius:20px;overflow:hidden;margin:7px 0 10px}.hull-bar i,.repair-progress i{display:block;height:100%;background:linear-gradient(90deg,#4dcc92,#d7c45b);border-radius:20px}.hull-actions small{color:#9dbacb}.hull-actions button{background:transparent;border:1px solid #35bcd2;box-shadow:none;color:#8feef5;padding:7px 10px;font-size:12px;min-height:38px}.repair-heading{display:flex;justify-content:space-between;align-items:center;gap:20px}.repair-heading>.action-art{width:84px;height:84px}.repair-price{display:flex;gap:16px;flex-wrap:wrap;padding:16px 0}.repair-price>span{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.repair-price .resource-art{width:24px;height:24px}.repair-planner label{display:block;margin:14px 0}.repair-planner select{width:100%;margin-top:8px}.repair-amount{display:flex;gap:8px;align-items:center;margin-top:8px}.repair-amount input{min-width:0;width:100%;text-align:center}.repair-amount button{min-width:42px;padding:10px}.repair-note{padding:12px;border:1px solid #2e5366;border-radius:8px;font-size:13px;color:#b3cad8}.repair-planner button[type=submit]{width:100%;margin-top:10px}.repair-job{padding:18px 0;border-top:1px solid #294553}.repair-job-title{display:flex;gap:12px;align-items:center}.repair-job-title .unit-art{width:54px;height:54px}.repair-job-title small{display:block;margin-top:5px;color:#a6c0d0}.repair-progress i{background:linear-gradient(90deg,#33d2e8,#129ab9)}.repair-job details{margin-top:14px}.repair-job summary{cursor:pointer;color:#a9c2d1;font-size:13px}.repair-cancel{background:#263341;color:#e4c4bf;box-shadow:none;border:1px solid #624443}.hangar-damage{margin-top:18px;padding-top:12px;border-top:1px solid #294553}.fleet-nav-sections{flex-wrap:wrap}.fleet-nav-sections button{flex:1 1 95px}.repair-planner input:focus-visible{outline:2px solid #75e4ec;outline-offset:2px}
 @media(max-width:600px){.fleet-nav-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.fleet-navigation[data-active-group=pvp] .fleet-nav-sections,.fleet-navigation[data-active-group=trade] .fleet-nav-sections{grid-template-columns:repeat(3,minmax(0,1fr))}.hull-actions{align-items:flex-start;flex-wrap:wrap}.repair-price{gap:10px;font-size:13px}.repair-heading h1{font-size:26px}.repair-heading>.action-art{width:64px;height:64px}.repair-amount{gap:6px}.orbit-condition{font-size:12px}}
+
+
+/* One-level building demolition: distinct action and safe confirmation on mobile. */
+.build-actions{display:flex;flex-direction:column;gap:9px;align-self:center;min-width:160px}
+.build-actions button{width:100%}
+.build-actions .demolish-open{background:transparent;border:1px solid #805c55;color:#f0b9a8;box-shadow:none;font-size:12px}
+.build-actions .demolish-open:hover:not(:disabled){border-color:#e9a17f;background:#4b2c2a}
+.build-actions .demolish-open:disabled{opacity:.38;cursor:not-allowed}
+.demolition-dialog{width:min(470px,calc(100vw - 24px));max-height:calc(100dvh - 28px);overflow-y:auto;border:1px solid #6c6662;border-radius:16px;background:#102432;color:#e7f3fa;padding:26px;box-shadow:0 22px 90px #000a}
+.demolition-dialog::backdrop{background:#020b13d9;backdrop-filter:blur(5px)}
+.demolition-dialog h2{font-size:26px;line-height:1.2;margin:12px 0}
+.demolition-subtitle{color:#b8cbd8}
+.demolition-level{display:flex;align-items:center;justify-content:center;gap:32px;padding:16px;border-radius:12px;background:#182f3c;font-size:30px;font-weight:800}
+.demolition-level span{color:#f4a983}
+.demolition-details{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.demolition-details>div{border:1px solid #385363;border-radius:10px;padding:12px;min-width:0}
+.demolition-details small{display:block;color:#aac3d0;margin-bottom:10px}
+.demolition-details strong{display:flex;flex-wrap:wrap;gap:6px;font-size:14px}
+.demolition-details .resource-art{width:20px;height:20px}
+.demolition-warning{padding:12px 14px;border:1px solid #a8753c;border-radius:10px;background:#362919;color:#ffdbaa;font-size:13px;line-height:1.5}
+.demolition-buttons{display:flex;gap:10px;margin-top:20px}
+.demolition-buttons button{flex:1;min-height:46px}
+.demolition-buttons [data-demolition-cancel]{background:transparent;box-shadow:none;border:1px solid #628292;color:#dceef7}
+.demolition-buttons .danger{background:#914737;color:#fff;border:1px solid #c67655}
+@media(max-width:660px){
+ .build-actions{width:100%;min-width:0}
+ .demolition-dialog{padding:18px}
+ .demolition-dialog h2{font-size:22px}
+ .demolition-details{grid-template-columns:1fr}
+ .demolition-buttons{flex-direction:column-reverse}
+}
