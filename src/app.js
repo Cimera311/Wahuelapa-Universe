@@ -404,10 +404,10 @@ document.addEventListener('click',async e=>{
  document.querySelector('dialog')?.remove();
  const account=cloud.user.id,d=document.createElement('dialog');d.className='combat-log-dialog';d.innerHTML='<form method="dialog"><button class="close plain" aria-label="Schließen">×</button></form><div class="battle-log-content">Kampfprotokoll wird geladen …</div>';document.body.append(d);d.showModal();
  let header=null,request=0;const completeRounds=new Map();
- async function show(round=0,offset=0){
+ async function show(round=-2,offset=0){
   const seq=++request,container=d.querySelector('.battle-log-content');container.setAttribute('aria-busy','true');
   try{header??=await cloud.battleLog(b.dataset.mission);let page=null;
-   if(round>0){
+   if(round>=0){
     if(!completeRounds.has(round))completeRounds.set(round,await loadBattleRound((...args)=>cloud.battleLog(...args),b.dataset.mission,round));
     const full=completeRounds.get(round);page={...full,shots:full.shots.slice(offset,offset+200),impacts:full.impacts.slice(offset,offset+200),summaryHTML:roundSummaryView(header,full)};
    }
