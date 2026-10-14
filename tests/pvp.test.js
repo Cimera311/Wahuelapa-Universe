@@ -161,7 +161,7 @@ test('Home planner matches server flight estimate and distinguishes loading, mis
 });
 
 test('New attacks pin v2, legacy launches stay v1, and full traces never enter sync projections',()=>{
- const launched=processWorld(fixture(),A,attack());assert.equal(launched.attacks[0].ruleVersion,2);
+ const launched=processWorld(fixture(),A,attack());assert.equal(launched.attacks[0].ruleVersion,3);
  const resolved=processWorld({...structuredClone(launched),now:launched.attacks[0].arrival_at},B,{type:'sync'});assert.ok(resolved.attacks[0].report.trace);assert.equal(projectPvP(resolved,B).reports[0].trace,undefined);assert.equal(projectPvP(resolved,B).reports[0].traceAvailable,true);
  const legacy=structuredClone(launched);delete legacy.attacks[0].ruleVersion;legacy.now=legacy.attacks[0].arrival_at;const old=processWorld(legacy,B,{type:'sync'});assert.equal(old.attacks[0].report.ruleVersion,1);assert.equal(old.attacks[0].report.trace,undefined);
 });
