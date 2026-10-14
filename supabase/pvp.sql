@@ -91,7 +91,13 @@ begin
   update public.galaxy_planets set owner_id=(r->>'owner_id')::uuid,reserved=(r->>'reserved')::boolean,
    colonized_at=case when r->>'colonized_at' is null then null else to_timestamp((r->>'colonized_at')::numeric/1000) end,
    protection_ended=coalesce((r->>'protection_ended')::boolean,false),debris=coalesce(r->'debris','{"metal":0,"crystal":0,"fuel":0}'::jsonb)
-   where id=r->>'id';
+   where id=r->>'id'
+   and (owner_id,reserved,colonized_at,protection_ended,debris) is distinct from (
+    (r->>'owner_id')::uuid,(r->>'reserved')::boolean,
+    case when r->>'colonized_at' is null then null else to_timestamp((r->>'colonized_at')::numeric/1000) end,
+    coalesce((r->>'protection_ended')::boolean,false),
+    coalesce(r->'debris','{"metal":0,"crystal":0,"fuel":0}'::jsonb)
+   );
  end loop;
  for r in select value from jsonb_array_elements(p_world->'surveys') loop
   insert into public.galaxy_surveys(user_id,planet_id) values((r->>'user_id')::uuid,r->>'planet_id') on conflict do nothing;
@@ -100,13 +106,15 @@ begin
   insert into public.galaxy_missions(id,user_id,kind,from_id,planet_id,started_at,arrival_at,finish_at,completed)
   values((r->>'id')::uuid,(r->>'user_id')::uuid,r->>'kind',r->>'from_id',r->>'planet_id',
    to_timestamp((r->>'started_at')::numeric/1000),to_timestamp((r->>'arrival_at')::numeric/1000),to_timestamp((r->>'finish_at')::numeric/1000),(r->>'completed')::boolean)
-  on conflict(id) do update set completed=excluded.completed;
+  on conflict(id) do update set completed=excluded.completed
+   where public.galaxy_missions.completed is distinct from excluded.completed;
  end loop;
  for r in select value from jsonb_array_elements(p_world->'attacks') loop
   insert into public.pvp_attacks(id,attacker_id,defender_id,started_at,warning_at,arrival_at,return_at,status,data)
   values((r->>'id')::uuid,(r->>'attacker_id')::uuid,(r->>'defender_id')::uuid,to_timestamp((r->>'started_at')::numeric/1000),
    to_timestamp((r->>'warning_at')::numeric/1000),to_timestamp((r->>'arrival_at')::numeric/1000),to_timestamp((r->>'return_at')::numeric/1000),r->>'status',r)
-  on conflict(id) do update set status=excluded.status,data=excluded.data;
+  on conflict(id) do update set status=excluded.status,data=excluded.data
+   where (public.pvp_attacks.status,public.pvp_attacks.data) is distinct from (excluded.status,excluded.data);
  end loop;
  if (p_world->'settings'->>'enabled')::boolean is distinct from ctl.enabled then
   insert into public.pvp_switch_log(user_id,enabled) values(p_uid,(p_world->'settings'->>'enabled')::boolean);

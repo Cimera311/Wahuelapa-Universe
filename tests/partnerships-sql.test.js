@@ -12,11 +12,26 @@ test('Partnership database persistence, atomic delivery, private reports and fle
  for(const f of ['setup.sql','leaderboard.sql','ship-tiers.sql','galaxy.sql','player-systems.sql','mixed-routes.sql','public-colonies.sql','pvp.sql','reports.sql','combat-logs.sql','combat-log-pagination.sql','partnerships.sql'])await db.exec(readFileSync('supabase/'+f,'utf8'));
  // The upgrade can safely be installed repeatedly without resetting relationships.
  await db.exec(readFileSync('supabase/partnerships.sql','utf8'));
+ // Apply the production patch twice: function replacements must be idempotent.
+ for(let i=0;i<2;i++)await db.exec(readFileSync('supabase/pvp-sync-performance.sql','utf8'));
  const seed=fixture();for(const row of seed.saves){await db.query('insert into auth.users values($1)',[row.user_id]);await db.query('insert into public.game_saves(user_id,state) values($1,$2)',[row.user_id,JSON.stringify(row.state)]);const p=seed.planets.find(p=>p.owner_id===row.user_id);await db.query('update public.galaxy_planets set owner_id=$1,reserved=false,colonized_at=to_timestamp($2) where id=$3',[row.user_id,(T-86400000)/1000,p.id]);}
  let now=T;
  const rpc={async rpc(name,p){try{const r=name==='imperium_pvp_snapshot'?await db.query('select public.imperium_pvp_snapshot($1,$2) as data',[p.p_uid,p.p_request_id]):await db.query('select public.imperium_pvp_commit($1,$2,$3,$4,$5) as data',[JSON.stringify(p.p_world),p.p_expected,p.p_uid,p.p_request_id,JSON.stringify(p.p_payload)]);if(name==='imperium_pvp_snapshot')r.rows[0].data.now=now;return {data:r.rows[0].data};}catch(e){return {error:{message:e.message}};}},from(){return {select(){return {eq(_,id){return {async maybeSingle(){return {data:(await db.query('select state,revision from public.game_saves where user_id=$1',[id])).rows[0]};}};}};}};}};
  let seq=0;const call=(uid,action)=>runServerCommand(rpc,uid,{type:'social',requestId:'30000000-0000-0000-0000-'+String(++seq).padStart(12,'0'),action});
  const invite=await call(A,{op:'invite',friend:B,delivery:true,defense:true});let partner=invite.pvp.social.partners[0];await call(B,{op:'accept',id:partner.id,delivery:true,defense:true});assert.equal((await runServerCommand(rpc,A,{type:'sync'})).pvp.social.partners[0].status,'accepted');
+ await t.test('Unchanged global world rows are not rewritten on an idle sync',async()=>{
+  await runServerCommand(rpc,A,{type:'sync'}); // First pass normalizes any legacy timestamps.
+  const versions=async()=>(await db.query(`
+   select 'planet:'||id as row_id,xmin::text as version from public.galaxy_planets
+   union all select 'partner' as row_id,xmin::text as version from public.partner_world
+   union all select 'attack:'||id::text as row_id,xmin::text as version from public.pvp_attacks
+   order by row_id`)).rows;
+  const before=await versions(),epoch=(await db.query('select epoch from public.pvp_control')).rows[0].epoch;
+  await runServerCommand(rpc,A,{type:'sync'});
+  assert.deepEqual(await versions(),before,'unchanged planet, attack and partner records must not receive UPDATE');
+  const next=(await db.query('select epoch from public.pvp_control')).rows[0].epoch;
+  assert.equal(Number(next),Number(epoch)+1,'optimistic epoch must still advance on successful sync');
+ });
  await t.test('Unauthenticated and authenticated clients cannot read private social state or call trusted wrappers',async()=>{
   await db.exec('set role authenticated');for(const q of ['select * from public.partner_world','select public.imperium_pvp_snapshot(null,null)','select public.imperium_pvp_snapshot_base(null,null)'])await assert.rejects(db.query(q),/permission denied/);await db.exec('reset role');
  });
