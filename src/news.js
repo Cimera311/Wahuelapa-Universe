@@ -1,4 +1,15 @@
 export const GAME_NEWS=[
+ {date:'14.10.2026',title:'🛠️ Überlebt heißt nicht unbeschädigt – das Reparaturdock ist da!',status:'🚀 Reparatur-Update #66',items:[
+ '🔍 Deine Titanen sind vom Kampf zurück, aber ihre Hülle hat ordentlich gelitten? Das erkennst du jetzt direkt im Hangar! Pro Schiffstyp und Planet siehst du intakte und beschädigte Einheiten, die gesamte verbleibende Hülle und den durchschnittlichen Hüllenzustand der beschädigten Einheiten.',
+ '🏗️ Neues Gebäude: Reparaturdock! Baubar mit Schiffswerft Stufe 2 und Bautechnik Stufe 1. Über Hangar → Reparaturdock oder direkt bei deinen beschädigten Schiffen planst du die Reparatur.',
+ '💰 Kosten und Dauer siehst du vor dem Start. Reparaturen kosten 30 % der Metall- und Kristall-Baukosten, anteilig zum Schaden. Ein Titan mit 50 % Hülle kostet damit 1.425 Metall und 975 Kristall.',
+ '⏳ Reparieren braucht jetzt Zeit. Bei Dockstufe 1 und voller Energie dauert die Reparatur eines Titanen mit 50 % Hülle drei Minuten. Die am schwersten beschädigten Einheiten werden zuerst repariert.',
+ '⚙️ Das Dock arbeitet unabhängig vom Schiffbau und besitzt eine eigene Warteschlange. Fertige Einheiten werden einzeln wieder freigegeben. Jede weitere Dockstufe verkürzt neue Reparaturen um 8 %; Strommangel bremst die Arbeit.',
+ '⚠️ Das Dock ist kein Schutzbunker! Schiffe im Dock können keine Flüge starten, bleiben aber angreifbar und verteidigen mit ihrer aktuellen Hülle. Zusätzlicher Kampfschaden kann weiteres Reparaturmaterial erfordern.',
+ '🏆 Schiffe im Dock zählen weiterhin in der Rangliste. Zerstörte Einheiten werden auch aus dem Reparaturauftrag entfernt.',
+ '↩️ Aufträge lassen sich abbrechen. Ungenutztes Material wird erstattet, bereits reparierte Hülle bleibt erhalten.',
+ '🚀 Die Kampfwerte bleiben unverändert. Bevor ihr die nächste Flotte losschickt: lieber einmal unter die Motorhaube schauen!'
+ ]},
  {date:'14.10.2026',title:'🛡️💥 ORBITALE VERTEIDIGUNG SCHLÄGT ZUERST ZU!',status:'🛡️ Kampf-Update #62',items:[
  '🚀 Kampfsystem v3 – Runde 0 ist da! Stationäre Orbitalplattformen eröffnen ab sofort das Feuer, bevor die eigentliche Raumschlacht beginnt! 🔥',
  '🛰️ Runde 0: Verteidigende Orbitalplattformen feuern ihren ersten Angriff ab – die angreifende Flotte kann in dieser Runde noch nicht zurückschießen!',
