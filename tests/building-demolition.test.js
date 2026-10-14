@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,act,advance,buildInfo,buildingLevelCost,demolishInfo,stats,capacity} from '../src/engine.js';
 import {validateSave,parseSave} from '../src/storage.js';
 import {RES,vector} from '../src/config.js';
+import {readFileSync} from 'node:fs';
 import {processWorld,projectPvP} from '../src/server-world.js';
 import {ui,tick} from './helpers/game-ui.js';
 
@@ -151,4 +152,16 @@ test('Older game-command blocks demolition buttons until server advertises the f
  const action=doc.querySelector('[data-action="demolish-open"][data-key="solar"]');
  assert.equal(action.disabled,true);
  assert.match(doc.body.textContent,/Rückbau benötigt die neue Serverversion/);
+});
+
+test('Archived dashboard game-command handles demolition exactly like server sources',async()=>{
+ const content=readFileSync('supabase/dashboard/game-command.ts','utf8').replace(/^import .*?;$/gm,'');
+ const module=await import('data:text/javascript;base64,'+Buffer.from('const Deno={serve(){}};\n'+content+'\nexport {processWorld,projectPvP};').toString('base64'));
+ const uid='00000000-0000-0000-0000-000000000001',s=resourceFree();
+ const w={now:T,settings:{enabled:false},admins:[],saves:[{user_id:uid,revision:1,state:s}],starts:[],planets:[],missions:[],attacks:[],surveys:[]};
+ const request={type:'command',action:{type:'demolish',key:'solar',planet:'home'}};
+ const sourceResult=processWorld(w,uid,request),bundledResult=module.processWorld(w,uid,request);
+ assert.deepEqual(bundledResult,sourceResult);
+ const due=sourceResult.saves[0].state.planets[0].build.end;
+ assert.deepEqual(module.processWorld({...bundledResult,now:due},uid,{type:'sync'}),processWorld({...sourceResult,now:due},uid,{type:'sync'}));
 });
