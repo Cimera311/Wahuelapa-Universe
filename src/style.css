@@ -488,3 +488,17 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
  .compact-building .compact-cost strong{font-size:12px}
  .compact-building .compact-time strong{font-size:10px}
 }
+
+
+/* Small collapse-all shortcut for the orbit fleet inventory. */
+.fleet-stock-tools{display:flex;align-items:center;gap:8px;min-width:0}
+.fleet-stock-tools .fleet-collapse-all{display:inline-flex;align-items:center;justify-content:center;flex:none;width:38px;height:38px;min-width:38px;min-height:38px;padding:7px;border-radius:9px;background:#102b3b;border:1px solid #315d71;color:#9bd9eb;box-shadow:none;cursor:pointer}
+.fleet-stock-tools .fleet-collapse-all svg{display:block;width:19px;height:19px}
+.fleet-stock-tools .fleet-collapse-all:hover{background:#154154;border-color:#3cc8e4;color:#d6f7ff}
+.fleet-stock-tools .fleet-collapse-all:focus-visible{outline:2px solid #8ceeff;outline-offset:3px}
+@media(max-width:600px){
+ .fleet-stock-tools{width:100%}
+ .fleet-stock-tools .fleet-stock-switch{width:auto;flex:1;min-width:0}
+ .fleet-stock-tools .fleet-stock-switch button{min-width:0;flex:1;padding:10px 7px;font-size:12px}
+ .fleet-stock-tools .fleet-collapse-all{width:38px;height:38px}
+}
