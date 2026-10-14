@@ -1,4 +1,15 @@
 export const GAME_NEWS=[
+ {date:'14.10.2026',title:'🛡️💥 ORBITALE VERTEIDIGUNG SCHLÄGT ZUERST ZU!',status:'🛡️ Kampf-Update #62',items:[
+ '🚀 Kampfsystem v3 – Runde 0 ist da! Stationäre Orbitalplattformen eröffnen ab sofort das Feuer, bevor die eigentliche Raumschlacht beginnt! 🔥',
+ '🛰️ Runde 0: Verteidigende Orbitalplattformen feuern ihren ersten Angriff ab – die angreifende Flotte kann in dieser Runde noch nicht zurückschießen!',
+ '⚔️ Runden 1–6: Danach läuft die reguläre Raumschlacht wie gewohnt weiter.',
+ '🌍 Keine Orbitalplattformen? Dann beginnt der Kampf ganz normal mit Runde 1.',
+ '📜 Neue Kampfberichte: Der orbitale Erstschlag wird als eigene Runde angezeigt und lässt sich im Kampfprotokoll nachvollziehen.',
+ '🛠️ Bereits gestartete Kämpfe behalten ihre bisherigen Regeln.',
+ '💀 Angreifer, aufgepasst: Wer einen schwer befestigten Planeten angreift, muss jetzt schon vor dem ersten eigenen Schuss mit Verlusten rechnen!',
+ '🏗️ Verteidiger: Eure Orbitalplattformen sind jetzt eine echte erste Verteidigungslinie.',
+ '🌌 Das Universum wird gefährlicher. Baut eure Verteidigung aus – oder bringt genügend Feuerkraft mit! 😈🚀'
+ ]},
  {date:'13.10.2026',title:'🛡️ Orbitalverteidigung ist zurück! Vier Plattformen, eine eigene Werft 🚀',status:'🛠️ Orbital-Update',items:[
  '🎉 Kommandanten, die Orbitalwerft hat ihre Tore geöffnet! Ab sofort könnt ihr wieder stationäre Verteidigung bauen: 💥 Flakplattform, 🔴 Laserplattform, ⚙️ Railgunplattform und 💜 Plasmaplattform.',
  '🏗️ Eure Orbitalwerft produziert unabhängig von der normalen Schiffswerft. Jede Werftstufe bringt einen Auftragsplatz – bis zu 20 gleichzeitig vorgemerkte Bauaufträge. Auch größere Stückzahlen sind möglich!',
