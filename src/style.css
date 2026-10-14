@@ -367,3 +367,8 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
  .community-dialog--wish .wish-thread{padding:10px}
  .community-dialog--wish .community-compose-footer button{width:100%}
 }
+
+/* Unread status on the four global navigation shortcuts */
+.topbar .commander [data-notice-kind]{position:relative;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.notice-count{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#e74663;color:white;font-size:10px;font-weight:800;line-height:1;box-shadow:0 0 0 2px #0a1b28,0 0 9px #e7466355;font-variant-numeric:tabular-nums}
+@media(max-width:600px){.notice-count{min-width:16px;height:16px;font-size:9px;padding:0 3px}}
