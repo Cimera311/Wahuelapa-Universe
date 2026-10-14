@@ -502,3 +502,38 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
  .fleet-stock-tools .fleet-stock-switch button{min-width:0;flex:1;padding:10px 7px;font-size:12px}
  .fleet-stock-tools .fleet-collapse-all{width:38px;height:38px}
 }
+
+
+/* Tutorial solar system: show the homeworld Aurelia as a fourth real planet.
+   All visuals reuse existing art; the TARGETS list/gameplay stays unchanged. */
+.tutorial-system-banner{height:170px;isolation:isolate}
+.tutorial-system-banner .sun{left:8.5%;top:42%;z-index:2;pointer-events:none}
+.tutorial-system-banner .map-planet{
+ display:block;box-sizing:content-box;z-index:3;transform:translateX(-50%);
+ width:max-content;max-width:18%;min-width:42px;text-align:center;white-space:nowrap;
+ padding:32px 0 0;color:#aee3fd;font-size:12px;line-height:1.2;
+ text-shadow:0 1px 5px #00131ff0;
+}
+.tutorial-system-banner .map-planet::before{
+ left:50%;transform:translateX(-50%);
+ width:25px;height:25px;top:0;
+ background:radial-gradient(circle at 28% 23%,#ccf5ff88 0,transparent 46%),radial-gradient(circle at 35% 35%,var(--planet),#061a2c 80%);
+ box-shadow:0 0 12px #67cff046;
+}
+.tutorial-system-banner .map-home::before{
+ width:29px;height:29px;top:-2px;
+ background:#063153 url('../assets/home.webp') center/contain no-repeat;
+ box-shadow:0 0 10px #3ca6e891,0 0 0 1px #8cd8fa55;
+}
+@media(max-width:600px){
+ .tutorial-system-banner{height:146px}
+ .tutorial-system-banner .sun{left:9%;top:42%;width:77px;height:77px}
+ .tutorial-system-banner .map-planet{font-size:10px;min-width:35px;padding-top:29px}
+ .tutorial-system-banner .map-planet::before{width:21px;height:21px}
+ .tutorial-system-banner .map-home::before{width:25px;height:25px}
+ .tutorial-system-banner .map-home{left:24%!important}
+}
+@media(max-width:380px){
+ .tutorial-system-banner .sun{width:65px;height:65px}
+ .tutorial-system-banner .map-planet{font-size:9px;letter-spacing:-.15px}
+}
