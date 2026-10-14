@@ -8,7 +8,7 @@ create table if not exists public.pvp_battle_logs(
  occurred_at timestamptz not null, header jsonb not null);
 create table if not exists public.pvp_battle_rounds(
  mission_id uuid not null references public.pvp_battle_logs(mission_id) on delete cascade,
- round integer not null check(round between 1 and 6), data jsonb not null, primary key(mission_id,round));
+ round integer not null check(round between 0 and 6), data jsonb not null, primary key(mission_id,round));
 alter table public.pvp_battle_logs enable row level security;
 alter table public.pvp_battle_rounds enable row level security;
 revoke all on public.pvp_battle_logs,public.pvp_battle_rounds from public,anon,authenticated;
@@ -20,7 +20,7 @@ returns trigger language plpgsql security definer set search_path='' as $$
 declare trace jsonb:=new.data->'report'->'trace'; q jsonb; old_header jsonb; h jsonb;
 begin
  if trace is null then return new;end if;
- if (trace->>'version')::integer<>1 or (trace->>'ruleVersion')::integer<>2 or jsonb_typeof(trace->'rounds')<>'array' or jsonb_array_length(trace->'rounds')>6 then raise exception 'INVALID_BATTLE_TRACE';end if;
+ if (trace->>'version')::integer<>1 or (trace->>'ruleVersion')::integer not in (2,3) or jsonb_typeof(trace->'rounds')<>'array' or jsonb_array_length(trace->'rounds')>7 then raise exception 'INVALID_BATTLE_TRACE';end if;
  h=(trace-'rounds')||jsonb_build_object('summary',(new.data->'report')-'trace','from',new.data->>'from','to',new.data->>'to');
  select header into old_header from public.pvp_battle_logs where mission_id=new.id;
  if old_header is not null and old_header is distinct from h then raise exception 'BATTLE_LOG_IMMUTABLE';end if;
@@ -43,7 +43,7 @@ returns jsonb language plpgsql security definer set search_path='' as $$
 declare uid uuid:=auth.uid(); h public.pvp_battle_logs; q jsonb; result jsonb;
 begin
  if uid is null then raise exception 'AUTH_REQUIRED';end if;
- if p_offset<0 or (p_round is not null and p_round not between 1 and 6) then raise exception 'INVALID_PAGE';end if;
+ if p_offset<0 or (p_round is not null and p_round not between 0 and 6) then raise exception 'INVALID_PAGE';end if;
  select * into h from public.pvp_battle_logs where mission_id=p_mission and uid in (attacker_id,defender_id);
  if not found then raise exception 'BATTLE_LOG_NOT_FOUND';end if;
  if p_round is null then
