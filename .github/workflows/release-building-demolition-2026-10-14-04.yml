@@ -24,7 +24,7 @@ jobs:
           node -e "const fs=require('fs');const p='supabase/dashboard/game-command.ts';const b='// @ts-nocheck — Generated dashboard bundle; edit source modules instead.\\n\\n'+fs.readFileSync(p,'utf8');fs.writeFileSync(p,b);for(const name of ['game-command-gesamt.txt','game-command-werft.txt'])fs.writeFileSync('supabase/dashboard/'+name,b)"
       - name: Verify authoritative demolition support
         run: |
-          node --input-type=module -e "import{readFileSync as r}from'node:fs';const s=r('supabase/dashboard/game-command.ts','utf8');for(const x of ['buildingDemolition','demolishInfo','Rückbau abgeschlossen','buildHistory'])if(!s.includes(x))throw Error('Missing demolition support: '+x);"
+          node --input-type=module -e "import{readFileSync as r}from'node:fs';const s=r('supabase/dashboard/game-command.ts','utf8');for(const x of ['buildingDemolition','demolishInfo','buildHistory','demolish'])if(!s.includes(x))throw Error('Missing demolition support: '+x);"
       - name: Archive immutable version 2026-10-14.04
         run: |
           if git diff --quiet -- supabase/dashboard/game-command.ts; then echo "Already bundled"; else node scripts/archive-game-command.mjs 2026-10-14.04 "Gebaeuderueckbau mit Bestaetigung, 20 Prozent Material, 25 Prozent Zeit und historische Bauwerte"; fi
