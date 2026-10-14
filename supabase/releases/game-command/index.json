@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-14.03",
+  "latest": "2026-10-14.04",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -155,6 +155,13 @@
       "sourceCommit": "39b84a2406bec8d47c5509f8faec969c3117d727",
       "description": "Reparaturdock: Hüllenzustand je Standort, zeitbasierte Reparaturen und angreifbare Dockflotten",
       "sha256": "e42bde0f39cea4811ec9f6015b5068ea307c5b8a9bccbc834263a98593acbb05"
+    },
+    {
+      "version": "2026-10-14.04",
+      "createdAt": "2026-10-14T16:59:13.447Z",
+      "sourceCommit": "e73612a484cd47782a2696dd663f3f6ad4d8a5cd",
+      "description": "Gebaeuderueckbau mit Bestaetigung, 20 Prozent Material, 25 Prozent Zeit und historische Bauwerte",
+      "sha256": "f6f425cf688c09e59976c41659ada5d8fe2cb570e11be7e38b66993d04669cd9"
     }
   ]
 }
