@@ -57,7 +57,38 @@ function nextOrbitalOrder(p){p.orbitaljob=(p.orbitalqueue||[]).shift()||null;}
 function produce(s,ms){for(const p of s.planets){settle(p);const z=stats(s,p);produceRepair(p,ms,z.ratio);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);for(const kind of ['ship','orbital'])if(p[kind+'job'])p[kind+'job'].workRemaining=Math.max(0,p[kind+'job'].workRemaining-ms*z.ratio);}}
 function report(s,title,body){s.reports.unshift({id:++s.seq,time:s.time,title,body});s.reports=s.reports.slice(0,60);}
 export function need(s,p,req){if(!req)return '';if(req.tech&&s.tech[req.tech]<req.level)return `Benötigt ${TECHS[req.tech].name} Stufe ${req.level}.`;if(req.building&&p.buildings[req.building]<req.level)return `Benötigt ${BUILDINGS[req.building].name} Stufe ${req.level}.`;return '';}
-export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key];const cost=key==='orbital'&&l>=4?vector(b.cost.map(v=>Math.ceil(v*Math.pow(1.6,3)*Math.pow(1.08,l-3)))):costAt(b,l);return {cost,ms:Math.ceil(b.time*Math.pow(1.35,l)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000),reason:(key==='repairDock'&&s.tech.engineering<1?'Benötigt Bautechnik Stufe 1.':'')||need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=(key==='bunker'?4:30)?'Maximale Gebäudestufe erreicht.':'')};}
+export const DEMOLITION_REFUND=.20;
+export const DEMOLITION_TIME=.25;
+// Level is zero-based: the original cost/time for completed level N uses index N-1.
+export function buildingLevelCost(key,index){
+ const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');
+ return key==='orbital'&&index>=4?vector(b.cost.map(v=>Math.ceil(v*Math.pow(1.6,3)*Math.pow(1.08,index-3)))):costAt(b,index);
+}
+export function buildingLevelTime(s,p,key,index){
+ const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');
+ return Math.ceil(b.time*Math.pow(1.35,index)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000);
+}
+export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key],cost=buildingLevelCost(key,l);return {cost,ms:buildingLevelTime(s,p,key,l),reason:(key==='repairDock'&&s.tech.engineering<1?'Benötigt Bautechnik Stufe 1.':'')||need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=(key==='bunker'?4:30)?'Maximale Gebäudestufe erreicht.':'')};}
+// Paid values are recorded when a new level finishes. Already-built legacy levels
+// fall back to the current level formula because their old prices were never saved.
+export function demolishInfo(s,p,key){
+ if(!Object.hasOwn(BUILDINGS,key))throw Error('Unbekanntes Gebäude.');
+ const level=p.buildings[key]||0;
+ if(level<1)return {reason:'Keine Gebäudestufe vorhanden.'};
+ const target=level-1,historical=p.buildHistory?.[key]?.[level];
+ const originalCost=historical?.cost||buildingLevelCost(key,target);
+ const originalMs=historical?.ms||buildingLevelTime(s,p,key,target);
+ const refund=vector(RES.map(k=>Math.floor(originalCost[k]*DEMOLITION_REFUND)));
+ const ms=Math.max(1,Math.ceil(originalMs*DEMOLITION_TIME));
+ let reason=p.build?'Auf diesem Planeten läuft bereits ein Bauauftrag.':'';
+ if(!reason&&key==='lab'&&target===0&&p.buildings.shipyard>0)reason='Die Schiffswerft benötigt Forschungslabor Stufe 1.';
+ if(!reason&&key==='lab'&&s.research?.planet===p.id&&target<TECHS[s.research.key].lab)reason='Eine laufende Forschung benötigt dieses Labor.';
+ if(!reason&&key==='shipyard'&&target<2&&p.buildings.repairDock>0)reason='Das Reparaturdock benötigt Schiffswerft Stufe 2.';
+ if(!reason&&key==='shipyard'&&[p.shipjob,...p.shipqueue||[]].filter(Boolean).some(j=>target<(SHIPS[j.key]?.shipyard||1)))reason='Laufende Schiffsbauaufträge benötigen diese Werftstufe.';
+ if(!reason&&key==='orbital'&&[p.orbitaljob,...p.orbitalqueue||[]].filter(Boolean).some(j=>target<(SHIPS[j.key]?.shipyard||1)))reason='Laufende Plattformaufträge benötigen diese Orbitalwerftstufe.';
+ if(!reason&&key==='repairDock'&&target===0&&(p.repairQueue||[]).length)reason='Im Reparaturdock befinden sich noch Einheiten.';
+ return {key,level,target,originalCost,originalMs,refund,ms,reason};
+}
 export function researchInfo(s,p,key){const t=TECHS[key];if(!t)throw Error('Unbekannte Forschung.');const l=s.tech[key];return {cost:costAt(t,l),ms:Math.ceil(t.time*Math.pow(1.5,l)*Math.pow(key==='military'?1.5:1,Math.max(0,l-4))/Math.max(1,1+(p.buildings.lab-1)*.15)*1000),reason:(key==='colonization'&&l>=3&&l<t.max?need(s,p,{tech:['ramjet','impulse','hyperspace'][l-3],level:1}):'')||(p.buildings.lab<t.lab?`Benötigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.`:need(s,p,t.requires)||(l>=t.max?'Maximale Forschungsstufe erreicht.':''))};}
 function pay(p,c){settle(p);for(const k of RES)if(!Number.isFinite(c[k])||c[k]<0||p.resources[k]+1e-8<c[k])throw Error('Nicht genügend lokale Ressourcen.');for(const k of RES)p.resources[k]=Math.max(0,p.resources[k]-c[k]);settle(p);}
 export function defenseSlots(p){return Object.entries(SHIPS).reduce((a,[k,sh])=>a+(sh.slots||0)*(p.ships[k]||0),0)+repairOrders(p).reduce((n,j)=>n+(SHIPS[j.key]?.slots||0)*j.entries.length,0)+[...shipOrders(p),...orbitalOrders(p)].reduce((a,j)=>a+(SHIPS[j.key]?.slots||0)*j.count,0);}
@@ -133,7 +164,19 @@ export function advance(s,now,collectDebris){
   produce(s,Math.max(0,next-s.time));s.time=Math.max(s.time,next);
   // Fixed order: research, buildings, shipbuilding, then missions by id.
   if(s.research&&s.research.end<=s.time){const j=s.research;s.tech[j.key]=j.level;s.research=null;report(s,'Forschung abgeschlossen',`${TECHS[j.key].name} erreicht Stufe ${j.level}.`);}
-  for(const p of s.planets){s.seq+=finishRepair(p,(title,body)=>report(s,title,body));if(p.build&&p.build.end<=s.time){const j=p.build;p.buildings[j.key]=j.level;p.build=null;report(s,'Ausbau abgeschlossen',`${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);}if(p.shipjob&&p.shipjob.workRemaining===0){const j=p.shipjob;p.ships[j.key]+=j.count;nextShipOrder(p);report(s,'Schiffbau abgeschlossen',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}if(p.orbitaljob&&p.orbitaljob.workRemaining===0){const j=p.orbitaljob;p.ships[j.key]+=j.count;nextOrbitalOrder(p);report(s,'Orbitalplattform fertiggestellt',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}}
+  for(const p of s.planets){s.seq+=finishRepair(p,(title,body)=>report(s,title,body));if(p.build&&p.build.end<=s.time){
+   const j=p.build;p.buildings[j.key]=j.level;p.build=null;
+   if(j.kind==='demolish'){
+    // A smaller warehouse must not delete goods: overflow is parked in the depot.
+    const cap=capacity(p);for(const k of RES){const excess=Math.max(0,p.resources[k]-cap);p.resources[k]-=excess;p.depot[k]+=excess;}
+    if(p.buildHistory?.[j.key])delete p.buildHistory[j.key][j.level+1];
+    deliver(p,j.refund);
+    report(s,'Rückbau abgeschlossen',`${p.name}: ${BUILDINGS[j.key].name} auf Stufe ${j.level} zurückgebaut. 20 % Material erstattet.`);
+   }else{
+    if(j.paid&&j.originalMs){p.buildHistory??={};p.buildHistory[j.key]??={};p.buildHistory[j.key][j.level]={cost:j.paid,ms:j.originalMs};}
+    report(s,'Ausbau abgeschlossen',`${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);
+   }
+  }if(p.shipjob&&p.shipjob.workRemaining===0){const j=p.shipjob;p.ships[j.key]+=j.count;nextShipOrder(p);report(s,'Schiffbau abgeschlossen',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}if(p.orbitaljob&&p.orbitaljob.workRemaining===0){const j=p.orbitaljob;p.ships[j.key]+=j.count;nextOrbitalOrder(p);report(s,'Orbitalplattform fertiggestellt',`${p.name}: ${j.count} × ${SHIPS[j.key].name}.`);}}
   for(const m of [...s.missions].sort((a,b)=>a.id-b.id))if(!m.paused&&!m.awaitingUnload&&m.due<=s.time){
    if(m.type==='route'){routeArrival(s,m);}
    else if(m.type==='station'){parkFleet(s,m,m.to,'Flotte stationiert');}
@@ -151,7 +194,14 @@ export function advance(s,now,collectDebris){
 export function act(s,action,now=Date.now()){
  // Work on a copy; a rejected command cannot partially mutate the caller.
  const n=structuredClone(s);advance(n,now);const p=getPlanet(n,action.planet||n.active);
- if(action.type==='build'){const info=buildInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(p.build)throw Error('Auf diesem Planeten läuft bereits ein Bauauftrag.');pay(p,info.cost);p.build={key:action.key,level:p.buildings[action.key]+1,start:n.time,end:n.time+info.ms};}
+ if(action.type==='build'){const info=buildInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(p.build)throw Error('Auf diesem Planeten läuft bereits ein Bauauftrag.');pay(p,info.cost);p.build={key:action.key,level:p.buildings[action.key]+1,start:n.time,end:n.time+info.ms,paid:info.cost,originalMs:info.ms};}
+ else if(action.type==='demolish'){
+  const info=demolishInfo(n,p,action.key);
+  if(info.reason)throw Error(info.reason);
+  // Re-evaluate on the authoritative server; the client confirmation is never trusted.
+  if(!Number.isSafeInteger(info.ms)||n.time+info.ms>8.64e15)throw Error('Rückbaudauer ungültig.');
+  p.build={kind:'demolish',key:action.key,level:info.target,start:n.time,end:n.time+info.ms,refund:info.refund,originalMs:info.originalMs};
+ }
  else if(action.type==='research'){const info=researchInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(n.research)throw Error('Es läuft bereits eine imperiumsweite Forschung.');pay(p,info.cost);n.research={key:action.key,level:n.tech[action.key]+1,start:n.time,end:n.time+info.ms,planet:p.id};}
  else if(action.type==='ship'){const count=action.count;if(!Number.isSafeInteger(count)||count<1)throw Error('Wähle eine positive ganze Anzahl Schiffe.');const info=shipInfo(n,p,action.key,count);if(info.reason)throw Error(info.reason);const defense=SHIPS[action.key]?.category==='defense',full=defense?orbitalQueueFullReason(p):shipQueueFullReason(p);if(full)throw Error(full);if(!Number.isSafeInteger(info.ms)||n.time+info.ms>8.64e15||RES.some(k=>!Number.isSafeInteger(info.cost[k])||info.cost[k]>1e12))throw Error('Dieser Bauauftrag ist zu groß.');if(p.defenseSalvage)for(const k of RES)p.defenseSalvage[k]-=info.salvage[k];pay(p,info.cost);const job={id:++n.seq,key:action.key,count,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{resources:{...info.cost},salvage:{...info.salvage}}};if(defense){if(p.orbitaljob){p.orbitalqueue??=[];p.orbitalqueue.push(job);}else p.orbitaljob=job;}else if(p.shipjob){p.shipqueue??=[];p.shipqueue.push(job);}else p.shipjob=job;}
  else if(action.type==='cancel-ship'){
