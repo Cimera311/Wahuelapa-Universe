@@ -58,3 +58,50 @@ test('Waiting freighters show bound ships and remaining cargo without a flight c
  const {doc,api}=ui(t),s=api.state();s.missions.push({id:900,type:'transport',ship:'transport',count:1,from:s.planets[0].id,to:s.planets[1].id,phase:'return',awaitingUnload:s.planets[0].id,cargo:{metal:123,crystal:0,fuel:0},start:s.time-60000,due:s.time,duration:60000});api.show('hangar');doc.querySelector('[data-action="fleet-group-nav"][data-group="hangar"]').click();
  doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();const card=doc.querySelector('.fleet-travel-card');assert.match(card.textContent,/Wartet auf Lagerplatz/);assert.match(card.textContent,/123/);assert.match(card.textContent,/Restladung bleibt an Bord/);assert.equal(card.querySelector('[data-due]'),null);assert.equal(card.querySelector('[role="progressbar"]').hidden,true);
 });
+
+
+test('Mini collapse-all closes all cards without changing fleet or filters and survives rerender',t=>{
+ const {doc,api}=ui(t);
+ api.show('hangar');
+ doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();
+ const cards=()=>[...doc.querySelectorAll('.fleet-overview [data-fleet-detail]')];
+ const btn=doc.querySelector('[data-action="fleet-collapse-all"]');
+ assert.ok(btn,'Mini button is present');
+ assert.equal(btn.getAttribute('aria-label'),'Alle Flottenkarten zuklappen');
+ assert.equal(btn.getAttribute('aria-controls'),'fleet-stock-grid');
+ assert.ok(cards().length>1);
+ assert.ok(cards().some(card=>card.open));
+ const original=JSON.stringify(api.state().planets.map(p=>p.ships));
+ btn.click();
+ assert.ok(cards().every(card=>!card.open));
+ assert.equal(JSON.stringify(api.state().planets.map(p=>p.ships)),original);
+ assert.equal(doc.querySelector('[data-action="fleet-filter"][aria-pressed="true"]').dataset.value,'all');
+ api.render();
+ assert.ok(cards().every(card=>!card.open),'Rerender must keep all cards closed');
+ doc.querySelector('[data-action="fleet-filter"][data-value="military"]').click();
+ assert.ok(cards().every(card=>!card.open),'Filter change must not reopen cards');
+ doc.querySelector('[data-action="fleet-group"][data-value="planet"]').click();
+ assert.ok(cards().every(card=>!card.open),'Switching to planets must keep all cards collapsed');
+ assert.equal(cards().length,2);
+ const chosen=cards()[0];
+ chosen.open=true;
+ api.render();
+ assert.equal(cards()[0].open,true,'Individual cards stay independently expandable');
+ doc.querySelector('[data-action="fleet-collapse-all"]').click();
+ assert.ok(cards().every(card=>!card.open));
+ doc.querySelector('[data-action="fleet-group"][data-value="ship"]').click();
+ assert.ok(cards().every(card=>!card.open),'Another grouping must not restore old expansion choices');
+});
+
+test('Fleet collapse-all does not affect underway missions or unrelated disclosure panels',t=>{
+ const {doc,api}=ui(t);
+ api.show('hangar');
+ doc.querySelector('[data-action="fleet-section"][data-section="overview"]').click();
+ const panel=doc.querySelector('#fleet-pane-overview');
+ const missionCount=panel.querySelectorAll('.fleet-travel-card').length;
+ const open=panel.querySelectorAll('[data-fleet-detail][open]').length;
+ assert.ok(open>0);
+ panel.querySelector('[data-action="fleet-collapse-all"]').click();
+ assert.equal(panel.querySelectorAll('[data-fleet-detail][open]').length,0);
+ assert.equal(panel.querySelectorAll('.fleet-travel-card').length,missionCount);
+});
