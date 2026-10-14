@@ -27,7 +27,7 @@ export function openCommunity(kind,context){
   if(!live()||loading)return;const {cloud,state}=context();
   if(!cloud?.user){form.hidden=true;lastFeedHTML=null;feed.innerHTML='<p class="community-empty">Melde dich an, um den gemeinsamen Chat und die Wünsche zu nutzen.</p>';return;}
   d.querySelector('.community-identity').textContent='Du schreibst als '+(state?.name||'Commander');form.hidden=false;loading=true;
-  try{const data=await cloud.community(kind,{before:older?oldest:null});if(!live())return;admin=data.isAdmin;rows=[...new Map([...rows,...data.items].map(p=>[p.id,p])).values()];if(older||oldest===null){more=data.hasMore;oldest=data.items.length?Math.min(...data.items.map(p=>p.id)):oldest;}error.textContent='';update();controls();}
+  try{const data=await cloud.community(kind,{before:older?oldest:null});if(!live())return;admin=data.isAdmin;rows=[...new Map([...rows,...data.items].map(p=>[p.id,p])).values()];if(older||oldest===null){more=data.hasMore;oldest=data.items.length?Math.min(...data.items.map(p=>p.id)):oldest;}error.textContent='';update();controls();if(!older)document.dispatchEvent(new CustomEvent('community-feed-loaded',{detail:{kind,items:data.items}}));}
   catch(e){if(live()){error.textContent=e.message||'Beiträge konnten nicht geladen werden.';if(!rows.length)feed.innerHTML='<p class="community-empty">Die Community ist gerade nicht erreichbar. Versuche es erneut.</p>';}}
   finally{loading=false;}
  }
