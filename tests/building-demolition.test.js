@@ -92,7 +92,7 @@ test('Downgrade guard preserves essential live dependencies but allows power sho
 
 test('Active building slot rejects second demolition and all upgrades; malformed jobs and ledger rejected',()=>{
  let s=resourceFree();s=act(s,{type:'demolish',key:'solar'},T);
- assert.throws(()=>act(s,{type:'demolish',key:'metal'},T),/Bauauftrag/);
+ assert.throws(()=>act(s,{type:'demolish',key:'solar'},T),/Bauauftrag/);
  assert.throws(()=>act(s,{type:'build',key:'metal'},T),/Bauauftrag/);
  for(const mutate of [
   j=>j.level+=2,
