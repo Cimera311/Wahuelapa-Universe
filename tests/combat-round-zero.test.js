@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {resolveBattle,COMBAT_RULE_VERSION} from '../src/combat.js';
 import {battleLogView} from '../src/combat-ui.js';
 import {roundSummaryView} from '../src/combat-summary.js';
@@ -47,4 +48,12 @@ test('Round zero is shown independently from battle start in both views',()=>{
  const summary=roundSummaryView(trace,trace.rounds[0]);
  assert.match(summary,/Angreifer können in Runde 0 nicht zurückschießen/);
  assert.match(battleLogView({...trace,ownSide:'defender'}, {...trace.rounds[0],shotTotal:trace.rounds[0].shots.length,impactTotal:trace.rounds[0].impacts.length},{round:0}),/Runde 0/);
+});
+
+test('Supabase migration allows round zero while retaining historical combat rules v2',()=>{
+ const sql=readFileSync('supabase/combat-round-zero-v3.sql','utf8');
+ assert.match(sql,/check\(round between 0 and 6\)/);
+ assert.match(sql,/ruleVersion'\)::integer not in \(2,3\)/);
+ assert.match(sql,/jsonb_array_length\(trace->'rounds'\)>7/);
+ assert.match(sql,/p_round not between 0 and 6/);
 });
