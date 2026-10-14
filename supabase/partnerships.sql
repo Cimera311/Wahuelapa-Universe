@@ -25,7 +25,8 @@ returns boolean language plpgsql security definer set search_path='' as $$
 begin
  if not public.imperium_pvp_commit_base(p_world,p_expected,p_uid,p_request_id,p_payload) then return false;end if;
  if p_world->>'socialVersion' is distinct from '1' or jsonb_typeof(p_world->'partners') is distinct from 'array' or jsonb_typeof(p_world->'socialMissions') is distinct from 'array' or jsonb_typeof(p_world->'trades') is distinct from 'array' then raise exception 'INVALID_PARTNER_WORLD';end if;
- update public.partner_world set data=jsonb_build_object('partners',p_world->'partners','socialMissions',p_world->'socialMissions','trades',p_world->'trades') where id;
+ update public.partner_world set data=jsonb_build_object('partners',p_world->'partners','socialMissions',p_world->'socialMissions','trades',p_world->'trades')
+  where id and data is distinct from jsonb_build_object('partners',p_world->'partners','socialMissions',p_world->'socialMissions','trades',p_world->'trades');
  return true;
 end $$;
 revoke all on function public.imperium_pvp_snapshot_base(uuid,uuid),public.imperium_pvp_commit_base(jsonb,bigint,uuid,uuid,jsonb),public.imperium_pvp_snapshot(uuid,uuid),public.imperium_pvp_commit(jsonb,bigint,uuid,uuid,jsonb) from public,anon,authenticated;
