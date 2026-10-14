@@ -1,4 +1,9 @@
 export const GAME_NEWS=[
+ {date:'14.10.2026',title:'🏗️ Gebäude rückbauen! 🔻',status:'🏗️ Gebäuderückbau #69',items:[
+ '🔻 Ab sofort kannst du Gebäudestufen einzeln zurückbauen – mit Bestätigungsfenster, 20 % Material zurück und 25 % der ursprünglichen Bauzeit! 💰⏳',
+ '⚡ Die Auswirkungen auf deine Energieversorgung siehst du vor dem Rückbau.',
+ '🐞 Fällt euch etwas auf? Bitte in der Wünschebox oder im Chat melden! ❤️'
+ ]},
  {date:'14.10.2026',title:'⚙️ Weniger Serverlast, gleiche Raumschlachten! 🚀',status:'🛠️ Performance-Update #68',items:[
  '🚀 Der Serverabgleich wurde optimiert: weniger unnötige Anfragen und Datenbank-Updates.',
  '⚔️ Aktive Angriffe bleiben aktuell. Kampfregeln, Flugzeiten und Beute sind unverändert.',
