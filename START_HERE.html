@@ -580,17 +580,19 @@ function resolveBattleLegacy(attacker,defender,seed){
  return {outcome:ac&&!dc?'attacker':dc&&!ac?'defender':'draw',attacker:aa,defender:dd,debris,defenseRepair,rounds,...combatGroups(defender,d)};
 }
 
-const COMBAT_RULE_VERSION=2;
+const COMBAT_RULE_VERSION=3;
 function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION){
  if(version===1)return resolveBattleLegacy(attacker,defender,seed);
- if(version!==2)throw Error('Unbekannte Kampfregelversion.');
+ if(version!==2&&version!==3)throw Error('Unbekannte Kampfregelversion.');
  const a=combatSide(attacker),d=combatSide(defender),random=rng(String(seed)),rounds=[],logs=[];
  for(const [side,list] of [['A',a],['D',d]]){const counts={};for(const u of list){counts[u.key]=(counts[u.key]||0)+1;u.id=side+'-'+u.key+'-'+String(counts[u.key]).padStart(3,'0');}}
  const snapshot=u=>({...(u.owner?{owner:u.owner,groupId:u.groupId,commander:u.commander}:{}),id:u.id,key:u.key,side:u.id[0]==='A'?'attacker':'defender',category:SHIPS[u.key].category,name:SHIPS[u.key].name,definition:{...COMBAT[u.key],cost:[...SHIPS[u.key].cost]},hp:Math.max(0,u.hp),maxHp:u.maxHp,shield:u.shield,maxShield:u.maxShield??combatStats(u.key,u.id[0]==='A'?attacker.tech:defender.tech).shield,attack:u.attack,shots:u.shots,bonus:{...u.bonus}});
  const initial=[...a,...d].map(snapshot);
  const total=list=>({count:list.filter(u=>u.hp>1e-8).length,hp:list.reduce((n,u)=>n+Math.max(0,u.hp),0),shield:list.filter(u=>u.hp>1e-8).reduce((n,u)=>n+u.shield,0)});
- for(let round=1;round<=6;round++){
+ for(let round=version===3?0:1;round<=6;round++){
   const aa=a.filter(u=>u.hp>1e-8),dd=d.filter(u=>u.hp>1e-8);if(!aa.length||!dd.length)break;
+  const opening=version===3&&round===0,platforms=opening?dd.filter(u=>SHIPS[u.key].category==='defense'):[];
+  if(opening&&!platforms.length)continue;
   const damage=new Map(),shots=[];
   function fire(shooters,targets){
    const military=targets.filter(t=>SHIPS[t.key].category==='military');
@@ -605,7 +607,8 @@ function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION){
     }
    }
   }
-  fire(aa,dd);fire(dd,aa);
+  if(!opening)fire(aa,dd);
+  fire(opening?platforms:dd,aa);
   const impacts=[];
   for(const [u,hit] of damage){
    const hpBefore=u.hp,shieldBefore=u.shield,shieldDamage=Math.min(u.shield,hit),hullDamage=Math.min(Math.max(0,u.hp),hit-shieldDamage);
@@ -620,7 +623,7 @@ function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION){
  const debris=vector([0,0,0]),defenseRepair=vector([0,0,0]);
  for(const u of [...a,...d])if(u.hp<=1e-8){const sh=SHIPS[u.key],out=sh.category==='defense'?defenseRepair:debris,rate=sh.category==='defense'?.7:.3;out.metal+=sh.cost[0]*rate;out.crystal+=sh.cost[1]*rate;}
  for(const k of RES){debris[k]=Math.floor(debris[k]);defenseRepair[k]=Math.floor(defenseRepair[k]);}
- return {outcome,attacker:aa,defender:dd,debris,defenseRepair,rounds,...combatGroups(defender,d),trace:{...(defender.groups?{defenderGroups:structuredClone(defender.groups)}:{}),version:1,ruleVersion:2,seed:String(seed),tech:{attacker:{...attacker.tech},defender:{...defender.tech}},shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},initial,final:[...a,...d].map(snapshot),rounds:logs}};
+ return {outcome,attacker:aa,defender:dd,debris,defenseRepair,rounds,...combatGroups(defender,d),trace:{...(defender.groups?{defenderGroups:structuredClone(defender.groups)}:{}),version:1,ruleVersion:version,seed:String(seed),tech:{attacker:{...attacker.tech},defender:{...defender.tech}},shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},initial,final:[...a,...d].map(snapshot),rounds:logs}};
 }
 
 function loadPlunder(stock,depot,bunker,capacity,debris,victory){
@@ -1103,30 +1106,30 @@ function summarizeRound(header,page){
 function roundSummaryView(header,page){
  const {pairs,outcomes}=summarizeRound(header,page);
  const label=u=>reportEscape(u.name)+' <small>'+side(u.side)+'</small>';
- return '<section class="battle-round-summary"><h3>Runde '+page.round+' · Schlagabtausch</h3><p class="fine">Beide Seiten feuern gleichzeitig. Verluste gelten am Rundenende.</p>'+pairs.map(p=>'<article class="battle-exchange"><strong>'+label(p.shooter)+' → '+label(p.target)+'</strong><p>'+number(p.shots)+' Schüsse · '+number(p.damage)+' berechneter Schaden</p></article>').join('')+'<h4>Was wurde beschädigt oder zerstört?</h4>'+outcomes.map(o=>'<article class="battle-impact-summary"><strong>'+label(o.target)+' · getroffen von '+reportEscape(o.sources.join(' + '))+'</strong><p>'+number(o.shield)+' Schild + '+number(o.hull)+' Hülle beschädigt</p><p class="'+(o.destroyed?'battle-loss':'')+'">'+(o.destroyed?'💥 '+number(o.destroyed)+' zerstört':'Keine Zerstörung')+(o.surviving?' · '+number(o.surviving)+' getroffene Einheiten überleben mit insgesamt '+number(o.hpAfter)+' Hülle':'')+'</p>'+(o.overkill?'<small>'+number(o.overkill)+' Überschaden · nicht auf andere Ziele übertragen</small>':'')+(o.sources.length>1?'<small>Gemeinsames Trefferergebnis; kein einzelner Klasse zugeschriebener Abschuss.</small>':'')+'</article>').join('')+(!pairs.length?'<p>Keine Schüsse in dieser Runde.</p>':'')+'</section>';
+ return '<section class="battle-round-summary"><h3>Runde '+page.round+(page.round===0?' · Orbitaler Erstschlag':' · Schlagabtausch')+'</h3><p class="fine">'+(page.round===0?'Nur Orbitalplattformen feuern. Angreifer können in Runde 0 nicht zurückschießen.':'Beide Seiten feuern gleichzeitig. Verluste gelten am Rundenende.')+'</p>'+pairs.map(p=>'<article class="battle-exchange"><strong>'+label(p.shooter)+' → '+label(p.target)+'</strong><p>'+number(p.shots)+' Schüsse · '+number(p.damage)+' berechneter Schaden</p></article>').join('')+'<h4>Was wurde beschädigt oder zerstört?</h4>'+outcomes.map(o=>'<article class="battle-impact-summary"><strong>'+label(o.target)+' · getroffen von '+reportEscape(o.sources.join(' + '))+'</strong><p>'+number(o.shield)+' Schild + '+number(o.hull)+' Hülle beschädigt</p><p class="'+(o.destroyed?'battle-loss':'')+'">'+(o.destroyed?'💥 '+number(o.destroyed)+' zerstört':'Keine Zerstörung')+(o.surviving?' · '+number(o.surviving)+' getroffene Einheiten überleben mit insgesamt '+number(o.hpAfter)+' Hülle':'')+'</p>'+(o.overkill?'<small>'+number(o.overkill)+' Überschaden · nicht auf andere Ziele übertragen</small>':'')+(o.sources.length>1?'<small>Gemeinsames Trefferergebnis; kein einzelner Klasse zugeschriebener Abschuss.</small>':'')+'</article>').join('')+(!pairs.length?'<p>Keine Schüsse in dieser Runde.</p>':'')+'</section>';
 }
 
 
 const battleNumber=n=>Number(n||0).toLocaleString('de-DE',{maximumFractionDigits:2});
-function battleLogView(header,page=null,{round=0,offset=0}={}){
+function battleLogView(header,page=null,{round=-2,offset=0}={}){
  const units=new Map(header.initial.map(u=>[u.id,u]));
  const label=id=>{const u=units.get(id);return (u?.name||u?.key||'Einheit')+' · '+id+(u?.commander?' · '+u.commander:'');};
  const control=(text,r,o=0,disabled=false)=>'<button data-battle-round="'+r+'" data-battle-offset="'+o+'" '+(disabled?'disabled':'')+' aria-pressed="'+(r===round&&o===offset)+'">'+text+'</button>';
- const nav=control('Start',0)+header.rounds.map(q=>control('Runde '+q.round,q.round)).join('')+control('Ende',-1);
+ const nav=control('Start',-2)+header.rounds.map(q=>control(q.round===0?'Runde 0 · Orbitaler Erstschlag':'Runde '+q.round,q.round)).join('')+control('Ende',-1);
  const reason={bonus:'Passendes Bonusziel',military:'Kriegsschiff hat Vorrang',defense:'Orbitale Verteidigung hat Vorrang',civil:'Keine Kriegsschiffe oder Verteidigungen übrig'};
  const summaries=header.rounds.map(q=>'<tr><th scope="row">'+q.round+'</th><td>'+q.after.attacker.count+'</td><td>'+q.after.defender.count+'</td></tr>').join('');
  const initial={attacker:header.initial.filter(u=>u.side==='attacker').length,defender:header.initial.filter(u=>u.side==='defender').length};
- const after=round===0?Object.fromEntries(Object.entries(initial).map(([side,count])=>[side,{count}])):round===-1?header.rounds.at(-1)?.after||Object.fromEntries(Object.entries(initial).map(([side,count])=>[side,{count}])):page?.after;
+ const after=round===-2?Object.fromEntries(Object.entries(initial).map(([side,count])=>[side,{count}])):round===-1?header.rounds.at(-1)?.after||Object.fromEntries(Object.entries(initial).map(([side,count])=>[side,{count}])):page?.after;
  const board=after?'<div class="battle-board">'+['attacker','defender'].map(side=>'<section><h3>'+(side==='attacker'?'Angreifer':'Verteidiger')+(side===header.ownSide?' · Du':'')+'</h3><p>'+reportEscape(header.participants?.[side]||'Commander')+'</p><strong>'+after[side].count+' / '+initial[side]+' Einheiten</strong><progress max="'+Math.max(1,initial[side])+'" value="'+after[side].count+'" aria-label="Verbleibende '+side+'"></progress>'+(after[side].hp!==undefined?'<small>Hülle insgesamt: '+battleNumber(after[side].hp)+' · Schild: '+battleNumber(after[side].shield)+'</small>':'')+'</section>').join('')+'</div>':'';
  let body='',total=0;
- if(round<=0){const list=round===0?header.initial:header.final;total=list.length;body='<h3>'+(round===0?'Startzustand':'Endzustand')+' jeder Einheit</h3><div class="battle-units">'+list.slice(offset,offset+200).map(u=>'<article><strong>'+reportEscape(label(u.id))+'</strong><small>'+(u.side==='attacker'?'Angreifer':'Verteidiger')+' · '+reportEscape(u.category)+'</small><p>Hülle '+battleNumber(u.hp)+' / '+battleNumber(u.maxHp)+' · Schild '+battleNumber(u.shield)+' / '+battleNumber(u.maxShield)+'</p><progress max="'+u.maxHp+'" value="'+u.hp+'" aria-label="Hülle"></progress><small>Angriff '+battleNumber(u.attack)+' · '+u.shots+' Schuss/Schüsse</small></article>').join('')+'</div>';}
+ if(round<0){const list=round===-2?header.initial:header.final;total=list.length;body='<h3>'+(round===-2?'Startzustand':'Endzustand')+' jeder Einheit</h3><div class="battle-units">'+list.slice(offset,offset+200).map(u=>'<article><strong>'+reportEscape(label(u.id))+'</strong><small>'+(u.side==='attacker'?'Angreifer':'Verteidiger')+' · '+reportEscape(u.category)+'</small><p>Hülle '+battleNumber(u.hp)+' / '+battleNumber(u.maxHp)+' · Schild '+battleNumber(u.shield)+' / '+battleNumber(u.maxShield)+'</p><progress max="'+u.maxHp+'" value="'+u.hp+'" aria-label="Hülle"></progress><small>Angriff '+battleNumber(u.attack)+' · '+u.shots+' Schuss/Schüsse</small></article>').join('')+'</div>';}
  else if(page){
   total=Math.max(page.shotTotal,page.impactTotal);
-  body='<h3>Runde '+round+' · Gleichzeitig verrechneter Schaden</h3><p>Alle zu Rundenbeginn lebenden Einheiten schießen. Die Zeilenreihenfolge ist keine zeitliche Trefferfolge. Überzähliger Schaden wird nicht auf andere Ziele verteilt.</p><div class="battle-units">'+page.impacts.map(hit=>{const u=units.get(hit.target);return '<article class="'+(hit.destroyed?'battle-destroyed':'')+'"><strong>'+reportEscape(label(hit.target))+'</strong><p>'+battleNumber(hit.damage)+' Schaden erhalten</p><small>Schild absorbiert: '+battleNumber(hit.shieldDamage)+' · Hülle verloren: '+battleNumber(hit.hullDamage)+' · Überschaden: '+battleNumber(hit.overkill)+'</small><p>HP '+battleNumber(hit.hpBefore)+' → '+battleNumber(hit.hpAfter)+' · Schild '+battleNumber(hit.shieldBefore)+' → '+battleNumber(hit.shieldAfter)+'</p><progress max="'+(u?.maxHp||1)+'" value="'+hit.hpAfter+'" aria-label="Verbleibende Hülle"></progress>'+(hit.destroyed?'<strong>Zerstört am Rundenende</strong>':'')+'</article>';}).join('')+'</div><h3>Einzelne Schüsse · '+page.shotTotal+' insgesamt</h3><div class="battle-shot-table"><table><thead><tr><th>Schütze → Ziel</th><th>Berechnung</th><th>Zielwahl</th></tr></thead><tbody>'+page.shots.map(s=>'<tr><td>'+reportEscape(label(s.shooter))+'<br>→ '+reportEscape(label(s.target))+'<small>Schuss '+s.shot+'</small></td><td>'+battleNumber(s.base)+' × '+battleNumber(1+s.bonus)+' = <strong>'+battleNumber(s.damage)+'</strong></td><td>'+reportEscape(reason[s.reason]||s.reason)+'</td></tr>').join('')+'</tbody></table></div>';
+  body='<h3>Runde '+round+' · Gleichzeitig verrechneter Schaden</h3><p>'+(round===0?'Nur Orbitalplattformen der Verteidiger eröffnen das Feuer. Angreifer schießen nicht zurück.':'Alle zu Rundenbeginn lebenden Einheiten schießen.')+' Die Zeilenreihenfolge ist keine zeitliche Trefferfolge. Überzähliger Schaden wird nicht auf andere Ziele verteilt.</p><div class="battle-units">'+page.impacts.map(hit=>{const u=units.get(hit.target);return '<article class="'+(hit.destroyed?'battle-destroyed':'')+'"><strong>'+reportEscape(label(hit.target))+'</strong><p>'+battleNumber(hit.damage)+' Schaden erhalten</p><small>Schild absorbiert: '+battleNumber(hit.shieldDamage)+' · Hülle verloren: '+battleNumber(hit.hullDamage)+' · Überschaden: '+battleNumber(hit.overkill)+'</small><p>HP '+battleNumber(hit.hpBefore)+' → '+battleNumber(hit.hpAfter)+' · Schild '+battleNumber(hit.shieldBefore)+' → '+battleNumber(hit.shieldAfter)+'</p><progress max="'+(u?.maxHp||1)+'" value="'+hit.hpAfter+'" aria-label="Verbleibende Hülle"></progress>'+(hit.destroyed?'<strong>Zerstört am Rundenende</strong>':'')+'</article>';}).join('')+'</div><h3>Einzelne Schüsse · '+page.shotTotal+' insgesamt</h3><div class="battle-shot-table"><table><thead><tr><th>Schütze → Ziel</th><th>Berechnung</th><th>Zielwahl</th></tr></thead><tbody>'+page.shots.map(s=>'<tr><td>'+reportEscape(label(s.shooter))+'<br>→ '+reportEscape(label(s.target))+'<small>Schuss '+s.shot+'</small></td><td>'+battleNumber(s.base)+' × '+battleNumber(1+s.bonus)+' = <strong>'+battleNumber(s.damage)+'</strong></td><td>'+reportEscape(reason[s.reason]||s.reason)+'</td></tr>').join('')+'</tbody></table></div>';
  }
- body=(page?.summaryHTML||'')+'<details class="battle-raw-details"><summary>'+(round>0?'Einzelne Treffer und Schüsse anzeigen':'Einzelne Schiffe anzeigen')+'</summary>'+body+'</details>';
+ body=(page?.summaryHTML||'')+'<details class="battle-raw-details"><summary>'+(round>=0?'Einzelne Treffer und Schüsse anzeigen':'Einzelne Schiffe anzeigen')+'</summary>'+body+'</details>';
  const pages=total>200?'<div class="battle-pages">'+control('← Vorherige Seite',round,Math.max(0,offset-200),offset===0)+'<span>Einträge '+(offset+1)+'–'+Math.min(total,offset+200)+' / '+total+'</span>'+control('Nächste Seite →',round,offset+200,offset+200>=total)+'</div>':'';
- return '<h2>Kampfprotokoll · Regelversion '+header.ruleVersion+'</h2><p>'+reportEscape(header.from)+' → '+reportEscape(header.to)+'</p><p>Bonusziele zuerst; danach Kriegsschiffe, Verteidigung und zivile Schiffe. Frachter und zivile Schiffe sind geschützt, solange auf ihrer Seite Kriegsschiffe leben.</p><div class="battle-round-nav">'+nav+'</div>'+board+pages+body+pages+'<details><summary>Forschung und Reproduzierbarkeit</summary><p>Seed: <code>'+reportEscape(header.seed)+'</code></p>'+['attacker','defender'].map(side=>'<p>'+(side==='attacker'?'Angreifer':'Verteidiger')+': Waffen '+(header.tech[side].weapons||0)+' · Schilde '+(header.tech[side].shields||0)+' · Panzerung '+(header.tech[side].armor||0)+' · Schildbereitschaft '+battleNumber(100*header.shieldFactors[side])+' %</p>').join('')+'</details><details><summary>Überlebende je Runde</summary><table><thead><tr><th>Runde</th><th>Angreifer</th><th>Verteidiger</th></tr></thead><tbody>'+summaries+'</tbody></table></details>';
+ return '<h2>Kampfprotokoll · Regelversion '+header.ruleVersion+'</h2><p>'+reportEscape(header.from)+' → '+reportEscape(header.to)+'</p><p>Bonusziele zuerst; danach Kriegsschiffe, Verteidigung und zivile Schiffe. Frachter und zivile Schiffe sind geschützt, solange auf ihrer Seite Kriegsschiffe leben.'+(header.ruleVersion>=3?' In Runde 0 feuern nur Orbitalplattformen der Verteidiger.':'')+'</p><div class="battle-round-nav">'+nav+'</div>'+board+pages+body+pages+'<details><summary>Forschung und Reproduzierbarkeit</summary><p>Seed: <code>'+reportEscape(header.seed)+'</code></p>'+['attacker','defender'].map(side=>'<p>'+(side==='attacker'?'Angreifer':'Verteidiger')+': Waffen '+(header.tech[side].weapons||0)+' · Schilde '+(header.tech[side].shields||0)+' · Panzerung '+(header.tech[side].armor||0)+' · Schildbereitschaft '+battleNumber(100*header.shieldFactors[side])+' %</p>').join('')+'</details><details><summary>Überlebende je Runde</summary><table><thead><tr><th>Runde</th><th>Angreifer</th><th>Verteidiger</th></tr></thead><tbody>'+summaries+'</tbody></table></details>';
 }
 
 
@@ -1842,10 +1845,10 @@ document.addEventListener('click',async e=>{
  document.querySelector('dialog')?.remove();
  const account=cloud.user.id,d=document.createElement('dialog');d.className='combat-log-dialog';d.innerHTML='<form method="dialog"><button class="close plain" aria-label="Schließen">×</button></form><div class="battle-log-content">Kampfprotokoll wird geladen …</div>';document.body.append(d);d.showModal();
  let header=null,request=0;const completeRounds=new Map();
- async function show(round=0,offset=0){
+ async function show(round=-2,offset=0){
   const seq=++request,container=d.querySelector('.battle-log-content');container.setAttribute('aria-busy','true');
   try{header??=await cloud.battleLog(b.dataset.mission);let page=null;
-   if(round>0){
+   if(round>=0){
     if(!completeRounds.has(round))completeRounds.set(round,await loadBattleRound((...args)=>cloud.battleLog(...args),b.dataset.mission,round));
     const full=completeRounds.get(round);page={...full,shots:full.shots.slice(offset,offset+200),impacts:full.impacts.slice(offset,offset+200),summaryHTML:roundSummaryView(header,full)};
    }

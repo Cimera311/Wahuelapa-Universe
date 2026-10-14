@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-14.01",
+  "latest": "2026-10-14.02",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -141,6 +141,13 @@
       "sourceCommit": "87aa9a853377a78270dd4a918d19bf6ea2a2eb6d",
       "description": "Trümmerbergung: Frachter von anderem eigenen Planeten, serverseitige Sammlung bei Ankunft und Rückkehr mit Restladung",
       "sha256": "ca2d75d6e27634c465effa00b0f17edd183bfd5e0fd5e3cbcee6fbf734adf821"
+    },
+    {
+      "version": "2026-10-14.02",
+      "createdAt": "2026-10-14T07:16:20.725Z",
+      "sourceCommit": "2339934d4e38c4dca94e49dba5125f0902d1b8c3",
+      "description": "Kampfregeln v3: Orbitaler Erstschlag in Runde 0, alte v1-v2 Protokolle kompatibel",
+      "sha256": "e7b32426c129830192f4ca3e488ae59374df305a1cc885a501ded6eab3dd6c68"
     }
   ]
 }

@@ -253,10 +253,10 @@ function resolveBattleLegacy(attacker, defender, seed) {
   }
   return { outcome: ac && !dc ? "attacker" : dc && !ac ? "defender" : "draw", attacker: aa, defender: dd, debris, defenseRepair, rounds, ...combatGroups(defender, d) };
 }
-var COMBAT_RULE_VERSION = 2;
+var COMBAT_RULE_VERSION = 3;
 function resolveBattle(attacker, defender, seed, version = COMBAT_RULE_VERSION) {
   if (version === 1) return resolveBattleLegacy(attacker, defender, seed);
-  if (version !== 2) throw Error("Unbekannte Kampfregelversion.");
+  if (version !== 2 && version !== 3) throw Error("Unbekannte Kampfregelversion.");
   const a = combatSide(attacker), d = combatSide(defender), random = rng(String(seed)), rounds = [], logs = [];
   for (const [side, list] of [["A", a], ["D", d]]) {
     const counts = {};
@@ -268,7 +268,7 @@ function resolveBattle(attacker, defender, seed, version = COMBAT_RULE_VERSION) 
   const snapshot = (u) => ({ ...u.owner ? { owner: u.owner, groupId: u.groupId, commander: u.commander } : {}, id: u.id, key: u.key, side: u.id[0] === "A" ? "attacker" : "defender", category: SHIPS[u.key].category, name: SHIPS[u.key].name, definition: { ...COMBAT[u.key], cost: [...SHIPS[u.key].cost] }, hp: Math.max(0, u.hp), maxHp: u.maxHp, shield: u.shield, maxShield: u.maxShield ?? combatStats(u.key, u.id[0] === "A" ? attacker.tech : defender.tech).shield, attack: u.attack, shots: u.shots, bonus: { ...u.bonus } });
   const initial = [...a, ...d].map(snapshot);
   const total = (list) => ({ count: list.filter((u) => u.hp > 1e-8).length, hp: list.reduce((n, u) => n + Math.max(0, u.hp), 0), shield: list.filter((u) => u.hp > 1e-8).reduce((n, u) => n + u.shield, 0) });
-  for (let round = 1; round <= 6; round++) {
+  for (let round = version === 3 ? 0 : 1; round <= 6; round++) {
     let fire = function(shooters, targets) {
       const military = targets.filter((t) => SHIPS[t.key].category === "military");
       const allowed = military.length ? targets.filter((t) => ["military", "defense"].includes(SHIPS[t.key].category)) : targets;
@@ -288,9 +288,11 @@ function resolveBattle(attacker, defender, seed, version = COMBAT_RULE_VERSION) 
     };
     const aa2 = a.filter((u) => u.hp > 1e-8), dd2 = d.filter((u) => u.hp > 1e-8);
     if (!aa2.length || !dd2.length) break;
+    const opening = version === 3 && round === 0, platforms = opening ? dd2.filter((u) => SHIPS[u.key].category === "defense") : [];
+    if (opening && !platforms.length) continue;
     const damage = /* @__PURE__ */ new Map(), shots = [];
-    fire(aa2, dd2);
-    fire(dd2, aa2);
+    if (!opening) fire(aa2, dd2);
+    fire(opening ? platforms : dd2, aa2);
     const impacts = [];
     for (const [u, hit] of damage) {
       const hpBefore = u.hp, shieldBefore = u.shield, shieldDamage = Math.min(u.shield, hit), hullDamage = Math.min(Math.max(0, u.hp), hit - shieldDamage);
@@ -313,7 +315,7 @@ function resolveBattle(attacker, defender, seed, version = COMBAT_RULE_VERSION) 
     debris[k] = Math.floor(debris[k]);
     defenseRepair[k] = Math.floor(defenseRepair[k]);
   }
-  return { outcome, attacker: aa, defender: dd, debris, defenseRepair, rounds, ...combatGroups(defender, d), trace: { ...defender.groups ? { defenderGroups: structuredClone(defender.groups) } : {}, version: 1, ruleVersion: 2, seed: String(seed), tech: { attacker: { ...attacker.tech }, defender: { ...defender.tech } }, shieldFactors: { attacker: attacker.shieldFactor ?? 1, defender: defender.shieldFactor ?? 1 }, initial, final: [...a, ...d].map(snapshot), rounds: logs } };
+  return { outcome, attacker: aa, defender: dd, debris, defenseRepair, rounds, ...combatGroups(defender, d), trace: { ...defender.groups ? { defenderGroups: structuredClone(defender.groups) } : {}, version: 1, ruleVersion: version, seed: String(seed), tech: { attacker: { ...attacker.tech }, defender: { ...defender.tech } }, shieldFactors: { attacker: attacker.shieldFactor ?? 1, defender: defender.shieldFactor ?? 1 }, initial, final: [...a, ...d].map(snapshot), rounds: logs } };
 }
 function loadPlunder(stock, depot, bunker, capacity2, debris, victory) {
   const loot = vector([0, 0, 0]), salvage = vector([0, 0, 0]);
