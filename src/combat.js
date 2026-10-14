@@ -95,7 +95,8 @@ export function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION
     }
    }
   }
-  fire(aa,dd);fire(dd,aa);
+  if(!opening)fire(aa,dd);
+  fire(opening?platforms:dd,aa);
   const impacts=[];
   for(const [u,hit] of damage){
    const hpBefore=u.hp,shieldBefore=u.shield,shieldDamage=Math.min(u.shield,hit),hullDamage=Math.min(Math.max(0,u.hp),hit-shieldDamage);
