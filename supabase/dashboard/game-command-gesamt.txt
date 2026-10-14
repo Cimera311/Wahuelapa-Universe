@@ -14,6 +14,7 @@ var BUILDINGS = {
   lab: { name: "Forschungslabor", icon: "\u2697", cost: [150, 100, 0], time: 12, description: "Schaltet imperiumsweite Forschung frei." },
   shipyard: { name: "Schiffswerft", icon: "\u2692", cost: [200, 100, 0], time: 12, description: "Ab Stufe 2 verk\xFCrzt jede weitere Stufe die Bauzeit neuer Auftr\xE4ge um 8 % gegen\xFCber der vorherigen Stufe. Verbraucht dauerhaft Strom; Strommangel bremst den Schiffbau.", requires: { building: "lab", level: 1 } },
   robotics: { name: "Arbeitsroboter", icon: "\u2699", cost: [400, 300, 60], time: 20, description: "Verk\xFCrzen neue Bauauftr\xE4ge um 8 % je Stufe.", requires: { tech: "engineering", level: 1 } },
+  repairDock: { asset: "./assets/pvp-resource-v1/actions/repair.webp", name: "Reparaturdock", icon: "\u2692", cost: [1200, 800, 300], time: 60, description: "Repariert besch\xE4digte Einheiten im Orbit. Eigene Warteschlange; jede weitere Stufe verk\xFCrzt neue Reparaturen um 8 %. Verbraucht Energie.", requires: { building: "shipyard", level: 2 } },
   orbital: { asset: "./assets/pvp-resource-v1/buildings/orbital.webp", name: "Orbitalwerft", icon: "\u25CE", cost: [600, 400, 120], time: 60, description: "Eigenst\xE4ndige Werft f\xFCr k\xFCnftige Verteidigungsplattformen. Verbraucht dauerhaft Energie. Jede Ausbaustufe wird die Bauzeit verk\xFCrzen und einen zus\xE4tzlichen Auftragsplatz erm\xF6glichen (maximal 20).", requires: { tech: "military", level: 1 } },
   bunker: { asset: "./assets/pvp-resource-v1/buildings/bunker.webp", name: "Ressourcenbunker", icon: "\u25A3", cost: [450, 300, 80], time: 45, description: "Je Stufe sch\xFCtzt er 2,5 % der Lagerkapazit\xE4t, insgesamt maximal 2000 je Rohstoff.", requires: { tech: "military", level: 1 } },
   tidal: { name: "Gezeitenkraftwerk", icon: "\u2248", cost: [700, 450, 80], time: 30, description: "Liefert 180 \xD7 Stufe^Realm-Faktor Energie auf Ozeanwelten.", requires: { tech: "energy", level: 3 }, ocean: true }
@@ -77,6 +78,118 @@ function canFlyInterstellar(s, key) {
 }
 function attackSlots(level) {
   return level >= 10 ? 4 : level >= 5 ? 2 : level >= 1 ? 1 : 0;
+}
+
+// src/repair.js
+var REPAIR_RATE = 0.3;
+function repairOrders(p) {
+  return p.repairQueue || [];
+}
+function repairQuote(p, key, count = 1, ratio = 1) {
+  if (!SHIPS[key]) throw Error("Unbekannte Einheit.");
+  const hulls = [...p.hulls?.[key] || []].sort((a, b) => a - b);
+  if (!Number.isSafeInteger(count) || count < 1 || count > hulls.length) throw Error("W\xE4hle eine g\xFCltige Anzahl besch\xE4digter Einheiten.");
+  const selected = hulls.slice(0, count), damage = selected.reduce((n, h) => n + 1 - h, 0), factor = Math.pow(0.92, Math.max(0, (p.buildings.repairDock || 0) - 1));
+  const work = Math.max(1, SHIPS[key].time * 1e3 * REPAIR_RATE * damage * factor);
+  return { hulls: selected, count, cost: vector(SHIPS[key].cost.map((c, i) => i === 2 ? 0 : Math.ceil(c * REPAIR_RATE * damage))), work, factor, ms: ratio > 0 ? Math.ceil(work / ratio) : null, hull: 1 - damage / count };
+}
+function repairMaterials(j) {
+  return vector(RES.map((k, i) => i === 2 ? 0 : Math.max(0, Math.ceil(j.entries.reduce((n, e) => n + Math.max(0, SHIPS[j.key].cost[i] * REPAIR_RATE * (1 - e.hp) - e.credit[k]), 0) - 1e-7))));
+}
+function repairRefund(j) {
+  return vector(RES.map((k) => Math.floor(j.entries.reduce((n, e) => n + e.credit[k], 0) + 1e-7)));
+}
+function reserveRepair(p, key, quote, id, time) {
+  const remaining = [...p.hulls[key]].sort((a, b) => a - b).slice(quote.count);
+  if (remaining.length) p.hulls[key] = remaining;
+  else delete p.hulls[key];
+  p.ships[key] -= quote.count;
+  const entries = quote.hulls.map((hp) => ({ hp, initialHp: hp, workRemaining: Math.max(1, SHIPS[key].time * 1e3 * REPAIR_RATE * (1 - hp) * quote.factor), credit: vector(SHIPS[key].cost.map((c, i) => i === 2 ? 0 : c * REPAIR_RATE * (1 - hp))) }));
+  for (const k of RES) entries[0].credit[k] += quote.cost[k] - entries.reduce((n, e) => n + e.credit[k], 0);
+  const job = { id, key, start: time, count: quote.count, completed: 0, lost: 0, factor: quote.factor, entries };
+  (p.repairQueue ??= []).push(job);
+  return job;
+}
+function payRepairMaterials(j, cost) {
+  for (const [i, k] of RES.entries()) {
+    if (i === 2) continue;
+    let left = cost[k];
+    for (const e of j.entries) {
+      const need2 = Math.max(0, SHIPS[j.key].cost[i] * REPAIR_RATE * (1 - e.hp) - e.credit[k]), amount = Math.min(need2, left);
+      e.credit[k] += amount;
+      left -= amount;
+    }
+    if (left > 0 && j.entries.length) j.entries[0].credit[k] += left;
+  }
+}
+function releaseRepair(p, j) {
+  p.hulls ??= {};
+  for (const e of j.entries) {
+    p.ships[j.key]++;
+    if (e.hp < 1) (p.hulls[j.key] ??= []).push(e.hp);
+  }
+  p.repairQueue = repairOrders(p).filter((q) => q.id !== j.id);
+}
+function forecastRepair(p, time, ratio) {
+  let wait = 0, blocked = false;
+  for (const j of repairOrders(p)) {
+    j.materials = repairMaterials(j);
+    blocked ||= RES.some((k) => j.materials[k] > 0);
+    j.paused = blocked || ratio === 0;
+    wait += j.entries.reduce((n, e) => n + e.workRemaining, 0);
+    j.end = time + Math.max(1, Math.ceil(wait / (ratio || 1)));
+  }
+  const active = repairOrders(p)[0];
+  return active && !active.paused ? time + Math.max(0, Math.ceil(active.entries[0].workRemaining / ratio)) : Infinity;
+}
+function produceRepair(p, elapsed, ratio) {
+  const j = repairOrders(p)[0];
+  if (!j || j.paused || !j.entries.length) return;
+  const e = j.entries[0], work = Math.min(e.workRemaining, elapsed * ratio), fraction = e.workRemaining ? work / e.workRemaining : 1;
+  e.hp = Math.min(1, e.hp + (1 - e.hp) * fraction);
+  for (const k of RES) e.credit[k] *= 1 - fraction;
+  e.workRemaining = Math.max(0, e.workRemaining - work);
+  if (e.workRemaining < 1e-6) {
+    e.workRemaining = 0;
+    e.hp = 1;
+  }
+}
+function finishRepair(p, notify) {
+  const j = repairOrders(p)[0];
+  if (!j || j.entries[0]?.workRemaining > 1e-6) return 0;
+  let finished = 0;
+  while (j.entries[0]?.workRemaining <= 1e-6) {
+    j.entries.shift();
+    j.completed++;
+    finished++;
+    p.ships[j.key]++;
+  }
+  if (!j.entries.length) {
+    p.repairQueue.shift();
+    notify?.("Reparatur abgeschlossen", `${p.name}: ${j.completed} \xD7 ${SHIPS[j.key].name} wieder einsatzbereit.`);
+  }
+  return finished;
+}
+function repairDefense(p, owner, commander, tech, shieldFactor2) {
+  return repairOrders(p).map((j) => ({ id: "repair:" + j.id, owner, commander: commander + " \xB7 Reparaturdock", fleet: { [j.key]: j.entries.length }, hulls: { [j.key]: j.entries.map((e) => e.hp) }, tech, shieldFactor: shieldFactor2 }));
+}
+function reconcileRepairBattle(p, result) {
+  for (const j of [...repairOrders(p)]) {
+    const finals = result.trace?.final.filter((u) => u.groupId === "repair:" + j.id) || result.defenderGroups?.find((g) => g.id === "repair:" + j.id)?.repairUnits || [];
+    if (finals.length !== j.entries.length) throw Error("Reparaturdock: Kampfzuordnung fehlt.");
+    j.entries = j.entries.flatMap((e, i) => {
+      const u = finals[i];
+      if (u.hp <= 1e-8) {
+        j.lost++;
+        return [];
+      }
+      e.hp = Math.min(1, u.hp / u.maxHp);
+      e.initialHp = e.hp;
+      e.workRemaining = Math.max(1, SHIPS[j.key].time * 1e3 * REPAIR_RATE * (1 - e.hp) * j.factor);
+      return [e];
+    });
+    if (!j.entries.length) p.repairQueue = p.repairQueue.filter((q) => q.id !== j.id);
+  }
 }
 
 // src/realm-config.js
@@ -209,7 +322,7 @@ function combatSide(side) {
   return side.groups.flatMap((g) => units(g.fleet, g.tech, g.hulls, g.shieldFactor).map((u) => ({ ...u, groupId: g.id, owner: g.owner, commander: g.commander, maxShield: combatStats(u.key, g.tech).shield })));
 }
 function combatGroups(side, list) {
-  return side.groups ? { defenderGroups: side.groups.map((g) => ({ id: g.id, owner: g.owner, ...survivors(list.filter((u) => u.groupId === g.id)) })) } : {};
+  return side.groups ? { defenderGroups: side.groups.map((g) => ({ id: g.id, owner: g.owner, ...survivors(list.filter((u) => u.groupId === g.id)), ...g.id?.startsWith("repair:") ? { repairUnits: list.filter((u) => u.groupId === g.id).map((u) => ({ hp: Math.max(0, u.hp), maxHp: u.maxHp })) } : {} })) } : {};
 }
 function survivors(list) {
   const fleet = {}, hulls = {};
@@ -353,7 +466,7 @@ function shipyardTimeFactor(level) {
   return Math.pow(0.92, Math.max(0, level - 1));
 }
 function energyDemand(p) {
-  const consumers = { metal: p.buildings.metal * 15, crystal: p.buildings.crystal * 18, fuel: p.buildings.fuel * 20, shipyard: Math.ceil(10 * Math.pow(p.buildings.shipyard, 1.5)), orbital: Math.ceil(10 * Math.pow(p.buildings.orbital || 0, 1.5)) };
+  const consumers = { metal: p.buildings.metal * 15, crystal: p.buildings.crystal * 18, fuel: p.buildings.fuel * 20, shipyard: Math.ceil(10 * Math.pow(p.buildings.shipyard, 1.5)), orbital: Math.ceil(10 * Math.pow(p.buildings.orbital || 0, 1.5)), repairDock: Math.ceil(10 * Math.pow(p.buildings.repairDock || 0, 1.5)) };
   return Object.fromEntries(Object.entries(consumers).map(([key, value2]) => [key, value2 * p.energy]));
 }
 function stats(s, p) {
@@ -453,6 +566,7 @@ function produce(s, ms2) {
   for (const p of s.planets) {
     settle(p);
     const z = stats(s, p);
+    produceRepair(p, ms2, z.ratio);
     for (const k of RES) p.resources[k] = Math.min(z.cap, p.resources[k] + z.rates[k] * ms2 / 36e5);
     for (const kind of ["ship", "orbital"]) if (p[kind + "job"]) p[kind + "job"].workRemaining = Math.max(0, p[kind + "job"].workRemaining - ms2 * z.ratio);
   }
@@ -472,7 +586,7 @@ function buildInfo(s, p, key) {
   if (!b) throw Error("Unbekanntes Geb\xE4ude.");
   const l = p.buildings[key];
   const cost = key === "orbital" && l >= 4 ? vector(b.cost.map((v) => Math.ceil(v * Math.pow(1.6, 3) * Math.pow(1.08, l - 3)))) : costAt(b, l);
-  return { cost, ms: Math.ceil(b.time * Math.pow(1.35, l) * Math.pow(0.95, s.tech.engineering) * Math.pow(0.92, p.buildings.robotics) * 1e3), reason: need(s, p, b.requires) || (b.ocean && !p.ocean ? "Ben\xF6tigt einen Ozeanplaneten." : "") || (l >= (key === "bunker" ? 4 : 30) ? "Maximale Geb\xE4udestufe erreicht." : "") };
+  return { cost, ms: Math.ceil(b.time * Math.pow(1.35, l) * Math.pow(0.95, s.tech.engineering) * Math.pow(0.92, p.buildings.robotics) * 1e3), reason: (key === "repairDock" && s.tech.engineering < 1 ? "Ben\xF6tigt Bautechnik Stufe 1." : "") || need(s, p, b.requires) || (b.ocean && !p.ocean ? "Ben\xF6tigt einen Ozeanplaneten." : "") || (l >= (key === "bunker" ? 4 : 30) ? "Maximale Geb\xE4udestufe erreicht." : "") };
 }
 function researchInfo(s, p, key) {
   const t = TECHS[key];
@@ -711,6 +825,7 @@ function advance(s, now, collectDebris) {
     forecastShipJobs(s);
     const times = [];
     for (const p of s.planets) {
+      times.push(forecastRepair(p, s.time, stats(s, p).ratio));
       if (p.build) times.push(p.build.end);
       for (const kind of ["ship", "orbital"]) if (p[kind + "job"] && !p[kind + "job"].paused) times.push(p[kind + "job"].workRemaining === 0 ? s.time : p[kind + "job"].end);
     }
@@ -734,6 +849,7 @@ function advance(s, now, collectDebris) {
       report(s, "Forschung abgeschlossen", `${TECHS[j.key].name} erreicht Stufe ${j.level}.`);
     }
     for (const p of s.planets) {
+      s.seq += finishRepair(p, (title, body) => report(s, title, body));
       if (p.build && p.build.end <= s.time) {
         const j = p.build;
         p.buildings[j.key] = j.level;
@@ -801,6 +917,7 @@ function advance(s, now, collectDebris) {
   waitingCargo(s);
   for (const m of s.missions) if (m.paused || m.awaitingUnload) m.due = now;
   forecastShipJobs(s);
+  for (const p of s.planets) forecastRepair(p, s.time, stats(s, p).ratio);
   return s;
 }
 function act(s, action, now = Date.now()) {
@@ -888,12 +1005,29 @@ function act(s, action, now = Date.now()) {
     const hulls = takeHulls(p, { [ship]: count });
     n.missions.push({ id: ++n.seq, type: action.type, ship, count, hulls, shieldUntil: p.shieldUntil || 0, from: p.id, to: dest.id, cargo, phase: "outbound", start: n.time, duration: f.ms, due: n.time + f.ms });
   } else if (action.type === "repair") {
-    const hulls = p.hulls || {}, cost = vector(RES.map((k, i) => i === 2 ? 0 : Object.entries(hulls).reduce((a, [key, list]) => a + list.reduce((v, hp) => v + SHIPS[key].cost[i] * 0.3 * (1 - hp), 0), 0)));
-    for (const k of RES) cost[k] = Math.ceil(cost[k]);
-    if (!Object.values(hulls).some((x) => x.length)) throw Error("Keine besch\xE4digten Einheiten.");
-    pay(p, cost);
-    p.hulls = {};
-    report(n, "Einheiten repariert", p.name);
+    if (!(p.buildings.repairDock >= 1)) throw Error("Baue zuerst ein Reparaturdock auf diesem Planeten.");
+    if (repairOrders(p).length >= 20) throw Error("Alle 20 Reparaturauftr\xE4ge sind belegt.");
+    const q = repairQuote(p, action.key, action.count, stats(n, p).ratio);
+    if (q.count > 1e5) throw Error("Maximal 100.000 Einheiten je Auftrag.");
+    pay(p, q.cost);
+    reserveRepair(p, action.key, q, ++n.seq, n.time);
+    report(n, "Reparatur eingereiht", `${p.name}: ${q.count} \xD7 ${SHIPS[action.key].name}.`);
+  } else if (["cancel-repair", "resume-repair"].includes(action.type)) {
+    const j = repairOrders(p).find((j2) => j2.id === action.id);
+    if (!j) throw Error("Der Reparaturauftrag hat sich ge\xE4ndert.");
+    if (action.type === "cancel-repair") {
+      const refund = repairRefund(j);
+      for (const k of RES) p.depot[k] += refund[k];
+      releaseRepair(p, j);
+      settle(p);
+      report(n, "Reparatur abgebrochen", p.name + ": ungenutztes Material erstattet; Schiffe freigegeben.");
+    } else {
+      const cost = repairMaterials(j);
+      if (!RES.some((k) => cost[k] > 0)) throw Error("Kein Zusatzmaterial erforderlich.");
+      pay(p, cost);
+      payRepairMaterials(j, cost);
+      report(n, "Reparatur fortgesetzt", p.name + ": zus\xE4tzliches Kampfmaterial bereitgestellt.");
+    }
   } else if (action.type === "reserve") {
     if (!action.reserves || RES.some((k) => !Number.isSafeInteger(action.reserves[k]) || action.reserves[k] < 0 || action.reserves[k] > 1e12)) throw Error("Ung\xFCltige Reserve.");
     p.reserves = { ...action.reserves };
@@ -991,6 +1125,7 @@ function act(s, action, now = Date.now()) {
   } else throw Error("Unbekannte Aktion.");
   waitingCargo(n);
   forecastShipJobs(n);
+  for (const q of n.planets) forecastRepair(q, n.time, stats(n, q).ratio);
   return n;
 }
 
@@ -1243,7 +1378,7 @@ function validateSave(input) {
     check(Array.isArray(p.mult) && p.mult.length === 3 && p.mult.every((x) => isNum(x, 10)));
     p.reserves ??= { metal: 0, crystal: 0, fuel: 0 };
     check(cargo(p.reserves) && cargo(p.resources) && cargo(p.depot));
-    for (const k of ["orbital", "bunker"]) if (p.buildings && !Object.hasOwn(p.buildings, k)) p.buildings[k] = 0;
+    for (const k of ["orbital", "bunker", "repairDock"]) if (p.buildings && !Object.hasOwn(p.buildings, k)) p.buildings[k] = 0;
     check(p.buildings && Object.keys(BUILDINGS).every((k) => integer(p.buildings[k], 30)));
     if (p.ships) {
       for (const k of Object.keys(SHIPS)) if (!["probe", "transport", "colony"].includes(k) && !Object.hasOwn(p.ships, k)) p.ships[k] = 0;
@@ -1255,6 +1390,14 @@ function validateSave(input) {
     p.orbitalqueue ??= [];
     check(job(p.orbitaljob, SHIPS) && (!p.orbitaljob || SHIPS[p.orbitaljob.key].category === "defense"));
     check(Array.isArray(p.orbitalqueue) && p.orbitalqueue.length + (p.orbitaljob ? 1 : 0) <= SHIP_QUEUE_LEGACY_LIMIT && (!p.orbitalqueue.length || p.orbitaljob));
+  }
+  for (const p of s.planets) {
+    p.repairQueue ??= [];
+    check(Array.isArray(p.repairQueue) && p.repairQueue.length <= 20 && (!p.repairQueue.length || p.buildings.repairDock >= 1));
+    for (const j of p.repairQueue) {
+      check(integer(j.id, s.seq) && j.id > 0 && Object.hasOwn(SHIPS, j.key) && isNum(j.start, s.time) && integer(j.count, 1e5) && j.count > 0 && integer(j.completed, j.count) && integer(j.lost, j.count) && isNum(j.factor, 1) && j.factor > 0 && Array.isArray(j.entries) && j.entries.length > 0 && j.entries.length + j.completed + j.lost === j.count);
+      for (const e of j.entries) check(isNum(e.hp, 1) && e.hp > 0 && isNum(e.initialHp, 1) && e.initialHp > 0 && e.initialHp <= e.hp && isNum(e.workRemaining, 864e13) && e.credit && RES.every((k) => isNum(e.credit[k])) && e.credit.fuel === 0);
+    }
   }
   const shipIds = [];
   for (const p of s.planets) {
@@ -1281,7 +1424,8 @@ function validateSave(input) {
   check(Array.isArray(s.discovered) && s.discovered.length <= 3 && new Set(s.discovered).size === s.discovered.length && s.discovered.every((id) => TARGETS.some((t) => t.id === id)));
   check(Array.isArray(s.missions) && s.missions.length <= 100);
   const fleetOK = (f, military = false) => f && typeof f === "object" && !Array.isArray(f) && Object.keys(f).length > 0 && Object.entries(f).every(([k, n]) => (isFreighter(k) || military && ["military", "civil"].includes(SHIPS[k]?.category)) && integer(n, Number.MAX_SAFE_INTEGER) && n > 0);
-  const eventIds = [...shipIds];
+  const repairIds = s.planets.flatMap((p) => p.repairQueue.map((j) => j.id));
+  const eventIds = [...shipIds, ...repairIds];
   const order = (o) => o && RES.every((k) => o[k] === "max" || integer(o[k], 1e12));
   for (const m of s.missions) {
     check(integer(m.id, s.seq) && m.id > 0 && ids.includes(m.from) && ["probe", "colony", "transport", "deliver", "collect", "salvage", "station", "route"].includes(m.type) && Object.hasOwn(SHIPS, m.ship) && integer(m.count, Number.MAX_SAFE_INTEGER) && m.count > 0 && cargo(m.cargo) && ["outbound", "return"].includes(m.phase) && isNum(m.start, 864e13) && m.start <= s.time && isNum(m.due, 864e13) && m.due >= s.time && isNum(m.duration, 864e5) && m.duration > 0);
@@ -1416,9 +1560,13 @@ function resolveAttack(w, m, time) {
   const parked = pausedRoutes.map((r) => ({ id: "route:" + r.id, owner: m.defender_id, commander: d.name + " \xB7 " + (r.name || "Wartet auf Lagerplatz"), fleet: { ...r.fleet || { [r.ship]: r.count } }, hulls: r.hulls, tech: { ...d.tech }, shieldFactor: shieldFactor(r.shieldUntil, time) }));
   const dockedRaids = w.attacks.filter((r) => r.awaitingUnload && r.status === "returning" && r.attacker_id === m.defender_id && r.from === m.to);
   parked.push(...dockedRaids.map((r) => ({ id: "raid:" + r.id, owner: m.defender_id, commander: d.name + " \xB7 R\xFCckkehrende Angriffsflotte", fleet: r.survivors, hulls: r.return_hulls, tech: r.combat.tech, shieldFactor: shieldFactor(r.shieldUntil, time) })));
+  const repairs = repairDefense(p, m.defender_id, d.name, { ...d.tech }, shieldFactor(p.shieldUntil, time));
   const supporting = socialDefense(w, m.defender_id, m.to, time);
-  if (supporting.length || parked.length) defense.groups = [{ id: "host", owner: m.defender_id, commander: d.name, ...defense }, ...parked, ...supporting];
+  if (supporting.length || parked.length || repairs.length) defense.groups = [{ id: "host", owner: m.defender_id, commander: d.name, ...defense }, ...parked, ...repairs, ...supporting];
   const result = resolveBattle({ ...m.combat, shieldFactor: shieldFactor(m.shieldUntil, time) }, defense, m.seed || m.id, m.ruleVersion || 1);
+  const repairBefore = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, repairs.reduce((n, g) => n + (g.fleet[k] || 0), 0)]));
+  if (repairs.length) reconcileRepairBattle(p, result);
+  const repairAfter = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, (p.repairQueue || []).filter((j) => j.key === k).reduce((n, j) => n + j.entries.length, 0)]));
   const before = { ...p.ships }, homeResult = result.defenderGroups?.find((g) => g.id === "host") || result.defender;
   for (const r of pausedRoutes) {
     const after = result.defenderGroups.find((g) => g.id === "route:" + r.id);
@@ -1452,8 +1600,8 @@ function resolveAttack(w, m, time) {
       delete r.awaitingUnload;
     }
   }
-  const hostBefore = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, before[k] + parked.reduce((n, g) => n + (g.fleet[k] || 0), 0)]));
-  const hostAfter = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, (homeResult.fleet[k] || 0) + pausedRoutes.reduce((n, r) => n + (r.fleet[k] || 0), 0) + dockedRaids.reduce((n, r) => n + (r.survivors[k] || 0), 0)]));
+  const hostBefore = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, before[k] + repairBefore[k] + parked.reduce((n, g) => n + (g.fleet[k] || 0), 0)]));
+  const hostAfter = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, (homeResult.fleet[k] || 0) + repairAfter[k] + pausedRoutes.reduce((n, r) => n + (r.fleet[k] || 0), 0) + dockedRaids.reduce((n, r) => n + (r.survivors[k] || 0), 0)]));
   const supportReports = [];
   for (const group of supporting) {
     const after = result.defenderGroups.find((g) => g.id === group.id), mission = w.socialMissions.find((x) => x.id === group.id);
@@ -1616,7 +1764,7 @@ function processWorld(snapshot, uid, request) {
   const s = stateOf(w, uid), start = w.starts.find((x) => x.user_id === uid);
   if (start) s.galaxy = { x: start.x, y: start.y };
   if (type === "command") {
-    if (!["build", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "salvage", "route", "deliver", "repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
+    if (!["build", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "salvage", "route", "deliver", "repair", "cancel-repair", "resume-repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
     if (action.type === "salvage") {
       const target = w.planets.find((p) => p.id === action.to);
       if (!target || target.owner_id !== uid || target.reserved) throw Error("W\xE4hle eine eigene besiedelte Galaxiekolonie mit Tr\xFCmmern.");
@@ -1649,7 +1797,7 @@ function projectPvP(w, uid) {
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
     social: socialProjection(w, uid),
-    features: { debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
+    features: { repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,
