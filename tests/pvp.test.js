@@ -89,7 +89,7 @@ test('Damage survives stationing, saving and repair; defense slots prevent overs
  const w=fixture();let s=w.saves[0].state,p=s.planets[1];p.hulls={waechter:[.5]};
  s=act(s,{type:'station',planet:p.id,to:'home',ship:'waechter',count:1},T);s=validateSave(s);advance(s,s.missions[0].due);
  assert.deepEqual(s.planets[0].hulls.waechter,[.5]);const metal=s.planets[0].resources.metal,crystal=s.planets[0].resources.crystal;
- s=act(s,{type:'repair',planet:'home'},s.time);assert.deepEqual(s.planets[0].hulls,{});assert.equal(s.planets[0].resources.metal,metal-135);assert.equal(s.planets[0].resources.crystal,crystal-90);
+ s.planets[0].buildings.repairDock=1;s=act(s,{type:'repair',planet:'home',key:'waechter',count:1},s.time);assert.deepEqual(s.planets[0].hulls,{});assert.equal(s.planets[0].resources.metal,metal-135);assert.equal(s.planets[0].resources.crystal,crystal-90);assert.equal(s.planets[0].repairQueue.length,1);advance(s,s.time+27000);assert.equal(s.planets[0].repairQueue.length,0);
  p=s.planets[1];p.buildings.shipyard=6;p.buildings.orbital=1;assert.throws(()=>act(s,{type:'ship',planet:p.id,key:'plasma',count:2},s.time),/Orbitalwerft Stufe 6/);assert.throws(()=>act(s,{type:'station',planet:p.id,to:'home',ship:'flak',count:1},s.time),/Verteidigung/);
 });
 test('PvP UI exposes the switch only to admins, escapes names and supports public unknown target labels',()=>{
