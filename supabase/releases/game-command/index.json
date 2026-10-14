@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-13.03",
+  "latest": "2026-10-14.01",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -134,6 +134,13 @@
       "sourceCommit": "427f3f729d780390fea0265869b40da9310dcaad",
       "description": "Vier bewaffnete Orbitalplattformen; eigene stromabhaengige Orbitalwerft-Warteschlange; Kampfregel v2 unveraendert",
       "sha256": "a31acf8b38d7613ca99e00f40f551ae8952b6efc867c35173563a327da038fd8"
+    },
+    {
+      "version": "2026-10-14.01",
+      "createdAt": "2026-10-14T05:23:40.908Z",
+      "sourceCommit": "87aa9a853377a78270dd4a918d19bf6ea2a2eb6d",
+      "description": "Trümmerbergung: Frachter von anderem eigenen Planeten, serverseitige Sammlung bei Ankunft und Rückkehr mit Restladung",
+      "sha256": "ca2d75d6e27634c465effa00b0f17edd183bfd5e0fd5e3cbcee6fbf734adf821"
     }
   ]
 }
