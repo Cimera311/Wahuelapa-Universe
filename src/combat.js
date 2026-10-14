@@ -48,7 +48,7 @@ function units(fleet,tech,hulls,shieldFactor=1){
  const out=[];for(const key of Object.keys(fleet).sort()){const n=fleet[key];if(!Number.isSafeInteger(n)||n<0)throw Error('Ungültiger Flottenbestand.');const z=combatStats(key,tech);z.shield*=shieldFactor;for(let i=0;i<n;i++)out.push({key,...z,maxHp:z.hp,hp:z.hp*(hulls?.[key]?.[i]??1)});}return out;
 }
 function combatSide(side){if(!side.groups)return units(side.fleet,side.tech,side.hulls,side.shieldFactor);return side.groups.flatMap(g=>units(g.fleet,g.tech,g.hulls,g.shieldFactor).map(u=>({...u,groupId:g.id,owner:g.owner,commander:g.commander,maxShield:combatStats(u.key,g.tech).shield})));}
-function combatGroups(side,list){return side.groups?{defenderGroups:side.groups.map(g=>({id:g.id,owner:g.owner,...survivors(list.filter(u=>u.groupId===g.id))}))}:{};}
+function combatGroups(side,list){return side.groups?{defenderGroups:side.groups.map(g=>({id:g.id,owner:g.owner,...survivors(list.filter(u=>u.groupId===g.id)),...(g.id?.startsWith('repair:')?{repairUnits:list.filter(u=>u.groupId===g.id).map(u=>({hp:Math.max(0,u.hp),maxHp:u.maxHp}))}:{})}))}:{};}
 function survivors(list){const fleet={},hulls={};for(const u of list)if(u.hp>1e-8){fleet[u.key]=(fleet[u.key]||0)+1;if(u.hp<u.maxHp-1e-8)(hulls[u.key]??=[]).push(u.hp/u.maxHp);}return {fleet,hulls};}
 function resolveBattleLegacy(attacker,defender,seed){
  const a=combatSide(attacker),d=combatSide(defender),random=rng(seed),rounds=[];

@@ -12,7 +12,7 @@ create or replace function public.imperium_rank_points(s jsonb)
 returns table(building_points bigint,research_points bigint,fleet_points bigint,colonies integer)
 language plpgsql immutable set search_path = '' as $$
 declare
- costs constant jsonb := '{"buildings":{"metal":[80,35,0],"crystal":[65,60,0],"fuel":[90,50,0],"solar":[75,40,0],"warehouse":[120,60,0],"lab":[150,100,0],"shipyard":[200,100,0],"robotics":[400,300,60],"orbital":[600,400,120],"bunker":[450,300,80],"tidal":[700,450,80]},"tech":{"scout":[100,100,30],"logistics":[150,120,40],"colonization":[350,250,100],"drive":[200,150,80],"ramjet":[600,450,200],"impulse":[1800,1400,650],"hyperspace":[5500,4200,2000],"engineering":[250,200,40],"military":[300,220,80],"weapons":[400,300,100],"shields":[350,450,100],"armor":[500,250,100],"assaultDrive":[600,400,200],"energy":[200,180,50]},"ships":{"probe":[90,60,20],"transport":[180,100,40],"longProbe":[280,200,80],"starColony":[1200,850,400],"colony":[500,300,100],"kurier":[140,80,30],"karawane":[800,450,180],"atlas":[2400,1400,600],"arche":[7600,4400,2000],"falke":[240,150,60],"waechter":[900,600,220],"donner":[3000,1800,700],"flak":[240,150,60],"laser":[900,600,220],"rail":[3000,1800,700],"plasma":[9500,6500,2500],"titan":[9500,6500,2500]}}'::jsonb;
+ costs constant jsonb := '{"buildings":{"metal":[80,35,0],"crystal":[65,60,0],"fuel":[90,50,0],"solar":[75,40,0],"warehouse":[120,60,0],"lab":[150,100,0],"shipyard":[200,100,0],"robotics":[400,300,60],"orbital":[600,400,120],"repairDock":[1200,800,300],"bunker":[450,300,80],"tidal":[700,450,80]},"tech":{"scout":[100,100,30],"logistics":[150,120,40],"colonization":[350,250,100],"drive":[200,150,80],"ramjet":[600,450,200],"impulse":[1800,1400,650],"hyperspace":[5500,4200,2000],"engineering":[250,200,40],"military":[300,220,80],"weapons":[400,300,100],"shields":[350,450,100],"armor":[500,250,100],"assaultDrive":[600,400,200],"energy":[200,180,50]},"ships":{"probe":[90,60,20],"transport":[180,100,40],"longProbe":[280,200,80],"starColony":[1200,850,400],"colony":[500,300,100],"kurier":[140,80,30],"karawane":[800,450,180],"atlas":[2400,1400,600],"arche":[7600,4400,2000],"falke":[240,150,60],"waechter":[900,600,220],"donner":[3000,1800,700],"flak":[240,150,60],"laser":[900,600,220],"rail":[3000,1800,700],"plasma":[9500,6500,2500],"titan":[9500,6500,2500]}}'::jsonb;
  p jsonb; m jsonb; item record; base jsonb; lvl integer; i integer;
  buildings_total numeric := 0; research_total numeric := 0; fleet_total numeric := 0;
  planets jsonb := case when jsonb_typeof(s->'planets')='array' then s->'planets' else '[]'::jsonb end;
@@ -25,6 +25,16 @@ begin
     for base in select value from jsonb_array_elements(item.value) loop
      buildings_total := buildings_total + ceil((base #>> '{}')::numeric * power(1.6::numeric,i));
     end loop;
+   end loop;
+  end loop;
+  -- Dock reservations remain owned units, including stationary platforms.
+  for m in select value from jsonb_array_elements(case when jsonb_typeof(p->'repairQueue')='array' then p->'repairQueue' else '[]'::jsonb end) limit 20 loop
+   for base in select value from jsonb_array_elements(coalesce(costs->'ships'->(m->>'key'),'[]'::jsonb)) loop
+    if m->>'key' in ('flak','laser','rail','plasma') then
+     buildings_total := buildings_total + (base #>> '{}')::numeric * jsonb_array_length(case when jsonb_typeof(m->'entries')='array' then m->'entries' else '[]'::jsonb end);
+    else
+     fleet_total := fleet_total + (base #>> '{}')::numeric * jsonb_array_length(case when jsonb_typeof(m->'entries')='array' then m->'entries' else '[]'::jsonb end);
+    end if;
    end loop;
   end loop;
   for item in select key,value from jsonb_each(costs->'ships') loop

@@ -1,7 +1,7 @@
 import {actionIcon} from './ui-assets.js';
 
-export const FLEET_GROUPS={hangar:{name:'Hangar',icon:'⌁',sections:['overview','hangar','orbital']},pvp:{name:'PvP',icon:'⚔',sections:['pvp','defense','partners']},trade:{name:'Handel',icon:'⇄',sections:['orders','routes','reports']}};
-export const FLEET_LABELS={overview:'Übersicht',hangar:'Werft',orbital:'Orbitalwerft',pvp:'Angriff',defense:'Verteidigung',partners:'Partner',orders:'Aufträge',routes:'Routen',reports:'Berichte'};
+export const FLEET_GROUPS={hangar:{name:'Hangar',icon:'⌁',sections:['overview','hangar','orbital','repair']},pvp:{name:'PvP',icon:'⚔',sections:['pvp','defense','partners']},trade:{name:'Handel',icon:'⇄',sections:['orders','routes','reports']}};
+export const FLEET_LABELS={overview:'Übersicht',hangar:'Werft',orbital:'Orbitalwerft',repair:'Reparaturdock',pvp:'Angriff',defense:'Verteidigung',partners:'Partner',orders:'Aufträge',routes:'Routen',reports:'Berichte'};
 export function fleetGroupFor(section){return Object.keys(FLEET_GROUPS).find(key=>FLEET_GROUPS[key].sections.includes(section))||'hangar';}
 export function fleetNavigation(section,{routes=0,incoming=0}={}){
  const group=fleetGroupFor(section);
