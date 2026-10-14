@@ -35,7 +35,7 @@ const noticeKey=()=> 'wahuelapa-read-v1:'+String(cloud?.user?.id||'guest');
 function noticeRead(){try{return JSON.parse(localStorage.getItem(noticeKey())||'{}')||{};}catch{return {};}}
 function noticeSave(data){try{localStorage.setItem(noticeKey(),JSON.stringify(data));}catch{}}
 function noticeBadge(kind){const count=noticeCounts[kind]||0;return count?'<span class="notice-count" aria-label="'+count+' ungelesen">'+(count>99?'99+':count)+'</span>':'';}
-function noticePaint(){for(const kind of noticeKinds){const target=document.querySelector('[data-notice-kind="'+kind+'"]');if(!target)continue;target.querySelector('.notice-count')?.remove();if(noticeCounts[kind])target.insertAdjacentHTML('beforeend',noticeBadge(kind));}}
+function noticePaint(){for(const kind of noticeKinds){const target=document.querySelector('[data-notice-kind="'+kind+'"]');if(!target||typeof target.querySelector!=='function')continue;target.querySelector('.notice-count')?.remove();if(noticeCounts[kind]&&typeof target.insertAdjacentHTML==='function')target.insertAdjacentHTML('beforeend',noticeBadge(kind));}}
 function noticeMark(kind,ids){
  const data=noticeRead();if(!Array.isArray(ids))return;
  if(kind==='news'){data.news=ids;}
