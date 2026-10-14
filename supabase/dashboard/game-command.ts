@@ -581,12 +581,41 @@ function need(s, p, req) {
   if (req.building && p.buildings[req.building] < req.level) return `Ben\xF6tigt ${BUILDINGS[req.building].name} Stufe ${req.level}.`;
   return "";
 }
+var DEMOLITION_REFUND = 0.2;
+var DEMOLITION_TIME = 0.25;
+function buildingLevelCost(key, index) {
+  const b = BUILDINGS[key];
+  if (!b) throw Error("Unbekanntes Geb\xE4ude.");
+  return key === "orbital" && index >= 4 ? vector(b.cost.map((v) => Math.ceil(v * Math.pow(1.6, 3) * Math.pow(1.08, index - 3)))) : costAt(b, index);
+}
+function buildingLevelTime(s, p, key, index) {
+  const b = BUILDINGS[key];
+  if (!b) throw Error("Unbekanntes Geb\xE4ude.");
+  return Math.ceil(b.time * Math.pow(1.35, index) * Math.pow(0.95, s.tech.engineering) * Math.pow(0.92, p.buildings.robotics) * 1e3);
+}
 function buildInfo(s, p, key) {
   const b = BUILDINGS[key];
   if (!b) throw Error("Unbekanntes Geb\xE4ude.");
-  const l = p.buildings[key];
-  const cost = key === "orbital" && l >= 4 ? vector(b.cost.map((v) => Math.ceil(v * Math.pow(1.6, 3) * Math.pow(1.08, l - 3)))) : costAt(b, l);
-  return { cost, ms: Math.ceil(b.time * Math.pow(1.35, l) * Math.pow(0.95, s.tech.engineering) * Math.pow(0.92, p.buildings.robotics) * 1e3), reason: (key === "repairDock" && s.tech.engineering < 1 ? "Ben\xF6tigt Bautechnik Stufe 1." : "") || need(s, p, b.requires) || (b.ocean && !p.ocean ? "Ben\xF6tigt einen Ozeanplaneten." : "") || (l >= (key === "bunker" ? 4 : 30) ? "Maximale Geb\xE4udestufe erreicht." : "") };
+  const l = p.buildings[key], cost = buildingLevelCost(key, l);
+  return { cost, ms: buildingLevelTime(s, p, key, l), reason: (key === "repairDock" && s.tech.engineering < 1 ? "Ben\xF6tigt Bautechnik Stufe 1." : "") || need(s, p, b.requires) || (b.ocean && !p.ocean ? "Ben\xF6tigt einen Ozeanplaneten." : "") || (l >= (key === "bunker" ? 4 : 30) ? "Maximale Geb\xE4udestufe erreicht." : "") };
+}
+function demolishInfo(s, p, key) {
+  if (!Object.hasOwn(BUILDINGS, key)) throw Error("Unbekanntes Geb\xE4ude.");
+  const level = p.buildings[key] || 0;
+  if (level < 1) return { reason: "Keine Geb\xE4udestufe vorhanden." };
+  const target = level - 1, historical = p.buildHistory?.[key]?.[level];
+  const originalCost = historical?.cost || buildingLevelCost(key, target);
+  const originalMs = historical?.ms || buildingLevelTime(s, p, key, target);
+  const refund = vector(RES.map((k) => Math.floor(originalCost[k] * DEMOLITION_REFUND)));
+  const ms2 = Math.max(1, Math.ceil(originalMs * DEMOLITION_TIME));
+  let reason = p.build ? "Auf diesem Planeten l\xE4uft bereits ein Bauauftrag." : "";
+  if (!reason && key === "lab" && target === 0 && p.buildings.shipyard > 0) reason = "Die Schiffswerft ben\xF6tigt Forschungslabor Stufe 1.";
+  if (!reason && key === "lab" && s.research?.planet === p.id && target < TECHS[s.research.key].lab) reason = "Eine laufende Forschung ben\xF6tigt dieses Labor.";
+  if (!reason && key === "shipyard" && target < 2 && p.buildings.repairDock > 0) reason = "Das Reparaturdock ben\xF6tigt Schiffswerft Stufe 2.";
+  if (!reason && key === "shipyard" && [p.shipjob, ...p.shipqueue || []].filter(Boolean).some((j) => target < (SHIPS[j.key]?.shipyard || 1))) reason = "Laufende Schiffsbauauftr\xE4ge ben\xF6tigen diese Werftstufe.";
+  if (!reason && key === "orbital" && [p.orbitaljob, ...p.orbitalqueue || []].filter(Boolean).some((j) => target < (SHIPS[j.key]?.shipyard || 1))) reason = "Laufende Plattformauftr\xE4ge ben\xF6tigen diese Orbitalwerftstufe.";
+  if (!reason && key === "repairDock" && target === 0 && (p.repairQueue || []).length) reason = "Im Reparaturdock befinden sich noch Einheiten.";
+  return { key, level, target, originalCost, originalMs, refund, ms: ms2, reason };
 }
 function researchInfo(s, p, key) {
   const t = TECHS[key];
@@ -854,7 +883,24 @@ function advance(s, now, collectDebris) {
         const j = p.build;
         p.buildings[j.key] = j.level;
         p.build = null;
-        report(s, "Ausbau abgeschlossen", `${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);
+        if (j.kind === "demolish") {
+          const cap = capacity(p);
+          for (const k of RES) {
+            const excess = Math.max(0, p.resources[k] - cap);
+            p.resources[k] -= excess;
+            p.depot[k] += excess;
+          }
+          if (p.buildHistory?.[j.key]) delete p.buildHistory[j.key][j.level + 1];
+          deliver(p, j.refund);
+          report(s, "R\xFCckbau abgeschlossen", `${p.name}: ${BUILDINGS[j.key].name} auf Stufe ${j.level} zur\xFCckgebaut. 20 % Material erstattet.`);
+        } else {
+          if (j.paid && j.originalMs) {
+            p.buildHistory ??= {};
+            p.buildHistory[j.key] ??= {};
+            p.buildHistory[j.key][j.level] = { cost: j.paid, ms: j.originalMs };
+          }
+          report(s, "Ausbau abgeschlossen", `${p.name}: ${BUILDINGS[j.key].name}, Stufe ${j.level}.`);
+        }
       }
       if (p.shipjob && p.shipjob.workRemaining === 0) {
         const j = p.shipjob;
@@ -929,7 +975,12 @@ function act(s, action, now = Date.now()) {
     if (info.reason) throw Error(info.reason);
     if (p.build) throw Error("Auf diesem Planeten l\xE4uft bereits ein Bauauftrag.");
     pay(p, info.cost);
-    p.build = { key: action.key, level: p.buildings[action.key] + 1, start: n.time, end: n.time + info.ms };
+    p.build = { key: action.key, level: p.buildings[action.key] + 1, start: n.time, end: n.time + info.ms, paid: info.cost, originalMs: info.ms };
+  } else if (action.type === "demolish") {
+    const info = demolishInfo(n, p, action.key);
+    if (info.reason) throw Error(info.reason);
+    if (!Number.isSafeInteger(info.ms) || n.time + info.ms > 864e13) throw Error("R\xFCckbaudauer ung\xFCltig.");
+    p.build = { kind: "demolish", key: action.key, level: info.target, start: n.time, end: n.time + info.ms, refund: info.refund, originalMs: info.originalMs };
   } else if (action.type === "research") {
     const info = researchInfo(n, p, action.key);
     if (info.reason) throw Error(info.reason);
@@ -1384,7 +1435,18 @@ function validateSave(input) {
       for (const k of Object.keys(SHIPS)) if (!["probe", "transport", "colony"].includes(k) && !Object.hasOwn(p.ships, k)) p.ships[k] = 0;
     }
     check(p.ships && Object.keys(SHIPS).every((k) => integer(p.ships[k], Number.MAX_SAFE_INTEGER)));
-    check(job(p.build, BUILDINGS) && (!p.build || p.build.level === p.buildings[p.build.key] + 1));
+    check(job(p.build, BUILDINGS) && (!p.build || (p.build.kind === "demolish" ? p.build.level === p.buildings[p.build.key] - 1 : p.build.kind === void 0 && p.build.level === p.buildings[p.build.key] + 1)));
+    if (p.build) {
+      const j = p.build;
+      if (j.kind === "demolish") check(j.refund && RES.every((k) => integer(j.refund[k], 1e12)) && integer(j.originalMs, 864e13) && j.originalMs > 0);
+      else if (j.paid !== void 0 || j.originalMs !== void 0) check(j.paid && RES.every((k) => integer(j.paid[k], 1e12)) && integer(j.originalMs, 864e13) && j.originalMs > 0);
+    }
+    p.buildHistory ??= {};
+    check(p.buildHistory && typeof p.buildHistory === "object" && !Array.isArray(p.buildHistory) && Object.keys(p.buildHistory).every((k) => Object.hasOwn(BUILDINGS, k)));
+    for (const [key, levels] of Object.entries(p.buildHistory)) {
+      check(levels && typeof levels === "object" && !Array.isArray(levels) && Object.keys(levels).length <= 30);
+      for (const [lvl, info] of Object.entries(levels)) check(/^(?:[1-9]|[12][0-9]|30)$/.test(lvl) && Number(lvl) <= p.buildings[key] && info && typeof info === "object" && info.cost && RES.every((k) => integer(info.cost[k], 1e12)) && integer(info.ms, 864e13) && info.ms > 0);
+    }
     check(job(p.shipjob, SHIPS) && (!p.shipjob || integer(p.shipjob.count, Number.MAX_SAFE_INTEGER) && p.shipjob.count > 0));
     p.orbitaljob ??= null;
     p.orbitalqueue ??= [];
@@ -1764,7 +1826,7 @@ function processWorld(snapshot, uid, request) {
   const s = stateOf(w, uid), start = w.starts.find((x) => x.user_id === uid);
   if (start) s.galaxy = { x: start.x, y: start.y };
   if (type === "command") {
-    if (!["build", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "salvage", "route", "deliver", "repair", "cancel-repair", "resume-repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
+    if (!["build", "demolish", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "salvage", "route", "deliver", "repair", "cancel-repair", "resume-repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
     if (action.type === "salvage") {
       const target = w.planets.find((p) => p.id === action.to);
       if (!target || target.owner_id !== uid || target.reserved) throw Error("W\xE4hle eine eigene besiedelte Galaxiekolonie mit Tr\xFCmmern.");
@@ -1797,7 +1859,7 @@ function projectPvP(w, uid) {
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
     social: socialProjection(w, uid),
-    features: { repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
+    features: { buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,

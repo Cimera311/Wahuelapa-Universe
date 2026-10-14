@@ -1,0 +1,40 @@
+name: Release game-command 2026-10-14.04
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  release:
+    if: github.head_ref == 'codex/building-demolition-confirmation'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Build deployable Supabase Dashboard bundle
+        run: |
+          npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --format=esm --platform=neutral --target=es2022 --external:npm:* --outfile=supabase/dashboard/game-command.ts
+          node -e "const fs=require('fs');const p='supabase/dashboard/game-command.ts';const b='// @ts-nocheck — Generated dashboard bundle; edit source modules instead.\\n\\n'+fs.readFileSync(p,'utf8');fs.writeFileSync(p,b);for(const name of ['game-command-gesamt.txt','game-command-werft.txt'])fs.writeFileSync('supabase/dashboard/'+name,b)"
+      - name: Verify authoritative demolition support
+        run: |
+          node --input-type=module -e "import{readFileSync as r}from'node:fs';const s=r('supabase/dashboard/game-command.ts','utf8');for(const x of ['buildingDemolition','demolishInfo','buildHistory','demolish'])if(!s.includes(x))throw Error('Missing demolition support: '+x);"
+      - name: Archive immutable version 2026-10-14.04
+        run: |
+          if git diff --quiet -- supabase/dashboard/game-command.ts; then echo "Already bundled"; else node scripts/archive-game-command.mjs 2026-10-14.04 "Gebaeuderueckbau mit Bestaetigung, 20 Prozent Material, 25 Prozent Zeit und historische Bauwerte"; fi
+      - run: npm test
+      - run: npm run build
+      - name: Commit synchronized dashboard and release archive
+        run: |
+          git add supabase/dashboard/ supabase/releases/game-command/ START_HERE.html news.html
+          if git diff --cached --quiet; then echo "No generated artifacts"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Archive Game Command 2026-10-14.04 building demolition"
+          git push origin HEAD:codex/building-demolition-confirmation
