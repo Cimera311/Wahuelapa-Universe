@@ -1,11 +1,8 @@
 export const GAME_NEWS=[
  {date:'14.10.2026',title:'⚙️ Weniger Serverlast, gleiche Raumschlachten! 🚀',status:'🛠️ Performance-Update #68',items:[
- '🌌 Wir haben den regelmäßigen Serverabgleich optimiert: Im normalen Spielbetrieb wird jetzt seltener synchronisiert. Bei erkannten ein- oder ausgehenden PvP-Angriffen bleibt der Abgleich eng getaktet.',
- '🪐 Unveränderte Planeten, Missionen, Angriffe und Partnerdaten werden nicht mehr bei jedem Abgleich unnötig neu in die Datenbank geschrieben. Das schafft Luft für unsere wachsende Galaxie!',
- '💤 Ist das Spiel im Hintergrund geöffnet, pausiert der regelmäßige Abgleich. Wenn du zurückkehrst, wird der aktuelle Spielstand nachgeladen. Laufende Ereignisse werden weiterhin anhand ihrer tatsächlichen Spielzeit berechnet.',
- '⚔️ An Kampfregeln, Schiffswerten, Flugzeiten und Beute haben wir nichts geändert. Eure Schlachten bleiben eure Schlachten! 💥',
- '🐞 Falls euch seit dem Update etwas auffällt – etwa ungewöhnliche Flottenbewegungen, verspätete Anzeigen oder Fehler bei Kampfberichten – meldet euch bitte über die Wünschebox oder im Chat. Schreibt möglichst dazu, was passiert ist, auf welchem Planeten und ungefähr wann. 🙏',
- '❤️ Danke fürs Testen und für eure Rückmeldungen! Gemeinsam machen wir WaHueLaPa stabiler. 🚀'
+ '🚀 Der Serverabgleich wurde optimiert: weniger unnötige Anfragen und Datenbank-Updates.',
+ '⚔️ Aktive Angriffe bleiben aktuell. Kampfregeln, Flugzeiten und Beute sind unverändert.',
+ '🐞 Falls euch etwas auffällt, meldet es bitte über die Wünschebox oder im Chat. Danke! ❤️'
  ]},
  {date:'14.10.2026',title:'🛠️ Überlebt heißt nicht unbeschädigt – das Reparaturdock ist da!',status:'🚀 Reparatur-Update #66',items:[
  '🔍 Deine Titanen sind vom Kampf zurück, aber ihre Hülle hat ordentlich gelitten? Das erkennst du jetzt direkt im Hangar! Pro Schiffstyp und Planet siehst du intakte und beschädigte Einheiten, die gesamte verbleibende Hülle und den durchschnittlichen Hüllenzustand der beschädigten Einheiten.',
