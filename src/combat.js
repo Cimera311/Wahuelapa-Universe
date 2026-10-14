@@ -56,8 +56,7 @@ function resolveBattleLegacy(attacker,defender,seed){
   const aa=a.filter(u=>u.hp>1e-8),dd=d.filter(u=>u.hp>1e-8);if(!aa.length||!dd.length)break;
   const damage=new Map();
   function fire(shooters,targets){for(const u of shooters)if(u.attack)for(let shot=0;shot<u.shots;shot++){const target=targets[Math.floor(random()*targets.length)],hit=u.attack/u.shots*(1+(u.bonus?.[target.key]||0));damage.set(target,(damage.get(target)||0)+hit);}}
-  if(!opening)fire(aa,dd);
-  fire(opening?platforms:dd,aa);
+  fire(aa,dd);fire(dd,aa);
   for(const [u,hit] of damage){const shield=Math.min(u.shield,hit);u.shield-=shield;u.hp-=hit-shield;}
   rounds.push({round:i,attacker:a.filter(u=>u.hp>1e-8).length,defender:d.filter(u=>u.hp>1e-8).length});
  }
