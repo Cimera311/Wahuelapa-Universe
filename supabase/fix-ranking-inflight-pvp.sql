@@ -1,3 +1,4 @@
+-- With partnerships installed, run fix-ranking-partner-fleets.sql AFTER this file.
 -- Fix: Flotten auf PvP-Angriffsflügen behalten ihren Ranglistenwert.
 -- Nutzt beim Hinflug die gestartete Flotte, beim Rückflug nur Überlebende.
 -- Keine Veränderung an Spielständen, Flotten oder Angriffen. Idempotent.
