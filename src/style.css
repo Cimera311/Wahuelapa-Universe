@@ -405,3 +405,86 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
  .demolition-details{grid-template-columns:1fr}
  .demolition-buttons{flex-direction:column-reverse}
 }
+
+
+/* WaHueLaPa Compact: approved building-card design (original building and resource artwork). */
+.compact-build-list{gap:10px}
+.compact-build-list .compact-building{display:block;min-width:0;padding:15px 16px 14px;border-color:#2b485b;border-radius:14px;background:linear-gradient(148deg,#122b3ce8,#0b1b2bf5)}
+.compact-building .compact-upper{display:grid;grid-template-columns:75px minmax(0,1fr) auto;align-items:center;gap:13px}
+.compact-building .compact-building-icon{width:75px;height:75px;padding:3px;border:1px solid #32576b;border-radius:12px;background:radial-gradient(at 25% 25%,#28465b,#0a1b29);overflow:hidden}
+.compact-building .compact-building-icon img{width:100%;height:100%;object-fit:contain}
+.compact-building .compact-building-main{min-width:0;width:auto!important}
+.compact-building .compact-name-line{display:flex;gap:7px;align-items:center;min-width:0}
+.compact-building .compact-name-line h2{font-size:19px;letter-spacing:-.2px;margin:0;line-height:1.12;overflow-wrap:anywhere}
+.compact-building .compact-info{border:0;background:transparent;color:#92b7c9;box-shadow:none;padding:3px 5px;min-height:28px;min-width:28px;font-size:16px;line-height:1;flex:none}
+.compact-building .compact-level{font-size:10px;color:#8eacbc;letter-spacing:.7px;display:block;margin:6px 0 7px;font-weight:750}
+.compact-building .compact-level span{color:#60cee7}
+.compact-building .compact-production{display:flex;align-items:center;gap:7px;font-size:13px;font-variant-numeric:tabular-nums;color:#b5cad5;min-width:0}
+.compact-building .compact-production .compact-chev{color:#7393a5}
+.compact-building .compact-production strong{color:#89e5b1;font-weight:850}
+.compact-building .compact-production small{font-size:11px;color:#8caec2}
+.compact-building .compact-energy{display:grid;grid-template-columns:21px auto;gap:1px 4px;align-items:center;text-align:right;padding:3px 0;white-space:nowrap;font-variant-numeric:tabular-nums;max-width:155px}
+.compact-building .compact-energy svg{width:21px;height:21px;filter:drop-shadow(0 1px 4px #e5b62555)}
+.compact-building .compact-energy strong{font-size:20px;font-weight:850;color:#83e5a8;letter-spacing:-.45px}
+.compact-building .compact-energy small{grid-column:1/-1;color:#8baabe;font-size:10px}
+.compact-building .compact-energy-warning strong{color:#f6c66c}
+.compact-building .compact-energy-alert{grid-column:1/-1;color:#f6c66c;font-size:11px}
+.compact-building .compact-below{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid #294354;margin-top:13px;padding-top:11px}
+.compact-building .compact-costs{display:flex;gap:10px;flex-wrap:wrap;min-width:0}
+.compact-building .compact-cost,.compact-building-dialog .compact-cost{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums;min-width:0}
+.compact-building .compact-cost img{width:26px;height:26px;margin:0;object-fit:contain;flex:none}
+.compact-building .compact-cost strong{font-size:17px;letter-spacing:-.35px;color:#e9f4fb;white-space:nowrap}
+.compact-building .compact-time{display:inline-flex;align-items:center;gap:5px;color:#a3c3d2;white-space:nowrap}
+.compact-building .compact-time strong{font-size:12px;font-weight:700}
+.compact-building .build-actions.compact-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px;align-items:center;width:100%;min-width:0}
+.compact-building .compact-controls button{border-radius:9px;font-weight:800}
+.compact-building .compact-controls .compact-upgrade{width:100%;min-height:43px;font-size:14px;padding:8px 11px;background:linear-gradient(125deg,#43d5f0,#179aca);color:#051822;border-color:#48cfea}
+.compact-building .compact-controls .compact-upgrade:disabled{background:#203343;color:#8299ad;border-color:#344c5e}
+.compact-building .compact-controls .compact-demolish{width:auto;min-height:34px;font-size:11px;padding:7px 10px;background:#17232f;color:#dda895;border-color:#6b5651}
+.compact-building .compact-reason{font-size:11px;color:#efc97c;margin:8px 0 0;line-height:1.35}
+.compact-building .compact-demolish-reason{color:#ba958a}
+.compact-building-dialog{width:min(470px,calc(100vw - 25px));max-height:calc(100dvh - 28px);overflow-y:auto;border:1px solid #476479;border-radius:16px;background:linear-gradient(160deg,#142d3d,#0b1928);color:#ebf3fa;padding:21px;box-shadow:0 24px 90px #0009}
+.compact-building-dialog::backdrop{background:#020911bc;backdrop-filter:blur(3px)}
+.compact-building-dialog h2{font-size:22px;margin:8px 0}
+.compact-building-dialog p{font-size:13px;color:#afc9d7}
+.compact-building-dialog .compact-dialog-head{display:flex;justify-content:space-between;align-items:center}
+.compact-building-dialog .compact-dialog-head button{font-size:26px;line-height:1}
+.compact-building-dialog .compact-dialog-facts{display:grid;grid-template-columns:1fr auto;gap:12px;background:#091a27;border:1px solid #244257;padding:13px;border-radius:10px;font-size:13px;align-items:center}
+.compact-building-dialog .compact-dialog-facts strong{display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.compact-building-dialog .compact-dialog-facts .compact-cost img{width:20px;height:20px}
+.compact-building-dialog .compact-dialog-done{margin-top:16px;width:100%}
+@media(min-width:1000px){.compact-build-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .compact-build-heading{padding:12px 0 7px}
+ .compact-build-heading h1{font-size:28px;margin:6px 0}
+ .compact-build-heading>p{font-size:11px;margin-bottom:7px;line-height:1.4}
+ .compact-build-list{gap:10px}
+ .compact-build-list .compact-building{padding:12px 12px 11px}
+ .compact-building .compact-upper{grid-template-columns:61px minmax(0,1fr) auto;gap:10px}
+ .compact-building .compact-building-icon{width:61px;height:61px}
+ .compact-building .compact-name-line h2{font-size:16px}
+ .compact-building .compact-level{font-size:9px;margin:5px 0}
+ .compact-building .compact-production{gap:5px;font-size:12px}
+ .compact-building .compact-production small{font-size:10px}
+ .compact-building .compact-energy{grid-template-columns:18px auto;gap:1px 3px}
+ .compact-building .compact-energy svg{width:18px;height:18px}
+ .compact-building .compact-energy strong{font-size:17px}
+ .compact-building .compact-below{margin-top:10px;padding-top:9px;gap:5px}
+ .compact-building .compact-costs{gap:5px}
+ .compact-building .compact-cost{gap:3px}
+ .compact-building .compact-cost img{width:22px;height:22px}
+ .compact-building .compact-cost strong{font-size:14px}
+ .compact-building .compact-time svg{width:14px;height:14px}
+ .compact-building .compact-time strong{font-size:11px}
+ .compact-building .build-actions.compact-controls{margin-top:10px}
+ .compact-building .compact-controls .compact-upgrade{min-height:40px;font-size:13px}
+ .compact-building .compact-controls .compact-demolish{font-size:11px;min-height:33px;padding:6px 9px}
+}
+@media(max-width:355px){
+ .compact-building .compact-upper{grid-template-columns:51px minmax(0,1fr) auto;gap:7px}
+ .compact-building .compact-building-icon{width:51px;height:51px}
+ .compact-building .compact-name-line h2{font-size:14px}
+ .compact-building .compact-cost img{width:18px;height:18px}
+ .compact-building .compact-cost strong{font-size:12px}
+ .compact-building .compact-time strong{font-size:10px}
+}
