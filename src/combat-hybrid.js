@@ -2,6 +2,7 @@
 // Intentionally not enabled for live missions until log/report compatibility is validated.
 import {COMBAT,combatStats} from './combat.js';
 import {SHIPS,RES,vector} from './config.js';
+import {combatConfigForRealm} from './realm-config.js';
 
 function seeded(seed){
  let x=2166136261;
@@ -75,6 +76,35 @@ function fireLocked(shooters,enemies,random,summary){
   }
  }
 }
+// v6 simulator: a ship locks its regular shots to one target, then may
+// earn additional FULL salvos against eligible targets. Damage is simultaneous.
+// An extra salvo uses the selected target's pair probability; failed rolls stop
+// the chain. Target selection for each extra salvo still follows priorities.
+function fireRapid(shooters,enemies,random,summary,rapid){
+ for(const s of shooters){
+  if(!s.count||!s.stat.attack)continue;
+  const pool=candidates(s,enemies);
+  if(!pool.length)continue;
+  const shots=s.stat.shots;
+  for(let unit=0;unit<s.count;unit++){
+   let picked=sampled(pool,random),extra=0;
+   while(picked){
+    const [target,index]=picked,bonus=s.stat.bonus?.[target.key]||0;
+    const damage=s.stat.attack*(1+bonus);
+    target.damage.set(index,(target.damage.get(index)||0)+damage);
+    const k=s.key+':'+target.key;
+    const item=summary[k]??={shooter:s.key,target:target.key,shots:0,damage:0,rapidFireShots:0,rapidFireDamage:0,extraSalvos:0};
+    item.shots+=shots;item.damage+=damage;
+    if(extra){item.rapidFireShots+=shots;item.rapidFireDamage+=damage;item.extraSalvos++;}
+    if(!rapid.enabled||extra>=rapid.maxExtraSalvos)break;
+    const chance=rapid.chances[s.key]?.[target.key]??0;
+    if(!chance||random()>=chance)break;
+    extra++;
+    picked=sampled(pool,random);
+   }
+  }
+ }
+}
 function applyDamage(groups){
  const impacts=[];
  for(const g of groups){
@@ -107,9 +137,11 @@ function result(groups){
 }
 function total(groups){return groups.reduce((n,g)=>n+g.count,0);}
 function groupSummary(groups,side){return groups.map(g=>({side,key:g.key,groupId:g.id,...(g.owner?{owner:g.owner}:{}),count:g.count}));}
-export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4){
- if(experimentalVersion!==4&&experimentalVersion!==5)throw Error('Unknown hybrid rules version');
- const fireRound=experimentalVersion===5?fireLocked:fire;
+export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4,realmOverrides={}){
+ if(![4,5,6].includes(experimentalVersion))throw Error('Unknown hybrid rules version');
+ const rapid=experimentalVersion===6?combatConfigForRealm(realmOverrides).rapidFire:null;
+ const fireRound=experimentalVersion===5?fireLocked:experimentalVersion===6?
+  (shooters,enemies,random,summary)=>fireRapid(shooters,enemies,random,summary,rapid):fire;
  const a=cohorts(attacker,'attacker'),d=cohorts(defender,'host'),random=seeded(seed),rounds=[],aggregates=[];
  const initialGroups=[...groupSummary(a,'attacker'),...groupSummary(d,'defender')];
  for(let round=0;round<=6;round++){
@@ -119,7 +151,8 @@ export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4
   if(opening&&!platforms.length)continue;
   const shots={};
   if(!opening)fireRound(a,d,random,shots);
-  fireRound(opening?platforms:d,a,random,shots);
+  if(opening&&experimentalVersion===6&&!rapid.allowInOrbitalOpening)fireLocked(platforms,a,random,shots);
+  else fireRound(opening?platforms:d,a,random,shots);
   const impacts=applyDamage([...a,...d]);
   rounds.push({round,attacker:total(a),defender:total(d)});
   aggregates.push({round,shots:Object.values(shots),impacts,after:{attacker:{count:total(a)},defender:{count:total(d)}}});
@@ -151,8 +184,14 @@ export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4
   trace:{version:2,ruleVersion:experimentalVersion,seed:String(seed),initialGroups,
    finalGroups:[...groupSummary(a,'attacker'),...groupSummary(d,'defender')],
    tech:{attacker:{...attacker.tech},defender:{...defender.tech}},
-   shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},rounds:aggregates}};
+   shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},
+   ...(experimentalVersion===6?{rapidFireRules:rapid}:{}),rounds:aggregates}};
 }
 
 // Benchmark-only. Not routed from server-world or selectable in production.
 export function resolveBattleHybridV5(attacker,defender,seed){return resolveBattleHybrid(attacker,defender,seed,5);}
+
+// Benchmark-only v6, deliberately not wired into the PvP server or admin controls.
+export function resolveBattleHybridV6(attacker,defender,seed,realmOverrides={}){
+ return resolveBattleHybrid(attacker,defender,seed,6,realmOverrides);
+}
