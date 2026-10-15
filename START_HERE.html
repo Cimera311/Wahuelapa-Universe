@@ -406,6 +406,138 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
  .demolition-details{grid-template-columns:1fr}
  .demolition-buttons{flex-direction:column-reverse}
 }
+
+
+/* WaHueLaPa Compact: approved building-card design (original building and resource artwork). */
+.compact-build-list{gap:10px}
+.compact-build-list .compact-building{display:block;min-width:0;padding:15px 16px 14px;border-color:#2b485b;border-radius:14px;background:linear-gradient(148deg,#122b3ce8,#0b1b2bf5)}
+.compact-building .compact-upper{display:grid;grid-template-columns:75px minmax(0,1fr) auto;align-items:center;gap:13px}
+.compact-building .compact-building-icon{width:75px;height:75px;padding:3px;border:1px solid #32576b;border-radius:12px;background:radial-gradient(at 25% 25%,#28465b,#0a1b29);overflow:hidden}
+.compact-building .compact-building-icon img{width:100%;height:100%;object-fit:contain}
+.compact-building .compact-building-main{min-width:0;width:auto!important}
+.compact-building .compact-name-line{display:flex;gap:7px;align-items:center;min-width:0}
+.compact-building .compact-name-line h2{font-size:19px;letter-spacing:-.2px;margin:0;line-height:1.12;overflow-wrap:anywhere}
+.compact-building .compact-info{border:0;background:transparent;color:#92b7c9;box-shadow:none;padding:3px 5px;min-height:28px;min-width:28px;font-size:16px;line-height:1;flex:none}
+.compact-building .compact-level{font-size:10px;color:#8eacbc;letter-spacing:.7px;display:block;margin:6px 0 7px;font-weight:750}
+.compact-building .compact-level span{color:#60cee7}
+.compact-building .compact-production{display:flex;align-items:center;gap:7px;font-size:13px;font-variant-numeric:tabular-nums;color:#b5cad5;min-width:0}
+.compact-building .compact-production .compact-chev{color:#7393a5}
+.compact-building .compact-production strong{color:#89e5b1;font-weight:850}
+.compact-building .compact-production small{font-size:11px;color:#8caec2}
+.compact-building .compact-energy{display:grid;grid-template-columns:21px auto;gap:1px 4px;align-items:center;text-align:right;padding:3px 0;white-space:nowrap;font-variant-numeric:tabular-nums;max-width:155px}
+.compact-building .compact-energy svg{width:21px;height:21px;filter:drop-shadow(0 1px 4px #e5b62555)}
+.compact-building .compact-energy strong{font-size:20px;font-weight:850;color:#83e5a8;letter-spacing:-.45px}
+.compact-building .compact-energy small{grid-column:1/-1;color:#8baabe;font-size:10px}
+.compact-building .compact-energy-warning strong{color:#f6c66c}
+.compact-building .compact-energy-alert{grid-column:1/-1;color:#f6c66c;font-size:11px}
+.compact-building .compact-below{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid #294354;margin-top:13px;padding-top:11px}
+.compact-building .compact-costs{display:flex;gap:10px;flex-wrap:wrap;min-width:0}
+.compact-building .compact-cost,.compact-building-dialog .compact-cost{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums;min-width:0}
+.compact-building .compact-cost img{width:26px;height:26px;margin:0;object-fit:contain;flex:none}
+.compact-building .compact-cost strong{font-size:17px;letter-spacing:-.35px;color:#e9f4fb;white-space:nowrap}
+.compact-building .compact-time{display:inline-flex;align-items:center;gap:5px;color:#a3c3d2;white-space:nowrap}
+.compact-building .compact-time strong{font-size:12px;font-weight:700}
+.compact-building .build-actions.compact-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px;align-items:center;width:100%;min-width:0}
+.compact-building .compact-controls button{border-radius:9px;font-weight:800}
+.compact-building .compact-controls .compact-upgrade{width:100%;min-height:43px;font-size:14px;padding:8px 11px;background:linear-gradient(125deg,#43d5f0,#179aca);color:#051822;border-color:#48cfea}
+.compact-building .compact-controls .compact-upgrade:disabled{background:#203343;color:#8299ad;border-color:#344c5e}
+.compact-building .compact-controls .compact-demolish{width:auto;min-height:34px;font-size:11px;padding:7px 10px;background:#17232f;color:#dda895;border-color:#6b5651}
+.compact-building .compact-reason{font-size:11px;color:#efc97c;margin:8px 0 0;line-height:1.35}
+.compact-building .compact-demolish-reason{color:#ba958a}
+.compact-building-dialog{width:min(470px,calc(100vw - 25px));max-height:calc(100dvh - 28px);overflow-y:auto;border:1px solid #476479;border-radius:16px;background:linear-gradient(160deg,#142d3d,#0b1928);color:#ebf3fa;padding:21px;box-shadow:0 24px 90px #0009}
+.compact-building-dialog::backdrop{background:#020911bc;backdrop-filter:blur(3px)}
+.compact-building-dialog h2{font-size:22px;margin:8px 0}
+.compact-building-dialog p{font-size:13px;color:#afc9d7}
+.compact-building-dialog .compact-dialog-head{display:flex;justify-content:space-between;align-items:center}
+.compact-building-dialog .compact-dialog-head button{font-size:26px;line-height:1}
+.compact-building-dialog .compact-dialog-facts{display:grid;grid-template-columns:1fr auto;gap:12px;background:#091a27;border:1px solid #244257;padding:13px;border-radius:10px;font-size:13px;align-items:center}
+.compact-building-dialog .compact-dialog-facts strong{display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.compact-building-dialog .compact-dialog-facts .compact-cost img{width:20px;height:20px}
+.compact-building-dialog .compact-dialog-done{margin-top:16px;width:100%}
+@media(min-width:1000px){.compact-build-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .compact-build-heading{padding:12px 0 7px}
+ .compact-build-heading h1{font-size:28px;margin:6px 0}
+ .compact-build-heading>p{font-size:11px;margin-bottom:7px;line-height:1.4}
+ .compact-build-list{gap:10px}
+ .compact-build-list .compact-building{padding:12px 12px 11px}
+ .compact-building .compact-upper{grid-template-columns:61px minmax(0,1fr) auto;gap:10px}
+ .compact-building .compact-building-icon{width:61px;height:61px}
+ .compact-building .compact-name-line h2{font-size:16px}
+ .compact-building .compact-level{font-size:9px;margin:5px 0}
+ .compact-building .compact-production{gap:5px;font-size:12px}
+ .compact-building .compact-production small{font-size:10px}
+ .compact-building .compact-energy{grid-template-columns:18px auto;gap:1px 3px}
+ .compact-building .compact-energy svg{width:18px;height:18px}
+ .compact-building .compact-energy strong{font-size:17px}
+ .compact-building .compact-below{margin-top:10px;padding-top:9px;gap:5px}
+ .compact-building .compact-costs{gap:5px}
+ .compact-building .compact-cost{gap:3px}
+ .compact-building .compact-cost img{width:22px;height:22px}
+ .compact-building .compact-cost strong{font-size:14px}
+ .compact-building .compact-time svg{width:14px;height:14px}
+ .compact-building .compact-time strong{font-size:11px}
+ .compact-building .build-actions.compact-controls{margin-top:10px}
+ .compact-building .compact-controls .compact-upgrade{min-height:40px;font-size:13px}
+ .compact-building .compact-controls .compact-demolish{font-size:11px;min-height:33px;padding:6px 9px}
+}
+@media(max-width:355px){
+ .compact-building .compact-upper{grid-template-columns:51px minmax(0,1fr) auto;gap:7px}
+ .compact-building .compact-building-icon{width:51px;height:51px}
+ .compact-building .compact-name-line h2{font-size:14px}
+ .compact-building .compact-cost img{width:18px;height:18px}
+ .compact-building .compact-cost strong{font-size:12px}
+ .compact-building .compact-time strong{font-size:10px}
+}
+
+
+/* Small collapse-all shortcut for the orbit fleet inventory. */
+.fleet-stock-tools{display:flex;align-items:center;gap:8px;min-width:0}
+.fleet-stock-tools .fleet-collapse-all{display:inline-flex;align-items:center;justify-content:center;flex:none;width:38px;height:38px;min-width:38px;min-height:38px;padding:7px;border-radius:9px;background:#102b3b;border:1px solid #315d71;color:#9bd9eb;box-shadow:none;cursor:pointer}
+.fleet-stock-tools .fleet-collapse-all svg{display:block;width:19px;height:19px}
+.fleet-stock-tools .fleet-collapse-all:hover{background:#154154;border-color:#3cc8e4;color:#d6f7ff}
+.fleet-stock-tools .fleet-collapse-all:focus-visible{outline:2px solid #8ceeff;outline-offset:3px}
+@media(max-width:600px){
+ .fleet-stock-tools{width:100%}
+ .fleet-stock-tools .fleet-stock-switch{width:auto;flex:1;min-width:0}
+ .fleet-stock-tools .fleet-stock-switch button{min-width:0;flex:1;padding:10px 7px;font-size:12px}
+ .fleet-stock-tools .fleet-collapse-all{width:38px;height:38px}
+}
+
+
+/* Tutorial solar system: show the homeworld Aurelia as a fourth real planet.
+   All visuals reuse existing art; the TARGETS list/gameplay stays unchanged. */
+.tutorial-system-banner{height:170px;isolation:isolate}
+.tutorial-system-banner .sun{left:8.5%;top:42%;z-index:2;pointer-events:none}
+.tutorial-system-banner .map-planet{
+ display:block;box-sizing:content-box;z-index:3;transform:translateX(-50%);
+ width:max-content;max-width:18%;min-width:42px;text-align:center;white-space:nowrap;
+ padding:32px 0 0;color:#aee3fd;font-size:12px;line-height:1.2;
+ text-shadow:0 1px 5px #00131ff0;
+}
+.tutorial-system-banner .map-planet::before{
+ left:50%;transform:translateX(-50%);
+ width:25px;height:25px;top:0;
+ background:radial-gradient(circle at 28% 23%,#ccf5ff88 0,transparent 46%),radial-gradient(circle at 35% 35%,var(--planet),#061a2c 80%);
+ box-shadow:0 0 12px #67cff046;
+}
+.tutorial-system-banner .map-home::before{
+ width:29px;height:29px;top:-2px;
+ background:#063153 url('./assets/home.webp') center/contain no-repeat;
+ box-shadow:0 0 10px #3ca6e891,0 0 0 1px #8cd8fa55;
+}
+@media(max-width:600px){
+ .tutorial-system-banner{height:146px}
+ .tutorial-system-banner .sun{left:9%;top:42%;width:77px;height:77px}
+ .tutorial-system-banner .map-planet{font-size:10px;min-width:35px;padding-top:29px}
+ .tutorial-system-banner .map-planet::before{width:21px;height:21px}
+ .tutorial-system-banner .map-home::before{width:25px;height:25px}
+ .tutorial-system-banner .map-home{left:24%!important}
+}
+@media(max-width:380px){
+ .tutorial-system-banner .sun{width:65px;height:65px}
+ .tutorial-system-banner .map-planet{font-size:9px;letter-spacing:-.15px}
+}
 </style></head><body><div id="app"></div><div id="toast" role="status" aria-live="polite"></div><script type="module">const RES = ['metal','crystal','fuel'];
 const LABEL = {metal:'Metall',crystal:'Kristall',fuel:'Treibstoff'};
 const ICON = {metal:'◈',crystal:'◆',fuel:'▰'};
@@ -419,7 +551,7 @@ const BUILDINGS = {
  shipyard:{name:'Schiffswerft',icon:'⚒',cost:[200,100,0],time:12,description:'Ab Stufe 2 verkürzt jede weitere Stufe die Bauzeit neuer Aufträge um 8 % gegenüber der vorherigen Stufe. Verbraucht dauerhaft Strom; Strommangel bremst den Schiffbau.',requires:{building:'lab',level:1}},
  robotics:{name:'Arbeitsroboter',icon:'⚙',cost:[400,300,60],time:20,description:'Verkürzen neue Bauaufträge um 8 % je Stufe.',requires:{tech:'engineering',level:1}},
  repairDock:{asset:'./assets/pvp-resource-v1/actions/repair.webp',name:'Reparaturdock',icon:'⚒',cost:[1200,800,300],time:60,description:'Repariert beschädigte Einheiten im Orbit. Eigene Warteschlange; jede weitere Stufe verkürzt neue Reparaturen um 8 %. Verbraucht Energie.',requires:{building:'shipyard',level:2}},
- orbital:{asset:'./assets/pvp-resource-v1/buildings/orbital.webp',name:'Orbitalwerft',icon:'◎',cost:[600,400,120],time:60,description:'Eigenständige Werft für künftige Verteidigungsplattformen. Verbraucht dauerhaft Energie. Jede Ausbaustufe wird die Bauzeit verkürzen und einen zusätzlichen Auftragsplatz ermöglichen (maximal 20).',requires:{tech:'military',level:1}},
+ orbital:{asset:'./assets/pvp-resource-v1/buildings/orbital.webp',name:'Orbitalwerft',icon:'◎',cost:[200,100,0],time:60,description:'Produziert Orbitalgeschütze. Ausbaukosten wie bei der Schiffswerft: Metall und Kristall, kein Treibstoff. Verbraucht dauerhaft Energie. Jede Ausbaustufe verkürzt die Bauzeit und ermöglicht einen zusätzlichen Auftragsplatz (maximal 20).',requires:{tech:'military',level:1}},
  bunker:{asset:'./assets/pvp-resource-v1/buildings/bunker.webp',name:'Ressourcenbunker',icon:'▣',cost:[450,300,80],time:45,description:'Je Stufe schützt er 2,5 % der Lagerkapazität, insgesamt maximal 2000 je Rohstoff.',requires:{tech:'military',level:1}},
  tidal:{name:'Gezeitenkraftwerk',icon:'≈',cost:[700,450,80],time:30,description:'Liefert 180 × Stufe^Realm-Faktor Energie auf Ozeanwelten.',requires:{tech:'energy',level:3},ocean:true}
 };
@@ -786,7 +918,7 @@ const DEMOLITION_TIME=.25;
 // Level is zero-based: the original cost/time for completed level N uses index N-1.
 function buildingLevelCost(key,index){
  const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');
- return key==='orbital'&&index>=4?vector(b.cost.map(v=>Math.ceil(v*Math.pow(1.6,3)*Math.pow(1.08,index-3)))):costAt(b,index);
+ return costAt(b,index);
 }
 function buildingLevelTime(s,p,key,index){
  const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');
@@ -1362,6 +1494,11 @@ function cargoStep(capacity){return Math.max(1,Math.floor(capacity*.05));}
 function clampFleetCount(value,available){return Math.max(0,Math.min(available,Math.floor(Number(value)||0)));}
 
 const GAME_NEWS=[
+ {date:'14.10.2026',title:'🏗️ Gebäude rückbauen! 🔻',status:'🏗️ Gebäuderückbau #69',items:[
+ '🔻 Ab sofort kannst du Gebäudestufen einzeln zurückbauen – mit Bestätigungsfenster, 20 % Material zurück und 25 % der ursprünglichen Bauzeit! 💰⏳',
+ '⚡ Die Auswirkungen auf deine Energieversorgung siehst du vor dem Rückbau.',
+ '🐞 Fällt euch etwas auf? Bitte in der Wünschebox oder im Chat melden! ❤️'
+ ]},
  {date:'14.10.2026',title:'⚙️ Weniger Serverlast, gleiche Raumschlachten! 🚀',status:'🛠️ Performance-Update #68',items:[
  '🚀 Der Serverabgleich wurde optimiert: weniger unnötige Anfragen und Datenbank-Updates.',
  '⚔️ Aktive Angriffe bleiben aktuell. Kampfregeln, Flugzeiten und Beute sind unverändert.',
@@ -1572,12 +1709,12 @@ function fleetInventory(planets,category='all'){
  }).filter(row=>row.total>0).sort((a,b)=>b.total-a.total||a.ship.name.localeCompare(b.ship.name,'de'));
 }
 
-function fleetOverviewHTML(planets,{group='ship',category='all',expanded=new Map(),mobile=false}={}){
+function fleetOverviewHTML(planets,{group='ship',category='all',expanded=new Map(),mobile=false,collapsed=false}={}){
  const inventory=fleetInventory(planets,category);
  const controls=(items,action,value)=>items.map(([key,label])=>`<button type="button" data-action="${action}" data-value="${key}" aria-pressed="${value===key}">${label}</button>`).join('');
  const picture=(src)=>`<img src="${stockEscape(src)}" alt="" loading="lazy" decoding="async">`;
  const damageBadge=key=>{const targets=key.startsWith('ship:')?planets.map(p=>[p,key.slice(5)]):Object.keys(SHIPS).map(k=>[planets.find(p=>p.id===key.slice(7)),k]);const damaged=targets.reduce((n,[p,k])=>n+(p?orbitCondition(p,k).damaged:0),0);return damaged?`<small class="amber fleet-damage-badge">⚠ ${fleetNumber(damaged)} beschädigt</small>`:'';};
- const detail=(key,title,art,total,body,index)=>`<details class="fleet-stock-card" data-fleet-detail="${stockEscape(key)}" ${(expanded.has(key)?expanded.get(key):!mobile||index===0)?'open':''}><summary>${picture(art)}<span><strong>${stockEscape(title)}</strong><span class="fleet-stock-total">${fleetNumber(total)} <small>im Orbit</small></span>${damageBadge(key)}</span><span class="fleet-stock-chevron" aria-hidden="true">⌄</span></summary><div class="fleet-stock-body">${body}</div></details>`;
+ const detail=(key,title,art,total,body,index)=>`<details class="fleet-stock-card" data-fleet-detail="${stockEscape(key)}" ${(expanded.has(key)?expanded.get(key):!collapsed&&(!mobile||index===0))?'open':''}><summary>${picture(art)}<span><strong>${stockEscape(title)}</strong><span class="fleet-stock-total">${fleetNumber(total)} <small>im Orbit</small></span>${damageBadge(key)}</span><span class="fleet-stock-chevron" aria-hidden="true">⌄</span></summary><div class="fleet-stock-body">${body}</div></details>`;
  const row=(art,name,count,note='')=>`<div class="fleet-stock-row">${picture(art)}<span>${stockEscape(name)}${note?`<small>${stockEscape(note)}</small>`:''}</span><strong>${fleetNumber(count)}</strong></div>`;
  const cards=group==='ship'?inventory.map((item,i)=>detail('ship:'+item.key,item.ship.name,fleetArt(item.key),item.total,`<p class="fleet-stock-label">Standorte</p>${item.locations.map(({planet,count})=>'<div class="fleet-stock-entry">'+row(planetImagePath(planet),planet.name,count,planet.coord||'')+orbitConditionHTML(planet,item.key)+'</div>').join('')}`,i)).join(''):planets.map((p,i)=>{
   const items=inventory.filter(item=>item.locations.some(loc=>loc.planet.id===p.id));
@@ -1585,7 +1722,7 @@ function fleetOverviewHTML(planets,{group='ship',category='all',expanded=new Map
   const body=items.length?fleetFilters.slice(1).map(([key,label])=>{const matching=items.filter(item=>item.ship.category===key);return matching.length?`<p class="fleet-stock-label">${label}</p>${matching.map(item=>'<div class="fleet-stock-entry">'+row(fleetArt(item.key),item.ship.name,orbitCondition(p,item.key).total)+orbitConditionHTML(p,item.key)+'</div>').join('')}`:'';}).join(''):`<p class="fine">${category==='all'?'Keine Einheiten im Orbit.':'Keine Einheiten dieser Kategorie.'}</p>`;
   return detail('planet:'+p.id,p.name,planetImagePath(p),total,body,i);
  }).join('');
- return `<div class="fleet-stock-heading"><div><h2>Gesamte Flotte</h2><p class="fine">Alle eigenen Planeten im Überblick · Einheiten im Orbit</p></div><div class="fleet-stock-switch" role="group" aria-label="Flotte gruppieren">${controls([['ship','Nach Schiff'],['planet','Nach Planet']],'fleet-group',group)}</div></div><div class="fleet-stock-filters" role="group" aria-label="Einheiten filtern">${controls(fleetFilters,'fleet-filter',category)}</div><div class="fleet-stock-grid">${cards||'<p class="fine" role="status">Keine Einheiten dieser Kategorie im Orbit.</p>'}</div>`;
+ return `<div class="fleet-stock-heading"><div><h2>Gesamte Flotte</h2><p class="fine">Alle eigenen Planeten im Überblick · Einheiten im Orbit</p></div><div class="fleet-stock-tools"><div class="fleet-stock-switch" role="group" aria-label="Flotte gruppieren">${controls([['ship','Nach Schiff'],['planet','Nach Planet']],'fleet-group',group)}</div><button type="button" class="fleet-collapse-all" data-action="fleet-collapse-all" aria-label="Alle Flottenkarten zuklappen" title="Alle zuklappen" aria-controls="fleet-stock-grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="m5 18 7-7 7 7M5 12l7-7 7 7"/></svg></button></div></div><div class="fleet-stock-filters" role="group" aria-label="Einheiten filtern">${controls(fleetFilters,'fleet-filter',category)}</div><div class="fleet-stock-grid" id="fleet-stock-grid">${cards||'<p class="fine" role="status">Keine Einheiten dieser Kategorie im Orbit.</p>'}</div>`;
 }
 
 function fleetMissionProgress(m,now){
@@ -1858,8 +1995,69 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-production
  const pref=tutorialPreference();try{localStorage.setItem(tutorialPreferenceKey(),JSON.stringify({...pref,completed:!tutorialGoal(),dismissed:b.dataset.action==='tutorial-dismiss'}));}catch{toast('Tutorial-Einstellung konnte nicht gespeichert werden.');return;}
  if(b.dataset.action==='tutorial-reopen'){document.querySelector('dialog')?.close();tab='overview';}render();
 });
-function buildingEnergy(p,key){const next=structuredClone(p);next.buildings[key]++;const now=stats(state,p),after=stats(state,next),extra=after.demand-now.demand,gain=after.supply-now.supply,balance=after.supply-after.demand,n=v=>v.toLocaleString('de-DE',{maximumFractionDigits:2});return `<p class="fine ${balance<0?'amber':'cyan'}">${resourceIcon("energy")} ${extra>0?`Nächste Stufe benötigt +${n(extra)} Energie`:gain>0?`Nächste Stufe liefert +${n(gain)} Energie`:'Kein zusätzlicher Energiebedarf'} · ${balance<0?`Danach fehlen ${n(-balance)} Energie`:`Danach ${n(balance)} Energie frei`}</p>`;}
-function buildings(p){return `<div class="page-heading"><span class="eyebrow">${esc(p.name)}</span><h1>Bauen</h1><p>Ein Bau- oder Rückbauauftrag pro Planet. Forschungen laufen parallel.</p></div>${p.build?progress(p.build,`${BUILDINGS[p.build.key].name} → Stufe ${p.build.level}${p.build.kind==='demolish'?' · Rückbau':''}`):''}<div class="list">${Object.entries(BUILDINGS).map(([key,b])=>{const inf=buildInfo(state,p,key),reason=(key==='repairDock'&&cloud?.authoritative&&!cloud.pvp?.features?.repairDock?'Reparaturdock benötigt die neue Serverversion.':'')||inf.reason||(p.build?'Bauplatz belegt.':'')||(!affordable(p,inf.cost)?'Lokale Ressourcen fehlen.':'');const l=p.buildings[key],dem=l?demolishInfo(state,p,key):null,demReason=dem&&((cloud?.authoritative&&!cloud.pvp?.features?.buildingDemolition?'Rückbau benötigt die neue Serverversion.':'')||dem.reason);let effect=b.description;if(RES.includes(key)){const next=structuredClone(p);next.buildings[key]++;effect=`Förderung jetzt ${fmt(stats(state,p).rates[key])}/Std · nächste Stufe ${fmt(stats(state,next).rates[key])}/Std (aktuelle Energieversorgung).`;}return `<article class="panel build-row ${inf.reason?'locked':''}"><div class="item-icon asset-item"><img src="${b.asset||'./assets/buildings-research-v1/buildings/'+key+'.webp'}" alt="" width="96" height="96" loading="lazy" decoding="async"></div><div class="item-copy"><h2>${b.name} <span class="muted">· Stufe ${l}</span></h2><p>${effect}</p>${buildingEnergy(p,key)}<div class="cost">${costHTML(inf.cost)}<span>◷ ${duration(inf.ms)}</span></div>${reason?`<div class="requirement">${esc(reason)}</div>`:''}${l&&demReason?`<p class="fine amber">Rückbau: ${esc(demReason)}</p>`:''}</div><div class="build-actions">${button(`Stufe ${l+1} bauen`,'build',`data-key="${key}"`,reason||readOnly)}${l?button(`↘ Stufe ${l} rückbauen`,'demolish-open',`data-key="${key}" data-planet="${esc(p.id)}" class="demolish-open"`,demReason||readOnly||cloudBlocked||galaxyBusy||cloudSaving):''}</div></article>`;}).join('')}</div>`;}
+// Compact building cards use the existing in-game assets and real quoted values.
+const COMPACT_BOLT='<svg viewBox="0 0 24 24" width="21" height="21" fill="#f8ce45" stroke="#f8ce45" stroke-linejoin="round" stroke-width="1.6" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-12h-7l0-8Z"/></svg>';
+const COMPACT_CLOCK='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>';
+const compactNumber=n=>Number(n).toLocaleString('de-DE',{maximumFractionDigits:1});
+function compactProduction(p,key){
+ const now=stats(state,p),future=structuredClone(p);future.buildings[key]++;const after=stats(state,future);
+ let current,next,unit='';
+ if(RES.includes(key)){current=now.rates[key];next=after.rates[key];unit='/h';}
+ else if(key==='solar'||key==='tidal'){current=now.supply;next=after.supply;unit='⚡';}
+ else if(key==='warehouse'){current=now.cap;next=after.cap;unit='Lager';}
+ else return '';
+ const caption=RES.includes(key)?'Förderung':key==='warehouse'?'Lagerkapazität':'Energieproduktion';
+ return `<div class="compact-production" aria-label="${caption}: ${compactNumber(current)} auf ${compactNumber(next)}"><span>${compactNumber(current)}</span><span class="compact-chev" aria-hidden="true">➜</span><strong>${compactNumber(next)}</strong><small>${unit}</small></div>`;
+}
+function buildingEnergy(p,key){
+ const next=structuredClone(p);next.buildings[key]++;
+ const now=stats(state,p),after=stats(state,next),extra=after.demand-now.demand,gain=after.supply-now.supply,balance=after.supply-after.demand;
+ const generating=gain>0,delta=generating?gain:extra;
+ const full=`${generating?'Erzeugung steigt um':extra>0?'Energiebedarf steigt um':'Keine Änderung der Energie'} ${compactNumber(delta)}. Danach ${balance<0?'fehlen '+compactNumber(-balance):'sind '+compactNumber(balance)+' frei'} Energie.`;
+ return `<div class="compact-energy ${balance<0?'compact-energy-warning':''}" title="${esc(full)}" aria-label="${esc(full)}">${COMPACT_BOLT}<strong>${delta>0?'+':''}${compactNumber(delta)}</strong><small>${generating?'Ertrag':extra>0?'Bedarf':'neutral'}</small>${balance<0?'<span class="compact-energy-alert" aria-hidden="true">⚠</span>':''}</div>`;
+}
+function compactCost(cost){
+ return RES.filter(key=>cost[key]>0).map(key=>`<span class="compact-cost" aria-label="${LABEL[key]}: ${compactNumber(cost[key])}">${resourceIcon(key)}<strong>${fmt(cost[key])}</strong></span>`).join('');
+}
+function buildings(p){
+ return `<div class="page-heading compact-build-heading"><span class="eyebrow">${esc(p.name)}</span><h1>Bauen</h1><p>Ein Bau- oder Rückbauauftrag pro Planet. Forschungen laufen parallel.</p></div>
+ ${p.build?progress(p.build,`${BUILDINGS[p.build.key].name} → Stufe ${p.build.level}${p.build.kind==='demolish'?' · Rückbau':''}`):''}
+ <div class="list compact-build-list">${Object.entries(BUILDINGS).map(([key,b])=>{
+  const inf=buildInfo(state,p,key),l=p.buildings[key];
+  const reason=(key==='repairDock'&&cloud?.authoritative&&!cloud.pvp?.features?.repairDock?'Reparaturdock benötigt die neue Serverversion.':'')||inf.reason||(p.build?'Bauplatz belegt.':'')||(!affordable(p,inf.cost)?'Lokale Ressourcen fehlen.':'');
+  const dem=l?demolishInfo(state,p,key):null,demReason=dem&&((cloud?.authoritative&&!cloud.pvp?.features?.buildingDemolition?'Rückbau benötigt die neue Serverversion.':'')||dem.reason);
+  const picture=b.asset||'./assets/buildings-research-v1/buildings/'+key+'.webp';
+  return `<article class="panel build-row compact-building ${inf.reason?'locked':''}" data-building-key="${key}">
+   <div class="compact-upper">
+    <div class="item-icon asset-item compact-building-icon"><img src="${picture}" alt="" width="96" height="96" loading="lazy" decoding="async"></div>
+    <div class="item-copy compact-building-main">
+     <div class="compact-name-line"><h2>${b.name}</h2>${button('ⓘ','building-info',`data-key="${key}" data-planet="${esc(p.id)}" class="compact-info" aria-label="Details zu ${esc(b.name)}" title="Gebäudedetails"`)}</div>
+     <span class="compact-level">STUFE ${l} <span>→ ${l+1}</span></span>
+     ${compactProduction(p,key)}
+    </div>
+    ${buildingEnergy(p,key)}
+   </div>
+   <div class="compact-below"><div class="compact-costs">${compactCost(inf.cost)}</div><span class="compact-time" aria-label="Bauzeit: ${duration(inf.ms)}">${COMPACT_CLOCK}<strong>${duration(inf.ms)}</strong></span></div>
+   <div class="build-actions compact-controls">
+    ${button(`↑ Stufe ${l+1} bauen`,'build',`data-key="${key}" class="compact-upgrade"`,reason||readOnly||cloudBlocked||galaxyBusy||cloudSaving)}
+    ${l?button('↘ Rückbau','demolish-open',`data-key="${key}" data-planet="${esc(p.id)}" class="demolish-open compact-demolish" title="${esc(demReason||`Stufe ${l} zurückbauen`)}" aria-label="${esc(b.name)} von Stufe ${l} zurückbauen"`,demReason||readOnly||cloudBlocked||galaxyBusy||cloudSaving):''}
+   </div>
+   ${reason?`<p class="compact-reason" role="status">⚠ ${esc(reason)}</p>`:''}
+   ${l&&demReason&&!reason?`<p class="compact-reason compact-demolish-reason" role="status">↘ ${esc(demReason)}</p>`:''}
+  </article>`;
+ }).join('')}</div>`;
+}
+function openBuildingDetails(key,planet){
+ if(!state||!Object.hasOwn(BUILDINGS,key))return;
+ const p=getPlanet(state,planet),b=BUILDINGS[key],inf=buildInfo(state,p,key),l=p.buildings[key];
+ const next=structuredClone(p);next.buildings[key]++;const before=stats(state,p),after=stats(state,next),balance=after.supply-after.demand;
+ document.querySelector('dialog')?.remove();
+ const d=document.createElement('dialog');d.className='compact-building-dialog';
+ d.innerHTML=`<div class="compact-dialog-head"><span class="eyebrow">GEBÄUDEDETAILS</span><button type="button" class="plain" data-compact-close aria-label="Schließen">×</button></div><h2>${esc(b.name)} · Stufe ${l}</h2><p>${esc(b.description)}</p><div class="compact-dialog-facts"><span>⚡ Energiebilanz nach Ausbau</span><strong class="${balance<0?'amber':'cyan'}">${balance<0?'-':'+'}${compactNumber(Math.abs(balance))}</strong><span>◷ Bauzeit</span><strong>${duration(inf.ms)}</strong><span>Baukosten</span><strong>${compactCost(inf.cost)||'Keine'}</strong></div>${inf.reason?`<p class="requirement">${esc(inf.reason)}</p>`:''}<button type="button" data-compact-close class="compact-dialog-done">Schließen</button>`;
+ d.addEventListener('click',event=>{if(event.target.closest('[data-compact-close]')){d.close();d.remove();}});
+ d.addEventListener('close',()=>d.remove(),{once:true});
+ document.body.append(d);d.showModal();
+}
 function openDemolitionDialog(key,planet){
  if(!state||readOnly||cloudBlocked||galaxyBusy||cloudSaving)return;
  const p=getPlanet(state,planet),q=demolishInfo(state,p,key);
@@ -1877,7 +2075,7 @@ function openDemolitionDialog(key,planet){
  d.addEventListener('close',()=>d.remove(),{once:true});document.body.append(d);d.showModal();
 }
 function research(p){return `<div class="page-heading"><span class="eyebrow">IMPERIUMSWEIT · LABOR ${p.buildings.lab} AUF ${esc(p.name)}</span><h1>Forschung</h1><p>Neue Möglichkeiten für alle deine Welten. Kosten werden hier bezahlt.</p></div><section class="panel"><h2>Vom Tutorial in die Galaxie</h2><p>Kolonisierung 1–3: drei Kolonien neben der Heimatwelt. Danach folgen Verbrennung → Staustrahl → Impuls → Hyperraum. Stufe 3 des vorherigen Antriebs öffnet die nächste Triebwerksforschung.</p><p class="fine">Neue Triebwerke: Stufe 1 schaltet die passende Kriegsschiffklasse frei, Stufe 2 den passenden Frachter. Jede Stufe verbessert nur Schiffe dieses Triebwerks. Kolonisierung 4/5/6 erfordert Staustrahl/Impuls/Hyperraum 1; diese zusätzlichen Plätze sind für die gemeinsame Galaxie. Fernsonde: Sensortechnik 2 + Staustrahl 1. Interstellares Kolonieschiff: Kolonisierung 4 + Staustrahl 1.</p></section>${state.research?progress(state.research,`${TECHS[state.research.key].name} → Stufe ${state.research.level}`):''}<div class="list">${Object.entries(TECHS).map(([key,t])=>{const inf=researchInfo(state,p,key),reason=inf.reason||(state.research?'Forschungslabor beschäftigt.':'')||(!affordable(p,inf.cost)?'Lokale Ressourcen fehlen.':'');return `<article class="panel build-row ${inf.reason?'locked':''}"><div class="item-icon asset-item"><img src="${t.asset||'./assets/buildings-research-v1/research/'+key+'.webp'}" alt="" width="96" height="96" loading="lazy" decoding="async"></div><div class="item-copy"><h2>${t.name} <span class="muted">· Stufe ${state.tech[key]} / ${t.max}</span></h2><p>${t.description}</p><div class="cost">${costHTML(inf.cost)}<span>◷ ${duration(inf.ms)}</span></div>${reason?`<div class="requirement">${esc(reason)}</div>`:''}</div>${button('Erforschen','research',`data-key="${key}"`,reason||readOnly)}</article>`;}).join('')}</div>`;}
-function tutorialGalaxy(p){return `<div class="page-heading"><span class="eyebrow">AUFBRUCH VON ${esc(p.name)}</span><h1>${esc(state.systemName||'Mein Sonnensystem')}</h1><form id="system-name-form"><label>Name deines Sonnensystems<input name="systemName" maxlength="30" required value="${esc(state.systemName||'')}" placeholder="z. B. Solara"></label><button ${readOnly||cloudBlocked||galaxyBusy?'disabled':''}>Namen speichern</button></form><p class="fine">Systemname und Commander-Name sind für angemeldete Spieler auf der Galaxiekarte sichtbar.</p><p>Erkunde und besiedle Ferrum, Nereus und Thalassa. Kolonisierung 1–3 erlaubt alle drei Kolonien neben deiner Heimatwelt.</p></div><div class="system-map"><span class="sun"></span>${TARGETS.map((t,i)=>`<span class="map-planet" style="--planet:${t.color};left:${28+i*25}%;top:${40+(i%2)*14}%">${state.discovered.includes(t.id)?t.name:'?'}</span>`).join('')}</div><div class="world-grid targets">${TARGETS.map(t=>{const known=state.discovered.includes(t.id),owned=state.planets.some(p=>p.id===t.id),mission=state.missions.find(m=>m.to===t.id&&m.type==='colony'),canColony=known&&!owned&&!mission&&state.planets.length-1+state.missions.filter(m=>m.type==='colony').length<state.tech.colonization&&p.ships.colony;const f=flightInfo(state,p,t,1,true);return `<article class="panel target"><div class="target-visual">${orb({...t,buildings:{}},'medium')}</div><span class="eyebrow">[${t.coord}]</span><h2>${known?t.name:'Unbekannte Welt'}</h2><p>${known?t.kind:'Ein Signal am Rand deines Systems.'}</p>${known?`<div class="yields">${RES.map((k,i)=>`<div><span>${LABEL[k]}</span><strong>×${t.mult[i].toLocaleString('de-DE')}</strong><div class="track"><i style="width:${Math.min(100,t.mult[i]/2*100)}%"></i></div></div>`).join('')}</div><p class="fine">Energiebedarf ×${t.energy} · ${t.ocean?'Gezeitenkraftwerke möglich':'Keine Gezeitenkraftwerke'}</p>`:'<div class="unknown">Vorkommen noch nicht bekannt</div>'}<p class="fine">Sonde: ${duration(f.ms)} je Strecke · ${f.fuel} Treibstoff insgesamt</p>${button('Sonde senden','probe',`data-to="${t.id}"`,!p.ships.probe||readOnly||p.system)}${known?button(owned?'Besiedelt':mission?'Kolonieschiff unterwegs':'Kolonisieren','colony',`data-to="${t.id}"`,!canColony||readOnly||p.system):''}${known&&!owned&&!mission?'<p class="fine">Benötigt freien Kolonieplatz + Kolonieschiff. Zusätzlich mitnehmen: 350 Metall, 250 Kristall, 100 Treibstoff.</p>':''}</article>`;}).join('')}</div><section class="panel"><h2>Vorbereitung</h2><p>Verfügbare Sonden: <strong>${p.ships.probe}</strong> · Kolonieschiffe: <strong>${p.ships.colony}</strong> · Tutorial-Kolonieplätze: <strong>${state.planets.length-1} / ${Math.min(3,state.tech.colonization)}</strong> · Spätere Galaxieplätze: <strong>${Math.max(0,state.tech.colonization-3)}</strong></p>${button('Zur Schiffswerft →','tab','data-tab="fleet"')}</section>`;}
+function tutorialGalaxy(p){return `<div class="page-heading"><span class="eyebrow">AUFBRUCH VON ${esc(p.name)}</span><h1>${esc(state.systemName||'Mein Sonnensystem')}</h1><form id="system-name-form"><label>Name deines Sonnensystems<input name="systemName" maxlength="30" required value="${esc(state.systemName||'')}" placeholder="z. B. Solara"></label><button ${readOnly||cloudBlocked||galaxyBusy?'disabled':''}>Namen speichern</button></form><p class="fine">Systemname und Commander-Name sind für angemeldete Spieler auf der Galaxiekarte sichtbar.</p><p>Erkunde und besiedle Ferrum, Nereus und Thalassa. Kolonisierung 1–3 erlaubt alle drei Kolonien neben deiner Heimatwelt.</p></div><div class="system-map tutorial-system-banner" role="img" aria-label="Tutorial-Sonnensystem: Sonne, ${esc(state.planets.find(q=>q.id==='home')?.name||'Aurelia')}, ${TARGETS.map(t=>state.discovered.includes(t.id)?esc(t.name):'unbekannter Planet').join(', ')}"><span class="sun" aria-hidden="true"></span><span class="map-planet map-home" style="--planet:#53add3;left:23%;top:20%" aria-hidden="true">${esc(state.planets.find(q=>q.id==='home')?.name||'Aurelia')}</span>${TARGETS.map((t,i)=>`<span class="map-planet" style="--planet:${t.color};left:${[42,62,83][i]}%;top:${[46,30,46][i]}%" aria-hidden="true">${state.discovered.includes(t.id)?esc(t.name):'?'}</span>`).join('')}</div><div class="world-grid targets">${TARGETS.map(t=>{const known=state.discovered.includes(t.id),owned=state.planets.some(p=>p.id===t.id),mission=state.missions.find(m=>m.to===t.id&&m.type==='colony'),canColony=known&&!owned&&!mission&&state.planets.length-1+state.missions.filter(m=>m.type==='colony').length<state.tech.colonization&&p.ships.colony;const f=flightInfo(state,p,t,1,true);return `<article class="panel target"><div class="target-visual">${orb({...t,buildings:{}},'medium')}</div><span class="eyebrow">[${t.coord}]</span><h2>${known?t.name:'Unbekannte Welt'}</h2><p>${known?t.kind:'Ein Signal am Rand deines Systems.'}</p>${known?`<div class="yields">${RES.map((k,i)=>`<div><span>${LABEL[k]}</span><strong>×${t.mult[i].toLocaleString('de-DE')}</strong><div class="track"><i style="width:${Math.min(100,t.mult[i]/2*100)}%"></i></div></div>`).join('')}</div><p class="fine">Energiebedarf ×${t.energy} · ${t.ocean?'Gezeitenkraftwerke möglich':'Keine Gezeitenkraftwerke'}</p>`:'<div class="unknown">Vorkommen noch nicht bekannt</div>'}<p class="fine">Sonde: ${duration(f.ms)} je Strecke · ${f.fuel} Treibstoff insgesamt</p>${button('Sonde senden','probe',`data-to="${t.id}"`,!p.ships.probe||readOnly||p.system)}${known?button(owned?'Besiedelt':mission?'Kolonieschiff unterwegs':'Kolonisieren','colony',`data-to="${t.id}"`,!canColony||readOnly||p.system):''}${known&&!owned&&!mission?'<p class="fine">Benötigt freien Kolonieplatz + Kolonieschiff. Zusätzlich mitnehmen: 350 Metall, 250 Kristall, 100 Treibstoff.</p>':''}</article>`;}).join('')}</div><section class="panel"><h2>Vorbereitung</h2><p>Verfügbare Sonden: <strong>${p.ships.probe}</strong> · Kolonieschiffe: <strong>${p.ships.colony}</strong> · Tutorial-Kolonieplätze: <strong>${state.planets.length-1} / ${Math.min(3,state.tech.colonization)}</strong> · Spätere Galaxieplätze: <strong>${Math.max(0,state.tech.colonization-3)}</strong></p>${button('Zur Schiffswerft →','tab','data-tab="fleet"')}</section>`;}
 let galaxyExpanded=false;
 function clearGalaxy(){galaxyViewMode='atlas';clearReportData();galaxyExpanded=false;galaxyRequest++;galaxyData=null;galaxyError='';galaxyBusy=false;galaxyLast=0;galaxyTarget='';galaxyCamera=null;}
 function galaxyMissionsHTML(){return galaxyData?.missions.length?`<h3>Galaxieflüge · ${galaxyData.missions.length}</h3><div class="route-cards">${galaxyData.missions.map(m=>{const returning=m.kind==='scan'&&m.arrival<=gameNow(),due=returning?m.due:m.arrival;return fleetTravelCard({title:m.kind==='scan'?'Erkundung':'Kolonisierung',status:returning?'Rückflug':'Unterwegs',worlds:(returning?[m.to,m.from]:[m.from,m.to]).map(fleetWorld),fleet:{[m.kind==='scan'?'longProbe':'starColony']:1},capacity:0,start:returning?m.arrival:m.start,due,now:gameNow(),clock:duration(due-gameNow())});}).join('')}</div>`:'';}
@@ -1984,15 +2182,34 @@ function filterRouteCards(){const routes=state.missions.filter(m=>m.type==='rout
 function tradeRoutes(p){const routes=state.missions.filter(m=>m.type==='route'),editing=routeSection==='existing'?routes.find(m=>m.id===routeEditId):null,model=editing?.pending||editing,home=editing?getPlanet(state,editing.home):p,old=editing?fleetManifest(editing):{},fleet=model?(model.fleet||fleetManifest(model)):{},stops=model?.stops||[{planet:home.id,load:vector([0,0,0]),unload:vector([0,0,0])},{planet:state.planets.find(q=>q.id!==home.id)?.id,load:vector([0,0,0]),unload:{metal:'max',crystal:'max',fuel:'max'}}];return `${routeSubmenu()}<div id="route-content" role="tabpanel" aria-labelledby="route-tab-${routeSection}">${routeSection==='existing'&&!editing?routeOverview(routes):`<section class="panel trade-editor"><div class="split"><h2>${editing?'Route bearbeiten · '+esc(editing.name):'Neue Handelsroute'}</h2>${button('← Zur Routenübersicht','route-existing')}</div>${state.planets.length<2?'<p>Besiedle eine zweite Welt, um Handelsrouten anzulegen.</p>':`<form id="route-form" data-planet="${home.id}" data-route-id="${editing?.id||0}"><div class="form-grid"><label>Routenname<input name="name" maxlength="40" required value="${esc(model?.name||'Handelsroute')}"></label><label>Betrieb<select name="repeat"><option value="true" ${model?.repeat===false?'':'selected'}>Endlos wiederholen</option><option value="false" ${model?.repeat===false?'selected':''}>Eine Runde</option></select></label></div><details class="mixed-fleet-picker" open><summary>Flotte zusammenstellen · Startplanet ${esc(home.name)}</summary><p class="fine">Vorgemerkte Schiffe bleiben bis zum Wechsel für andere Aufträge verfügbar.</p>${fleetPicker(state,home,{fleet,extra:old})}</details><div class="route-estimate" id="route-estimate" role="status"></div><h3>Stopps in Flugreihenfolge</h3><p class="fine">Erst abladen, dann einladen. Nach dem letzten Stopp kehrt die Flotte zum Startplaneten zurück und lädt soweit möglich ab. Volle Lager lassen Restladung an Bord; sie belegt weiterhin Laderaum.</p><div id="route-stops" class="route-stops">${stops.map((q,i)=>routeStopRow(q.planet,i===0,q)).join('')}</div><button type="button" data-action="add-stop">+ Stopp hinzufügen</button><p class="fine">+5 % addiert bei jedem Klick fünf Prozent des ausgewählten Laderaums. Nach MAX beginnt eine feste Menge wieder bei 0. MAX bleibt dynamisch: verfügbare Menge bis zum freien Laderaum. Ladereihenfolge: Metall → Kristall → Treibstoff. Bestände sind aktuelle Vorschauen, geladen wird bei Ankunft. Bei vollem Lager bleibt Restladung im Frachter und fährt zum nächsten Stopp mit.</p>${editing?'<div class="pending-change">'+(editing.paused?'Änderungen werden jetzt am Startplaneten übernommen. ':'Änderungen werden gemeinsam bei Rückkehr zum Startplanet aktiviert. ')+ ' Fehlen Schiffe, bleibt die bisherige Route aktiv und die Änderung vorgemerkt.</div>':''}<div class="trade-save"><button type="submit" ${readOnly?'disabled':''}>${editing?(editing.paused?'Änderungen speichern':'Änderungen vormerken'):'Handelsroute starten'}</button>${editing?routePauseButton(editing)+button('Route beenden','stop-route',`data-id="${editing.id}"`)+button('Zur Routenübersicht','route-existing'):''}</div></form>`}</section>`}</div>`;}
 let fleetGroup='ship',fleetFilter='all';
 const fleetExpanded=new Map();
+let fleetAllCollapsed=false;
 function captureFleetOverview(){for(const el of document.querySelectorAll('[data-fleet-detail]'))fleetExpanded.set(el.dataset.fleetDetail,el.open);}
-function fleetStock(){return fleetOverviewHTML(state.planets,{group:fleetGroup,category:fleetFilter,expanded:fleetExpanded,mobile:window.matchMedia?.('(max-width:600px)').matches||false});}
+function fleetStock(){return fleetOverviewHTML(state.planets,{group:fleetGroup,category:fleetFilter,expanded:fleetExpanded,collapsed:fleetAllCollapsed,mobile:window.matchMedia?.('(max-width:600px)').matches||false});}
 function fleetWorld(id){return state.planets.find(p=>p.id===id)||TARGETS.find(p=>p.id===id)||galaxyData?.planets?.find(p=>p.id===id)||cloud?.pvp?.social?.partners?.flatMap(p=>p.planets||[]).find(p=>p.id===id)||{id,name:id||'Unbekannte Welt'};}
 function fleetMissions(missions){return '<div class="route-cards">'+missions.map(m=>{
  if(m.type==='route')return routeCard(m,false);
  const returning=m.phase==='return',f=fleetManifest(m),progress=fleetMissionProgress(m,state.time);
  return fleetTravelCard({title:({station:'Stationieren',salvage:'Trümmerbergung',collect:'Abholen',deliver:'Lieferung',transport:'Lieferung',probe:'Erkundung',colony:'Kolonisierung'})[m.type]||'Flottenauftrag',status:m.awaitingUnload?'Wartet auf Lagerplatz · Schiffe gebunden':returning?'Rückflug':'Unterwegs',worlds:(returning?[m.to,m.from]:[m.from,m.to]).map(fleetWorld),fleet:f,cargoHTML:costHTML(m.cargo),capacity:fleetCapacity(state,f),info:m.type==='salvage'&&!returning?'Trümmer werden bei Ankunft bis zum verfügbaren Laderaum geborgen.':m.type==='collect'&&!returning?'Material wird am Ziel abgeholt.':m.type==='colony'?'Das Kolonieschiff gründet am Ziel eine neue Kolonie.':'',due:progress.end,start:progress.start,now:state.time,waiting:!!m.awaitingUnload,clock:m.awaitingUnload?'Restladung bleibt an Bord':duration(m.due-state.time)});
  }).join('')+'</div>'+(missions.length?'':'<p class="muted">Keine lokalen Flotten unterwegs.</p>');}
-app.addEventListener('click',e=>{const b=e.target.closest('[data-action="fleet-group"], [data-action="fleet-filter"]');if(!b)return;captureFleetOverview();if(b.dataset.action==='fleet-group')fleetGroup=b.dataset.value;else fleetFilter=b.dataset.value;render();document.querySelector(`[data-action="${b.dataset.action}"][data-value="${b.dataset.value}"]`)?.focus();});
+app.addEventListener('click',e=>{
+ const b=e.target.closest('[data-action="fleet-group"], [data-action="fleet-filter"], [data-action="fleet-collapse-all"]');
+ if(!b)return;
+ if(b.dataset.action==='fleet-collapse-all'){
+  // Collapse every card without dispatching a game command or changing the filters.
+  // Clear old expansion choices from other groups/filters, too.
+  fleetAllCollapsed=true;
+  fleetExpanded.clear();
+  for(const el of app.querySelectorAll('.fleet-overview [data-fleet-detail]')){
+   el.open=false;
+   fleetExpanded.set(el.dataset.fleetDetail,false);
+  }
+  return;
+ }
+ captureFleetOverview();
+ if(b.dataset.action==='fleet-group')fleetGroup=b.dataset.value;else fleetFilter=b.dataset.value;
+ render();
+ document.querySelector(`[data-action="${b.dataset.action}"][data-value="${b.dataset.value}"]`)?.focus();
+});
 
 function fleetMenu(){fleetLastSection[fleetGroupFor(fleetSection)]=fleetSection;return '<div class="fleet-page-title"><h1>Flotten</h1></div>'+fleetNavigation(fleetSection,{routes:state.missions.filter(m=>m.type==='route').length,incoming:cloud?.pvp?.incoming?.length||0});}
 function selectFleetSection(section,focus=false){if(!Object.hasOwn(FLEET_LABELS,section))return;tab='fleet';fleetSection=section;render();if(focus)document.getElementById('fleet-tab-'+section)?.focus();if(['pvp','defense'].includes(section)){void refreshGalaxy(true);void refreshReports();}if(section==='reports'){reportFilters.mission=null;void refreshReports();}}
@@ -2065,14 +2282,14 @@ async function refreshRanking(force=false){
  const request=++rankingRequest,account=cloud.user.id;rankingBusy=true;rankingError='';if(tab==='leaderboard')render();
  try{const rows=await cloud.leaderboard();if(request!==rankingRequest||cloud?.user?.id!==account)return;rankingRows=rows;rankingTime=Date.now();}catch(e){if(request===rankingRequest&&cloud?.user?.id===account)rankingError=e.message||'Rangliste nicht erreichbar. Bitte erneut versuchen.';}finally{if(request===rankingRequest){rankingBusy=false;if(tab==='leaderboard')render();}}
 }
-function clearRanking(){fleetSection='overview';Object.assign(fleetLastSection,{hangar:'overview',pvp:'pvp',trade:'orders'});routeEditId=0;routeSection='existing';routeQuery='';routeFilter='all';clearGalaxy();rankingRequest++;rankingRows=[];rankingBusy=false;rankingError='';rankingTime=0;}
+function clearRanking(){fleetAllCollapsed=false;fleetExpanded.clear();fleetSection='overview';Object.assign(fleetLastSection,{hangar:'overview',pvp:'pvp',trade:'orders'});routeEditId=0;routeSection='existing';routeQuery='';routeFilter='all';clearGalaxy();rankingRequest++;rankingRows=[];rankingBusy=false;rankingError='';rankingTime=0;}
 function render(){if(noticeAccount!==noticeKey()){noticeAccount=noticeKey();noticeCounts.chat=noticeCounts.wish=noticeCounts.war=0;queueMicrotask(()=>void noticePoll());}noticeRefreshNews();captureFleetOverview();captureReportUI();captureFleetDraft();if(!state){app.innerHTML=`<main class="welcome"><div class="brand">WaHueLaPa<span>Universe</span></div>${orb({color:'#53add3',kind:'Heimatplanet',buildings:{}})}<section class="panel"><span class="eyebrow">SOLO · VERSION 0.1</span><h1>Deine erste Welt.</h1><p><a href="./news.html">News & Patchnotes ↗</a></p><p>Erkunde fremde Planeten, spezialisiere Kolonien und verbinde sie mit deiner Transportflotte.</p><form id="start-form"><label>Dein Commander-Name<input name="name" maxlength="30" placeholder="z. B. Sebastian" required autocomplete="nickname"></label><button ${readOnly?'disabled':''}>Imperium gründen →</button></form><p class="fine">Als Gast wird dein Fortschritt automatisch in diesem Browser gespeichert.</p>${CLOUD_CONFIG.enabled?button('Anmelden / Konto erstellen','settings'):''}</section></main>`;return;}
  const p=getPlanet(state,state.active),z=stats(state,p);app.innerHTML=`<header><div class="topbar"><button class="brand plain" data-action="tab" data-tab="overview">WaHueLaPa<span>Universe</span></button><div class="commander">${esc(state.name)} <button class="plain" data-action="news-open" data-notice-kind="news">News${noticeBadge('news')}</button> <button class="plain" data-action="war-times-open" data-notice-kind="war">Kriegsarchiv${noticeBadge('war')}</button> <button class="plain" data-action="community-open" data-kind="chat" data-notice-kind="chat">Chat${noticeBadge('chat')}</button> <button class="plain" data-action="community-open" data-kind="wish" data-notice-kind="wish">Wünsche${noticeBadge('wish')}</button> <button class="plain gear" data-action="settings" aria-label="Spielstand und Hilfe">⚙</button></div></div><div class="resources">${RES.map(k=>`<div><span class="resource-icon">${resourceIcon(k)}</span><div><small>${LABEL[k]}</small><strong data-resource="${k}">${fmt(p.resources[k])}</strong><small>${fmt(z.rates[k])}/Std · Lager ${fmt(z.cap)}</small></div></div>`).join('')}<div><span class="resource-icon amber">${resourceIcon("energy")}</span><div><small>Energie</small><strong class="${z.supply-z.demand<0?'amber':''}">${Math.round(z.supply-z.demand)>0?'+':''}${Math.round(z.supply-z.demand)}</strong><small>${Math.round(z.supply)} / ${Math.round(z.demand)}</small></div></div></div><div class="planet-bar"><label>Aktive Welt <select id="planet-select">${state.planets.map(q=>`<option value="${q.id}" ${q.id===p.id?'selected':''}>${esc(q.name)} · [${esc(q.coord)}]</option>`).join('')}</select></label><span class="local-badge">${readOnly?'Nur Ansicht · anderer Tab aktiv':cloudBadge()}</span></div></header><main>${tab==='overview'&&cloud?.pvp?.social?.partners?.some(partner=>partner.status==='pending'&&partner.incoming)?`<div class="notice" role="alert">🤝 <strong>${cloud.pvp.social.partners.filter(partner=>partner.status==='pending'&&partner.incoming).length} ${cloud.pvp.social.partners.filter(partner=>partner.status==='pending'&&partner.incoming).length===1?'neue Partnerschaftsanfrage':'neue Partnerschaftsanfragen'}</strong> · ${cloud.pvp.social.partners.filter(partner=>partner.status==='pending'&&partner.incoming).length===1?'Ein Commander möchte dein Partner werden.':'Commander möchten deine Partner werden.'} ${button('Anfragen ansehen','partner-invites')}</div>`:''}${cloud?.pvp?.incoming?.length?`<div class="notice" role="alert">${actionIcon("attack")} ${cloud.pvp.incoming.length} Angriff(e) unterwegs. ${button('Warnungen ansehen','pvp-defense')}</div>`:''}${state.missions.some(m=>m.awaitingUnload===p.id)?`<div class="notice">Frachter warten auf Lagerplatz. Restladung bleibt an Bord und die Schiffe bleiben gebunden. ${button('Flotten ansehen','fleet-section','data-section="overview"')}</div>`:''}${RES.some(k=>ownDebris(p.id)[k]>0)?`<div class="notice">${actionIcon('debris')} <strong>Trümmer vor ${esc(p.name)}</strong>: ${costHTML(ownDebris(p.id))}. Wähle einen anderen eigenen Startplaneten und öffne Flotte → Handel → Aufträge → Trümmer bergen.</div>`:''}${RES.some(k=>p.depot[k]>0)?`<div class="notice">Altbestände & Erstattungen: ${costHTML(p.depot)}. Werden bei freiem Lagerplatz übernommen. Neue Lieferungen behalten nicht abladbare Ladung im Frachter.</div>`:''}${({overview,build:buildings,research,galaxy,fleet,leaderboard}[tab])(p)}<footer>Prototyp-Balancing: kurze Zeiten zum Ausprobieren. PvP-Kämpfe werden serverseitig verarbeitet. Rangliste: zuletzt gespeicherte Cloud-Spielstände.</footer></main><nav aria-label="Hauptnavigation">${Object.entries(tabs).map(([key,[icon,label]])=>`<button class="${key===tab?'active':''}" data-action="tab" data-tab="${key}"><span>${icon}</span>${label}</button>`).join('')}</nav>`;if(tab==='fleet'){for(const el of document.querySelectorAll('.partner-hub [data-fleet-detail]'))if(fleetExpanded.has(el.dataset.fleetDetail))el.open=fleetExpanded.get(el.dataset.fleetDetail);restoreFleetDraft();const order=document.getElementById('fleet-order-form');if(order)order.elements.namedItem('type').value=orderMode;}transportEstimate();fleetEstimates();socialEstimate();updateFleetEngineLabels();mapCleanup?.();mapCleanup=tab==='galaxy'?mountMap():null;restoreBattleSummaries();updateRepairQuote();}
 function transportEstimate(){const form=document.getElementById('transport-form');if(!form)return;const d=new FormData(form),p=getPlanet(state,state.active),to=state.planets.find(p=>p.id===d.get('to')),count=Number(d.get('count'));if(!to||!Number.isInteger(count)||count<1)return;const f=flightInfo(state,p,to,count);document.getElementById('transport-estimate').textContent=`${fmt(cargoCapacity(state,count))} Laderaum · ${duration(f.ms)} je Strecke · ${f.fuel} Treibstoff Flugkosten`;}
 function settings(){document.querySelector('dialog')?.remove();const d=document.createElement('dialog');d.innerHTML=`<form method="dialog"><button class="close plain" aria-label="Schließen">×</button></form><span class="eyebrow">SPIELSTAND & HILFE</span><h2>Dein Imperium sichern</h2><p>Lokale Sicherung nach jeder Aktion. ${cloud?.authoritative?'Der Export sichert eine lesbare Kopie. Imports und Neustarts sind für Server-Spielstände gesperrt.':'Export und Import funktionieren weiterhin.'}</p>${cloudPanel()}${pvpSettings(cloud?.pvp,galaxyBusy||cloudSaving,!!cloud?.pending)}<div class="settings-actions">${button('Spielstand exportieren','export')}${button('Spielstand importieren','import','',readOnly||cloud?.authoritative)}<input type="file" id="import-file" accept=".json,application/json" hidden>${button('Neues Spiel starten','reset','class="danger"',readOnly||cloud?.authoritative)}</div>${state?button('Tutorial wieder anzeigen','tutorial-reopen'):''}<h3>So erreichst du deine erste Kolonie</h3><ol><li>Labor 1 bauen, Sensortechnik 1 erforschen.</li><li>Werft bauen; Sonde bauen und unter Galaxie losschicken.</li><li>Labor auf Stufe 2 ausbauen; Kolonisierung erforschen.</li><li>Kolonieschiff bauen; erkundeten Planeten besiedeln.</li><li>Transporttechnik erforschen, Kolonieminen bauen und Materialien nach Hause transportieren.</li></ol><p class="fine">Bauen je Planet, Forschung imperiumsweit und Schiffbau laufen parallel. Energieknappheit reduziert Förderung. Abwesenheit wird bis zur aktuellen Gerätezeit nachberechnet. Gezeitenkraftwerke benötigen Energietechnik 3 und einen Ozeanplaneten.</p>`;document.body.append(d);d.showModal();}
 app.addEventListener('submit',e=>{e.preventDefault();if(readOnly||cloudBlocked)return;if(e.target.id==='start-form'){state=newGame(new FormData(e.target).get('name'));persist(true);render();}else if(e.target.id==='transport-form'){const f=new FormData(e.target);command({type:'transport',to:f.get('to'),count:Number(f.get('count')),cargo:Object.fromEntries(RES.map(k=>[k,Number(f.get(k))]))});}});
 async function command(action){const queuedShip=action.type==='ship'&&!!getPlanet(state,action.planet||state.active)[SHIPS[action.key]?.category==='defense'?'orbitaljob':'shipjob'];if(galaxyBusy||cloudSaving){toast('Galaxie-Abgleich läuft.');return;}if(readOnly||cloudBlocked){toast(cloudBlocked?'Bitte zuerst den Cloud-Spielstand laden.':'Dieser Tab ist schreibgeschützt.');return;}try{if(cloud?.authoritative&&(action.type==='build'&&action.key==='repairDock'||['repair','cancel-repair','resume-repair'].includes(action.type))&&!cloud.pvp?.features?.repairDock)throw Error('Das Reparaturdock benötigt die neue Serverversion.');if(cloud?.authoritative&&action.type==='demolish'&&!cloud.pvp?.features?.buildingDemolition)throw Error('Der Rückbau benötigt die neue Serverversion.');action=fleetDispatchAction(action);if(cloud?.authoritative){galaxyBusy=true;adoptServer(await cloud.gameRequest({type:'command',action:{...action,planet:action.planet||state.active}}));galaxyBusy=false;}else state=act(state,action);if(['deliver','collect','salvage','station'].includes(action.type)){document.getElementById('fleet-order-form')?.reset();fleetSection='overview';}if(action.type==='route'||action.type==='edit-route'||action.type==='cancel-route-edit'){const form=document.getElementById('route-form');if(form){const key=fleetDraftKey(form.dataset.planet)+':route:'+form.dataset.routeId;fleetDrafts.delete(key);form.remove();}routeEditId=0;routeSection='existing';}if(action.type==='ship')shipBuildDrafts.delete(shipBuildDraftKey(getPlanet(state,action.planet||state.active),action.key));persist(true);render();toast(({ 'cancel-ship':'Bauauftrag abgebrochen.','edit-route':'Routenänderung gespeichert.','cancel-route-edit':'Vormerkung verworfen.','pause-route':'Pause nach dieser Runde vorgemerkt.','resume-route':'Route fortgesetzt.','cancel-route-pause':'Routenpause verworfen.','stop-route':'Beendigung gespeichert.' })[action.type]||(queuedShip?'Bauauftrag eingereiht.':'Auftrag gestartet.'));}catch(e){galaxyBusy=false;toast(e.message);if(cloud?.pending)settings();}}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b||b.disabled)return;const a=b.dataset.action;if((cloudBlocked||galaxyBusy)&&['planet','build','research','ship','probe','colony','import','reset'].includes(a)){toast('Bitte zuerst den Cloud-Spielstand laden.');return;}if(a==='ranking-refresh'){void refreshRanking(true);}else if(a==='tab'){tab=b.dataset.tab;render();if(tab==='leaderboard')void refreshRanking();if(tab==='galaxy')void refreshGalaxy();if(tab==='fleet'&&['reports','pvp','defense'].includes(fleetSection))void refreshReports();window.scrollTo({top:0,behavior:'smooth'});}else if(a==='planet'&&!readOnly){state.active=b.dataset.id;if(b.dataset.id.startsWith('g-'))tab='overview';persist(true);render();}else if(a==='settings')settings();else if(a==='demolish-open'){openDemolitionDialog(b.dataset.key,b.dataset.planet);}else if(['build','research','ship','probe','colony'].includes(a)){command({type:a,key:b.dataset.key,to:b.dataset.to,count:a==='ship'?Number(document.getElementById('build-count-'+b.dataset.key)?.value||1):1});}else if(a==='export'){try{advance(state,gameNow());const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`wahuelapa-universe-${new Date().toISOString().slice(0,10)}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);toast('Sicherung exportiert.');}catch(e){toast(e.message);}}else if(a==='import'&&!cloud?.authoritative)document.getElementById('import-file').click();else if(a==='reset'&&!cloud?.authoritative&&!readOnly&&confirm('Wirklich neu starten? Exportiere vorher deinen bisherigen Spielstand.')){if(cloud?.user){state=newGame(state.name);persist(true);void flushCloud();}else{state=null;try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem(SAVE_KEY+'-backup');}catch{}}document.querySelector('dialog')?.close();render();}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b||b.disabled)return;const a=b.dataset.action;if((cloudBlocked||galaxyBusy)&&['planet','build','research','ship','probe','colony','import','reset'].includes(a)){toast('Bitte zuerst den Cloud-Spielstand laden.');return;}if(a==='ranking-refresh'){void refreshRanking(true);}else if(a==='tab'){tab=b.dataset.tab;render();if(tab==='leaderboard')void refreshRanking();if(tab==='galaxy')void refreshGalaxy();if(tab==='fleet'&&['reports','pvp','defense'].includes(fleetSection))void refreshReports();window.scrollTo({top:0,behavior:'smooth'});}else if(a==='planet'&&!readOnly){state.active=b.dataset.id;if(b.dataset.id.startsWith('g-'))tab='overview';persist(true);render();}else if(a==='settings')settings();else if(a==='building-info'){openBuildingDetails(b.dataset.key,b.dataset.planet);}else if(a==='demolish-open'){openDemolitionDialog(b.dataset.key,b.dataset.planet);}else if(['build','research','ship','probe','colony'].includes(a)){command({type:a,key:b.dataset.key,to:b.dataset.to,count:a==='ship'?Number(document.getElementById('build-count-'+b.dataset.key)?.value||1):1});}else if(a==='export'){try{advance(state,gameNow());const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`wahuelapa-universe-${new Date().toISOString().slice(0,10)}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);toast('Sicherung exportiert.');}catch(e){toast(e.message);}}else if(a==='import'&&!cloud?.authoritative)document.getElementById('import-file').click();else if(a==='reset'&&!cloud?.authoritative&&!readOnly&&confirm('Wirklich neu starten? Exportiere vorher deinen bisherigen Spielstand.')){if(cloud?.user){state=newGame(state.name);persist(true);void flushCloud();}else{state=null;try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem(SAVE_KEY+'-backup');}catch{}}document.querySelector('dialog')?.close();render();}});
 document.addEventListener('change',async e=>{if(e.target.id==='planet-select'&&!readOnly&&!cloudBlocked&&!galaxyBusy){state.active=e.target.value;persist(true);render();}if(e.target.id==='import-file'&&!cloud?.authoritative&&!readOnly&&!cloudBlocked&&!galaxyBusy){try{const file=e.target.files[0];if(!file)return;if(file.size>2000000)throw Error('Datei ist zu groß.');const incoming=parseSave(await file.text());if(!confirm('Aktuellen Spielstand durch diese Sicherung ersetzen?'))return;state=advance(incoming,Date.now());persist(true);document.querySelector('dialog')?.close();render();toast('Spielstand importiert.');}catch(err){toast(err.message);}}if(e.target.closest('#transport-form'))transportEstimate();});
 document.addEventListener('input',e=>{if(e.target.closest('#transport-form'))transportEstimate();});
 function tick(){if(!state||readOnly||cloudBlocked||galaxyBusy)return;try{const before=state.seq;advance(state,Date.now());persist();if(before!==state.seq){render();return;}const p=getPlanet(state,state.active);document.querySelectorAll('[data-orbit-planet]').forEach(el=>{const world=state.planets.find(q=>q.id===el.dataset.orbitPlanet);if(!world)return;const z=orbitCondition(world,el.dataset.orbitKey),pct=Math.round(z.hull*100),bar=el.querySelector('.hull-bar');if(bar){bar.setAttribute('aria-valuenow',pct);bar.querySelector('i').style.width=pct+'%';el.querySelector('.hull-label strong').textContent=pct+' %';el.querySelector('.hull-actions small').textContent='Beschädigte: Ø '+Math.round(z.damagedHull*100)+' % Hülle';}});document.querySelectorAll('[data-repair-progress]').forEach(el=>{const j=repairOrders(p).find(j=>j.id===Number(el.dataset.repairProgress));if(j){const e=j.entries[0],pct=Math.round(100*(j.completed+((e.hp-e.initialHp)/(1-e.initialHp)||0))/j.count);el.setAttribute('aria-valuenow',pct);el.querySelector('i').style.width=pct+'%';}});updateRepairQuote();document.querySelectorAll('[data-resource]').forEach(el=>el.textContent=fmt(p.resources[el.dataset.resource]));document.querySelectorAll('[data-due]').forEach(el=>el.textContent=duration(Number(el.dataset.due)-state.time));document.querySelectorAll('[data-route-progress]').forEach(el=>{const m=state.missions.find(m=>m.id===Number(el.dataset.routeProgress));if(m){const percent=Math.round(Math.min(100,Math.max(0,100*(state.time-m.start)/m.duration)));el.setAttribute('aria-valuenow',percent);el.querySelector('i').style.width=`${percent}%`;}});updateOverviewProgress(gameNow());updateAttackProgress(gameNow());document.querySelectorAll('.job').forEach(el=>{const timer=el.querySelector('[data-due]'),due=Number(timer.dataset.due);const ship=el.hasAttribute('data-ship-progress'),jobs=[p.build,state.research].filter(Boolean),j=ship?p.shipjob:jobs.find(j=>j.end===due);if(j){if(ship){timer.dataset.due=j.end;timer.textContent=j.paused?'Pausiert · kein Strom':duration(j.end-state.time);}el.querySelector('i').style.width=`${Math.min(100,Math.max(0,ship?100*(1-j.workRemaining/j.workTotal):100*(state.time-j.start)/(j.end-j.start)))}%`;}}); // refresh disabled affordability without replacing a user's form
