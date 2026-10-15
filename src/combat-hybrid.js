@@ -80,7 +80,8 @@ function fireLocked(shooters,enemies,random,summary){
 // earn additional FULL salvos against eligible targets. Damage is simultaneous.
 // An extra salvo uses the selected target's pair probability; failed rolls stop
 // the chain. Target selection for each extra salvo still follows priorities.
-function fireRapid(shooters,enemies,random,summary,rapid,shotMechanics={}){
+// v6: OGame-inspired probabilistic extra salvos, independent of legacy damage bonuses.
+function fireRapid(shooters,enemies,random,summary,rapid){
  for(const s of shooters){
   if(!s.count||!s.stat.attack)continue;
   const pool=candidates(s,enemies);
@@ -88,45 +89,13 @@ function fireRapid(shooters,enemies,random,summary,rapid,shotMechanics={}){
   for(let unit=0;unit<s.count;unit++){
    let picked=sampled(pool,random),extra=0;
    while(picked){
-    const [target]=picked,rule=shotMechanics[s.key]?.[target.key];
-    const shots=rule?.shots??s.stat.shots;
-    const distributed=rule?.targeting==='distinct';
-    const targets=distributed?pool.filter(g=>g.key===target.key):null;
-    const used=new Set();
-    for(let shot=0;shot<shots;shot++){
-     let choice=picked;
-     if(distributed){
-      // Rejection sampling is near-constant time for large swarms.
-      // Fall back to a scan only when few unused targets remain.
-      let found=null;
-      for(let attempt=0;attempt<16;attempt++){
-       const candidate=sampled(targets,random);
-       if(!candidate)break;
-       if(!used.has(candidate[0].id+':'+candidate[0].key+':'+candidate[1])){found=candidate;break;}
-      }
-      if(!found){
-       for(const g of targets){
-        for(let i=0;i<g.count;i++){
-         const idx=g.indices[i];
-         if(!used.has(g.id+':'+g.key+':'+idx)){found=[g,idx];break;}
-        }
-        if(found)break;
-       }
-      }
-      choice=found??sampled(targets,random);
-     }
-     if(!choice)break;
-     const [victim,index]=choice;
-     used.add(victim.id+':'+victim.key+':'+index);
-     const bonus=s.stat.bonus?.[victim.key]||0;
-     const damage=(rule?.damagePerShot??s.stat.attack/s.stat.shots)*(1+bonus);
-     victim.damage.set(index,(victim.damage.get(index)||0)+damage);
-     const key=s.key+':'+victim.key;
-     const item=summary[key]??={shooter:s.key,target:victim.key,shots:0,damage:0,rapidFireShots:0,rapidFireDamage:0,extraSalvos:0};
-     item.shots++;item.damage+=damage;
-     if(extra){item.rapidFireShots++;item.rapidFireDamage+=damage;}
-    }
-    if(extra){const k=s.key+':'+target.key;summary[k].extraSalvos++;}
+    const [target,index]=picked;
+    const damage=s.stat.attack;
+    target.damage.set(index,(target.damage.get(index)||0)+damage);
+    const k=s.key+':'+target.key;
+    const item=summary[k]??={shooter:s.key,target:target.key,shots:0,damage:0,rapidFireShots:0,rapidFireDamage:0,extraSalvos:0};
+    item.shots+=s.stat.shots;item.damage+=damage;
+    if(extra){item.rapidFireShots+=s.stat.shots;item.rapidFireDamage+=damage;item.extraSalvos++;}
     if(!rapid.enabled||extra>=rapid.maxExtraSalvos)break;
     const chance=rapid.chances[s.key]?.[target.key]??0;
     if(!chance||random()>=chance)break;
@@ -173,7 +142,7 @@ export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4
  const combatSettings=experimentalVersion===6?combatConfigForRealm(realmOverrides):null;
  const rapid=combatSettings?.rapidFire;
  const fireRound=experimentalVersion===5?fireLocked:experimentalVersion===6?
-  (shooters,enemies,random,summary)=>fireRapid(shooters,enemies,random,summary,rapid,combatSettings.shotMechanics):fire;
+  (shooters,enemies,random,summary)=>fireRapid(shooters,enemies,random,summary,rapid):fire;
  const a=cohorts(attacker,'attacker'),d=cohorts(defender,'host'),random=seeded(seed),rounds=[],aggregates=[];
  const initialGroups=[...groupSummary(a,'attacker'),...groupSummary(d,'defender')];
  for(let round=0;round<=6;round++){
