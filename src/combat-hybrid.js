@@ -80,22 +80,47 @@ function fireLocked(shooters,enemies,random,summary){
 // earn additional FULL salvos against eligible targets. Damage is simultaneous.
 // An extra salvo uses the selected target's pair probability; failed rolls stop
 // the chain. Target selection for each extra salvo still follows priorities.
-function fireRapid(shooters,enemies,random,summary,rapid){
+function fireRapid(shooters,enemies,random,summary,rapid,shotMechanics={}){
  for(const s of shooters){
   if(!s.count||!s.stat.attack)continue;
   const pool=candidates(s,enemies);
   if(!pool.length)continue;
-  const shots=s.stat.shots;
   for(let unit=0;unit<s.count;unit++){
    let picked=sampled(pool,random),extra=0;
    while(picked){
-    const [target,index]=picked,bonus=s.stat.bonus?.[target.key]||0;
-    const damage=s.stat.attack*(1+bonus);
-    target.damage.set(index,(target.damage.get(index)||0)+damage);
-    const k=s.key+':'+target.key;
-    const item=summary[k]??={shooter:s.key,target:target.key,shots:0,damage:0,rapidFireShots:0,rapidFireDamage:0,extraSalvos:0};
-    item.shots+=shots;item.damage+=damage;
-    if(extra){item.rapidFireShots+=shots;item.rapidFireDamage+=damage;item.extraSalvos++;}
+    const [target]=picked,rule=shotMechanics[s.key]?.[target.key];
+    const shots=rule?.shots??s.stat.shots;
+    const distributed=rule?.targeting==='distinct';
+    const targets=distributed?pool.filter(g=>g.key===target.key):null;
+    const used=new Set();
+    let salvoDamage=0;
+    for(let shot=0;shot<shots;shot++){
+     let choice=picked;
+     if(distributed){
+      // Uniformly pick an unused unit of the same target type when available.
+      let available=0;
+      for(const g of targets)for(let i=0;i<g.count;i++)if(!used.has(g.id+':'+g.key+':'+g.indices[i]))available++;
+      if(available){
+       let offset=Math.floor(random()*available);
+       outer:for(const g of targets)for(let i=0;i<g.count;i++){
+        const idx=g.indices[i],key=g.id+':'+g.key+':'+idx;
+        if(used.has(key))continue;
+        if(offset--===0){choice=[g,idx];break outer;}
+       }
+      }else choice=sampled(targets,random);
+     }
+     if(!choice)break;
+     const [victim,index]=choice;
+     used.add(victim.id+':'+victim.key+':'+index);
+     const bonus=s.stat.bonus?.[victim.key]||0;
+     const damage=(rule?.damagePerShot??s.stat.attack/s.stat.shots)*(1+bonus);
+     victim.damage.set(index,(victim.damage.get(index)||0)+damage);
+     const key=s.key+':'+victim.key;
+     const item=summary[key]??={shooter:s.key,target:victim.key,shots:0,damage:0,rapidFireShots:0,rapidFireDamage:0,extraSalvos:0};
+     item.shots++;item.damage+=damage;salvoDamage+=damage;
+     if(extra){item.rapidFireShots++;item.rapidFireDamage+=damage;}
+    }
+    if(extra){const k=s.key+':'+target.key;summary[k].extraSalvos++;}
     if(!rapid.enabled||extra>=rapid.maxExtraSalvos)break;
     const chance=rapid.chances[s.key]?.[target.key]??0;
     if(!chance||random()>=chance)break;
@@ -139,9 +164,10 @@ function total(groups){return groups.reduce((n,g)=>n+g.count,0);}
 function groupSummary(groups,side){return groups.map(g=>({side,key:g.key,groupId:g.id,...(g.owner?{owner:g.owner}:{}),count:g.count}));}
 export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4,realmOverrides={}){
  if(![4,5,6].includes(experimentalVersion))throw Error('Unknown hybrid rules version');
- const rapid=experimentalVersion===6?combatConfigForRealm(realmOverrides).rapidFire:null;
+ const combatSettings=experimentalVersion===6?combatConfigForRealm(realmOverrides):null;
+ const rapid=combatSettings?.rapidFire;
  const fireRound=experimentalVersion===5?fireLocked:experimentalVersion===6?
-  (shooters,enemies,random,summary)=>fireRapid(shooters,enemies,random,summary,rapid):fire;
+  (shooters,enemies,random,summary)=>fireRapid(shooters,enemies,random,summary,rapid,combatSettings.shotMechanics):fire;
  const a=cohorts(attacker,'attacker'),d=cohorts(defender,'host'),random=seeded(seed),rounds=[],aggregates=[];
  const initialGroups=[...groupSummary(a,'attacker'),...groupSummary(d,'defender')];
  for(let round=0;round<=6;round++){
