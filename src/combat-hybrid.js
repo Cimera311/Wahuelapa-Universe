@@ -113,9 +113,11 @@ export function resolveBattleHybrid(attacker,defender,seed){
   const subset=d.filter(g=>g.id===group.id);
   const out=result(subset);
   if(group.id?.startsWith('repair:')){
-   out.repairUnits=subset.flatMap(g=>Array.from({length:g.count},(_,j)=>{
-    const i=g.indices[j];return {hp:Math.max(0,g.hp[i]),maxHp:g.stat.hp};
-   }));
+   // Repair reconciliation requires every original dock slot, including destroyed
+   // units, in its original order. Survivors-only arrays corrupt the queue.
+   out.repairUnits=subset.flatMap(g=>Array.from({length:g.hp.length},(_,i)=>({
+    hp:Math.max(0,g.hp[i]),maxHp:g.stat.hp
+   })));
   }
   return {id:group.id,owner:group.owner,...out};
  });
