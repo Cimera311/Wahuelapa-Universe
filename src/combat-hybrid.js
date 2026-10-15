@@ -54,6 +54,27 @@ function fire(shooters,enemies,random,summary){
   }
  }
 }
+
+// Experimental v5: each firing ship acquires exactly one target per round.
+// All of that ship's shots hit the same target, with no retargeting within
+// the round. Damage is still applied simultaneously after both sides fire.
+function fireLocked(shooters,enemies,random,summary){
+ for(const s of shooters){
+  if(!s.count||!s.stat.attack)continue;
+  const pool=candidates(s,enemies);
+  if(!pool.length)continue;
+  const shots=s.stat.shots;
+  for(let unit=0;unit<s.count;unit++){
+   const picked=sampled(pool,random);if(!picked)break;
+   const [target,index]=picked,bonus=s.stat.bonus?.[target.key]||0;
+   const hit=s.stat.attack/shots*(1+bonus);
+   target.damage.set(index,(target.damage.get(index)||0)+hit*shots);
+   const k=s.key+':'+target.key;
+   const item=summary[k]??={shooter:s.key,target:target.key,shots:0,damage:0};
+   item.shots+=shots;item.damage+=hit*shots;
+  }
+ }
+}
 function applyDamage(groups){
  const impacts=[];
  for(const g of groups){
@@ -86,7 +107,9 @@ function result(groups){
 }
 function total(groups){return groups.reduce((n,g)=>n+g.count,0);}
 function groupSummary(groups,side){return groups.map(g=>({side,key:g.key,groupId:g.id,...(g.owner?{owner:g.owner}:{}),count:g.count}));}
-export function resolveBattleHybrid(attacker,defender,seed){
+export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4){
+ if(experimentalVersion!==4&&experimentalVersion!==5)throw Error('Unknown hybrid rules version');
+ const fireRound=experimentalVersion===5?fireLocked:fire;
  const a=cohorts(attacker,'attacker'),d=cohorts(defender,'host'),random=seeded(seed),rounds=[],aggregates=[];
  const initialGroups=[...groupSummary(a,'attacker'),...groupSummary(d,'defender')];
  for(let round=0;round<=6;round++){
@@ -95,8 +118,8 @@ export function resolveBattleHybrid(attacker,defender,seed){
   const platforms=opening?d.filter(g=>SHIPS[g.key].category==='defense'):[];
   if(opening&&!platforms.length)continue;
   const shots={};
-  if(!opening)fire(a,d,random,shots);
-  fire(opening?platforms:d,a,random,shots);
+  if(!opening)fireRound(a,d,random,shots);
+  fireRound(opening?platforms:d,a,random,shots);
   const impacts=applyDamage([...a,...d]);
   rounds.push({round,attacker:total(a),defender:total(d)});
   aggregates.push({round,shots:Object.values(shots),impacts,after:{attacker:{count:total(a)},defender:{count:total(d)}}});
@@ -125,8 +148,11 @@ export function resolveBattleHybrid(attacker,defender,seed){
  });
  return {outcome:ac&&!dc?'attacker':dc&&!ac?'defender':'draw',attacker:attackerAfter,defender:defenderAfter,debris,defenseRepair,rounds,...grouped,
   // v4 traces intentionally aggregate; v3's per-unit report reader must not consume these.
-  trace:{version:2,ruleVersion:4,seed:String(seed),initialGroups,
+  trace:{version:2,ruleVersion:experimentalVersion,seed:String(seed),initialGroups,
    finalGroups:[...groupSummary(a,'attacker'),...groupSummary(d,'defender')],
    tech:{attacker:{...attacker.tech},defender:{...defender.tech}},
    shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},rounds:aggregates}};
 }
+
+// Benchmark-only. Not routed from server-world or selectable in production.
+export function resolveBattleHybridV5(attacker,defender,seed){return resolveBattleHybrid(attacker,defender,seed,5);}
