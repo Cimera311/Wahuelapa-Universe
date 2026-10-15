@@ -1,4 +1,4 @@
-name: Combat v3/v4/v5 benchmark
+name: Combat v3/v4/v5/v6 benchmark
 
 on:
   workflow_dispatch:
@@ -11,6 +11,15 @@ on:
         options:
           - v4-v5
           - v3-v4
+          - v5-v6
+      realm:
+        description: 'Realm balance profile for v6'
+        required: true
+        default: 'main'
+        type: choice
+        options:
+          - main
+          - test
       scenario:
         description: 'Scenario'
         required: true
@@ -32,6 +41,8 @@ on:
   pull_request:
     paths:
       - 'src/combat-hybrid.js'
+      - 'src/realm-config.js'
+      - 'tests/combat-v6.test.js'
       - 'tests/combat-v5.test.js'
       - 'scripts/combat-benchmark.mjs'
       - '.github/workflows/combat-benchmark.yml'
@@ -45,6 +56,7 @@ jobs:
     timeout-minutes: 10
     env:
       COMPARE: ${{ github.event.inputs.comparison || 'v4-v5' }}
+      REALM: ${{ github.event.inputs.realm || 'main' }}
       SCENARIO: ${{ github.event.inputs.scenario || 'swarm' }}
       RUNS: ${{ github.event.inputs.runs || '3' }}
       V3_MAX_UNITS: 3000
