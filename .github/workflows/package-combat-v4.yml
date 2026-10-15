@@ -41,7 +41,7 @@ jobs:
           import {readFileSync,writeFileSync} from 'node:fs';
           const path='game-command-v5.ts';
           let source=readFileSync(path,'utf8');
-          for(const fragment of ['resolveBattleHybridV5','imperium_set_combat_engine','initialGroups','finalGroups']){
+          for(const fragment of ['fireLocked','imperium_set_combat_engine','initialGroups','finalGroups']){
             if(!source.includes(fragment))throw Error('Game Command bundle missing: '+fragment);
           }
           writeFileSync(path,'// @ts-nocheck — Combat v5, generated from source. Deploy after SQL migrations.\n'+source);
