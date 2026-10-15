@@ -20,6 +20,7 @@ on:
         options:
           - main
           - test
+          - test2
       scenario:
         description: 'Scenario'
         required: true
