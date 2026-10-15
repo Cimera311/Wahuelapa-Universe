@@ -62,7 +62,7 @@ function resolveBattleLegacy(attacker,defender,seed){
  }
  const aa=survivors(a),dd=survivors(d),ac=Object.values(aa.fleet).reduce((a,b)=>a+b,0),dc=Object.values(dd.fleet).reduce((a,b)=>a+b,0);
  const debris=vector([0,0,0]),defenseRepair=vector([0,0,0]);
- for(const u of [...a,...d])if(u.hp<=1e-8){const sh=SHIPS[u.key],out=sh.category==='defense'?defenseRepair:debris,rate=sh.category==='defense'?.7:.3;out.metal+=sh.cost[0]*rate;out.crystal+=sh.cost[1]*rate;}
+ for(const u of [...a,...d])if(u.hp<=1e-8){const sh=SHIPS[u.key],out=debris,rate=.3;out.metal+=sh.cost[0]*rate;out.crystal+=sh.cost[1]*rate;}
  for(const k of RES){debris[k]=Math.floor(debris[k]);defenseRepair[k]=Math.floor(defenseRepair[k]);}
  return {outcome:ac&&!dc?'attacker':dc&&!ac?'defender':'draw',attacker:aa,defender:dd,debris,defenseRepair,rounds,...combatGroups(defender,d)};
 }
@@ -108,7 +108,7 @@ export function resolveBattle(attacker,defender,seed,version=COMBAT_RULE_VERSION
  }
  const aa=survivors(a),dd=survivors(d),ac=Object.values(aa.fleet).reduce((n,v)=>n+v,0),dc=Object.values(dd.fleet).reduce((n,v)=>n+v,0),outcome=ac&&!dc?'attacker':dc&&!ac?'defender':'draw';
  const debris=vector([0,0,0]),defenseRepair=vector([0,0,0]);
- for(const u of [...a,...d])if(u.hp<=1e-8){const sh=SHIPS[u.key],out=sh.category==='defense'?defenseRepair:debris,rate=sh.category==='defense'?.7:.3;out.metal+=sh.cost[0]*rate;out.crystal+=sh.cost[1]*rate;}
+ for(const u of [...a,...d])if(u.hp<=1e-8){const sh=SHIPS[u.key],out=debris,rate=.3;out.metal+=sh.cost[0]*rate;out.crystal+=sh.cost[1]*rate;}
  for(const k of RES){debris[k]=Math.floor(debris[k]);defenseRepair[k]=Math.floor(defenseRepair[k]);}
  return {outcome,attacker:aa,defender:dd,debris,defenseRepair,rounds,...combatGroups(defender,d),trace:{...(defender.groups?{defenderGroups:structuredClone(defender.groups)}:{}),version:1,ruleVersion:version,seed:String(seed),tech:{attacker:{...attacker.tech},defender:{...defender.tech}},shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},initial,final:[...a,...d].map(snapshot),rounds:logs}};
 }
