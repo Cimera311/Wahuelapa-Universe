@@ -10,13 +10,13 @@ const scenarios={
  orbital:{attacker:{titan:600},defender:{flak:1000,laser:200,rail:50,plasma:200}},
  large:{attacker:{titan:1000},defender:{falke:10000}},
  stress:{attacker:{titan:10000},defender:{falke:100000}},
- falke_titan:{attacker:{falke:80},defender:{titan:8}},
- titan_falke:{attacker:{titan:12},defender:{falke:160}},
+ falke_titan:{attacker:{falke:400},defender:{titan:10}},
+ titan_falke:{attacker:{titan:10},defender:{falke:320}},
  waechter_falke:{attacker:{waechter:40},defender:{falke:240}},
  waechter_titan:{attacker:{waechter:60},defender:{titan:20}},
  donner_flak:{attacker:{donner:30},defender:{flak:200}},
  donner_laser:{attacker:{donner:30},defender:{laser:160}},
- donner_orbital:{attacker:{donner:40},defender:{flak:120,laser:80,rail:30,plasma:15}},
+ donner_orbital:{attacker:{donner:40,titan:15},defender:{flak:120,laser:80,rail:30,plasma:15}},
  mixed_special:{attacker:{falke:80,waechter:35,donner:20,titan:8},defender:{falke:160,titan:12,flak:100,laser:40}}
 };
 import {REALM_COMBAT_OVERRIDES,combatConfigForRealmId} from '../src/realm-config.js';
