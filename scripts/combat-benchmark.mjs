@@ -1,7 +1,7 @@
 import {performance} from 'node:perf_hooks';
 import {writeFileSync,mkdirSync} from 'node:fs';
 import {resolveBattle} from '../src/combat.js';
-import {resolveBattleHybrid,resolveBattleHybridV5} from '../src/combat-hybrid.js';
+import {resolveBattleHybrid,resolveBattleHybridV5,resolveBattleHybridV6} from '../src/combat-hybrid.js';
 
 const scenarios={
  duel:{attacker:{titan:400},defender:{titan:332}},
@@ -11,8 +11,11 @@ const scenarios={
  large:{attacker:{titan:1000},defender:{falke:10000}},
  stress:{attacker:{titan:10000},defender:{falke:100000}}
 };
+import {REALM_COMBAT_OVERRIDES,combatConfigForRealmId} from '../src/realm-config.js';
+const realm=process.env.REALM||'main';
+const realmConfig=combatConfigForRealmId(realm);
 const comparison=process.env.COMPARE||'v4-v5';
-if(!['v3-v4','v4-v5'].includes(comparison))throw Error('Unknown comparison: '+comparison);
+if(!['v3-v4','v4-v5','v5-v6'].includes(comparison))throw Error('Unknown comparison: '+comparison);
 const scenario=process.env.SCENARIO||'duel';
 const all=scenario==='all'?['swarm','mid','duel','orbital','large']: [scenario];
 const runs=Math.max(1,Math.min(1000,Number(process.env.RUNS||10)));
@@ -23,7 +26,9 @@ function compare(name,seed){
  const input=scenarios[name];if(!input)throw Error('Unknown scenario: '+name);
  const total=count(input.attacker)+count(input.defender);
  const iterations=total>10000?Math.min(runs,3):runs;
- const versions=comparison==='v4-v5'
+ const versions=comparison==='v5-v6'
+  ?[['v5',resolveBattleHybridV5],['v6',(a,d,seed)=>resolveBattleHybridV6(a,d,seed,REALM_COMBAT_OVERRIDES[realm])]]
+  :comparison==='v4-v5'
   ?[['v4',resolveBattleHybrid],['v5',resolveBattleHybridV5]]
   :total>legacyLimit?[['v4',resolveBattleHybrid]]:[['v3',(a,d,s)=>resolveBattle(a,d,s,3)],['v4',resolveBattleHybrid]];
  for(const [engine,fn] of versions){
@@ -45,13 +50,14 @@ for(const name of all)compare(name);
 console.table(results);
 const differences=[];
 for(const name of all){
- const a=results.find(r=>r.scenario===name&&r.engine===(comparison==='v4-v5'?'v4':'v3')),b=results.find(r=>r.scenario===name&&r.engine===(comparison==='v4-v5'?'v5':'v4'));
+ const a=results.find(r=>r.scenario===name&&r.engine===(comparison==='v5-v6'?'v5':comparison==='v4-v5'?'v4':'v3')),b=results.find(r=>r.scenario===name&&r.engine===(comparison==='v5-v6'?'v6':comparison==='v4-v5'?'v5':'v4'));
  if(a&&b)differences.push({scenario:name,speedup:a.msPerBattle/b.msPerBattle,deltaAttackers:b.avgAttackers-a.avgAttackers,deltaDefenders:b.avgDefenders-a.avgDefenders,deltaDamaged:b.avgDamaged-a.avgDamaged,deltaDebrisMetal:b.avgDebrisMetal-a.avgDebrisMetal});
 }
 console.table(differences);
 mkdirSync('benchmark-results',{recursive:true});
-writeFileSync('benchmark-results/results.json',JSON.stringify({createdAt:new Date().toISOString(),scenario,comparison,runs,legacyLimit,results,differences},null,2));
+writeFileSync('benchmark-results/results.json',JSON.stringify({createdAt:new Date().toISOString(),scenario,comparison,realm,rapidFireRules:comparison==='v5-v6'?realmConfig.rapidFire:null,runs,legacyLimit,results,differences},null,2));
 let md='# WaHueLaPa – Kampfprüfstand v3 vs. v4\n\n';
+md+='**Realm-Profil:** '+realm+'\\n\\n';
 md+='**Hinweis:** v3 wird bei mehr als '+legacyLimit+' Schiffen bewusst übersprungen. v4 ist noch NICHT im Live-Spiel. Unterschiedliche Ergebnisse sind kein automatischer Fehler, müssen aber untersucht werden. Die identischen Seeds garantieren wegen verschiedener Zufalls-Abrufreihenfolge keine identischen Treffer.\n\n';
 md+='| Szenario | Einheiten | Engine | Läufe | ms/Kampf | Angreifer übrig | Verteidiger übrig | Beschädigte | Ergebnis KB |\n|---|---:|---|---:|---:|---:|---:|---:|---:|\n';
 for(const r of results)md+=`| ${r.scenario} | ${r.totalUnits} | ${r.engine} | ${r.runs} | ${r.msPerBattle} | ${r.avgAttackers} | ${r.avgDefenders} | ${r.avgDamaged} | ${r.avgResultKB} |\n`;
