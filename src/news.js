@@ -1,5 +1,20 @@
 export const GAME_NEWS=[
  {
+  date:'15.10.2026',
+  title:'⚔️🎯 Neue Kampfengine: Titanen nehmen ihre Ziele ins Visier!',
+  status:'🚀 Kampfsystem v4/v5',
+  items:[
+   '⚡ Unter der Haube rechnet unsere neue Hybrid-Engine große Raumschlachten deutlich kompakter ab. Das sorgt für kleinere Kampfprotokolle und weniger unnötige Daten.',
+   '🎯 Mit Kampfversion 5 kommt Zielbindung: Ein Schiff konzentriert seine Schüsse innerhalb einer Kampfrunde auf ein gemeinsames Ziel. Ein Titan mit vier Schüssen feuert also nicht mehr wahllos auf vier verschiedene Gegner!',
+   '🛡️ Der orbitale Erstschlag in Runde 0 bleibt erhalten. Schäden, Reparaturdock, Verluste und Trümmer gehören weiterhin zum Kampfsystem.',
+   '📜 Kampfberichte werden bei den neuen Engines nach Schiffstypen und Gruppen zusammengefasst – statt jeden einzelnen Schuss aufzulisten.',
+   '⏳ Bereits gestartete Angriffe behalten ihre Kampfversion. Die Zielbindung gilt für Angriffe, sobald v5 vom Spielbetrieb aktiviert wurde.',
+   '🔬 Wir haben v4 und v5 mit identischen Flottenkonstellationen im Kampfprüfstand verglichen. Die Zielbindung verändert die Schadensverteilung und damit potenziell auch das Schlachtergebnis!',
+   '🚀 Als Nächstes planen wir Rapid Fire: bestimmte Schiffstypen sollen gegen passende Ziele zusätzliche Angriffsmöglichkeiten erhalten. Noch ist das Zukunftsmusik.',
+   '🐞 Seht ihr unerwartete Verluste, ungewöhnliche Reparaturen oder einen unlesbaren Bericht? Meldet euch über die Wünschebox oder im Chat! ❤️'
+  ]
+ },
+ {
   "date": "15.10.2026",
   "title": "🛠️ Orbitalgeschütze: ausgeschaltet heißt reparierbar! 🛡️",
   "status": "🛡️ Reparatur-Update #75",
