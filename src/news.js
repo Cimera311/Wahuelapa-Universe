@@ -1,4 +1,20 @@
 export const GAME_NEWS=[
+ {
+  "date": "15.10.2026",
+  "title": "🛠️ Orbitalgeschütze: ausgeschaltet heißt reparierbar! 🛡️",
+  "status": "🛡️ Reparatur-Update #75",
+  "items": [
+    "💥 Flak, Laser, Railgun oder Plasma im Kampf ausgeschaltet? Ab jetzt bleiben eure Geschütze auf dem betroffenen Planeten als defekte Einheiten erhalten. Sie verteidigen erst wieder, wenn ihr sie repariert habt!",
+    "🔧 So geht’s: Bei den defekten Geschützen im Orbit auf „Reparatur planen“ klicken oder das lokale Reparaturdock öffnen. Typ und Anzahl auswählen, Kosten prüfen und Auftrag starten. Auch die Orbitalwerft bietet euch den Reparaturweg direkt bei beschädigten Geschützen.",
+    "💎 Die vollständige Wiederherstellung kostet 70 % der ursprünglichen Metall- und Kristall-Baukosten – keinen Treibstoff. Sie dauert genauso lange wie ein Neubau. Orbitalwerft und Arbeitsroboter beschleunigen beides; bei Energiemangel dauert es länger.",
+    "☄️ 30 % Metall und Kristall landen als normale Trümmer im Orbit. Andere können sie mitnehmen – oder ihr selbst bergen. Eure Geschütze bleiben in beiden Fällen reparierbar. Bei vollständiger Eigenbergung bleiben 40 % Metall-/Kristallverlust.",
+    "⏳ Defekte Geschütze bleiben auch während ihrer vollständigen Wiederherstellung inaktiv und geschützt. Sie kämpfen nicht und erzeugen bei weiteren Angriffen keine neuen Trümmer. Reparaturen laufen nacheinander; jede fertige Einheit ist sofort wieder einsatzbereit.",
+    "🏆 Defekte Geschütze und laufende vollständige Wiederherstellungen bringen bis zur Fertigstellung keine Ranglistenpunkte. Danach zählen die Geschütze wieder zu den Gebäudepunkten.",
+    "↩️ Reparatur abgebrochen? Nur unverbrauchtes Material kommt zurück. Noch nicht fertiggestellte Geschütze bleiben defekt; bereits verbrauchtes Material und begonnener Reparaturfortschritt gehen verloren.",
+    "🚀 Überlebende Einheiten mit Teilschäden behalten die bisherige anteilige Reparatur und bleiben dabei angreifbar. Zerstörte Raumschiffe bleiben endgültig verloren. Die neue Geschützregel gilt für künftig abgewickelte Kämpfe; frühere Verluste werden nicht rückwirkend wiederhergestellt.",
+    "🐞 Falls euch etwas auffällt, meldet es bitte über die Wünschebox oder im Chat. Viel Spaß beim Schrauben, Commander! ❤️"
+  ]
+},
  {date:'14.10.2026',title:'🏗️ Gebäude rückbauen! 🔻',status:'🏗️ Gebäuderückbau #69',items:[
  '🔻 Ab sofort kannst du Gebäudestufen einzeln zurückbauen – mit Bestätigungsfenster, 20 % Material zurück und 25 % der ursprünglichen Bauzeit! 💰⏳',
  '⚡ Die Auswirkungen auf deine Energieversorgung siehst du vor dem Rückbau.',
