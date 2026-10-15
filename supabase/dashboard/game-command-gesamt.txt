@@ -15,7 +15,7 @@ var BUILDINGS = {
   shipyard: { name: "Schiffswerft", icon: "\u2692", cost: [200, 100, 0], time: 12, description: "Ab Stufe 2 verk\xFCrzt jede weitere Stufe die Bauzeit neuer Auftr\xE4ge um 8 % gegen\xFCber der vorherigen Stufe. Verbraucht dauerhaft Strom; Strommangel bremst den Schiffbau.", requires: { building: "lab", level: 1 } },
   robotics: { name: "Arbeitsroboter", icon: "\u2699", cost: [400, 300, 60], time: 20, description: "Verk\xFCrzen neue Bauauftr\xE4ge um 8 % je Stufe.", requires: { tech: "engineering", level: 1 } },
   repairDock: { asset: "./assets/pvp-resource-v1/actions/repair.webp", name: "Reparaturdock", icon: "\u2692", cost: [1200, 800, 300], time: 60, description: "Repariert besch\xE4digte Einheiten im Orbit. Eigene Warteschlange; jede weitere Stufe verk\xFCrzt neue Reparaturen um 8 %. Verbraucht Energie.", requires: { building: "shipyard", level: 2 } },
-  orbital: { asset: "./assets/pvp-resource-v1/buildings/orbital.webp", name: "Orbitalwerft", icon: "\u25CE", cost: [600, 400, 120], time: 60, description: "Eigenst\xE4ndige Werft f\xFCr k\xFCnftige Verteidigungsplattformen. Verbraucht dauerhaft Energie. Jede Ausbaustufe wird die Bauzeit verk\xFCrzen und einen zus\xE4tzlichen Auftragsplatz erm\xF6glichen (maximal 20).", requires: { tech: "military", level: 1 } },
+  orbital: { asset: "./assets/pvp-resource-v1/buildings/orbital.webp", name: "Orbitalwerft", icon: "\u25CE", cost: [200, 100, 0], time: 60, description: "Produziert Orbitalgesch\xFCtze. Ausbaukosten wie bei der Schiffswerft: Metall und Kristall, kein Treibstoff. Verbraucht dauerhaft Energie. Jede Ausbaustufe verk\xFCrzt die Bauzeit und erm\xF6glicht einen zus\xE4tzlichen Auftragsplatz (maximal 20).", requires: { tech: "military", level: 1 } },
   bunker: { asset: "./assets/pvp-resource-v1/buildings/bunker.webp", name: "Ressourcenbunker", icon: "\u25A3", cost: [450, 300, 80], time: 45, description: "Je Stufe sch\xFCtzt er 2,5 % der Lagerkapazit\xE4t, insgesamt maximal 2000 je Rohstoff.", requires: { tech: "military", level: 1 } },
   tidal: { name: "Gezeitenkraftwerk", icon: "\u2248", cost: [700, 450, 80], time: 30, description: "Liefert 180 \xD7 Stufe^Realm-Faktor Energie auf Ozeanwelten.", requires: { tech: "energy", level: 3 }, ocean: true }
 };
@@ -586,7 +586,7 @@ var DEMOLITION_TIME = 0.25;
 function buildingLevelCost(key, index) {
   const b = BUILDINGS[key];
   if (!b) throw Error("Unbekanntes Geb\xE4ude.");
-  return key === "orbital" && index >= 4 ? vector(b.cost.map((v) => Math.ceil(v * Math.pow(1.6, 3) * Math.pow(1.08, index - 3)))) : costAt(b, index);
+  return costAt(b, index);
 }
 function buildingLevelTime(s, p, key, index) {
   const b = BUILDINGS[key];

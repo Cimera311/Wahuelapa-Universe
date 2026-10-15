@@ -62,7 +62,7 @@ export const DEMOLITION_TIME=.25;
 // Level is zero-based: the original cost/time for completed level N uses index N-1.
 export function buildingLevelCost(key,index){
  const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');
- return key==='orbital'&&index>=4?vector(b.cost.map(v=>Math.ceil(v*Math.pow(1.6,3)*Math.pow(1.08,index-3)))):costAt(b,index);
+ return costAt(b,index);
 }
 export function buildingLevelTime(s,p,key,index){
  const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');
