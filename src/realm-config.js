@@ -6,6 +6,7 @@ export const REALM_CONFIG = Object.freeze({
   // Rapid Fire is experimental v6 only; editing this does not enable it live.
   combat: Object.freeze({
     shotMechanics: Object.freeze({}),
+    applyLegacyDamageBonuses: true,
     rapidFire: Object.freeze({
       enabled: true,
       maxExtraSalvos: 3,
@@ -35,7 +36,7 @@ export function powerExponent(kind, plant) {
 // Deep merge only the Rapid Fire fields; never share mutable maps across realms.
 export function combatConfigForRealm(overrides={}){
  const base=REALM_CONFIG.combat.rapidFire,patch=overrides.combat?.rapidFire||{};
- const chances=Object.fromEntries(Object.entries(base.chances).map(([ship,pairs])=>[ship,{...pairs}]));
+ const chances=patch.replaceChances?{}:Object.fromEntries(Object.entries(base.chances).map(([ship,pairs])=>[ship,{...pairs}]));
  for(const [ship,pairs] of Object.entries(patch.chances||{}))chances[ship]={...(chances[ship]||{}),...pairs};
  const settings={enabled:patch.enabled??base.enabled,maxExtraSalvos:patch.maxExtraSalvos??base.maxExtraSalvos,
   allowInOrbitalOpening:patch.allowInOrbitalOpening??base.allowInOrbitalOpening,chances};
@@ -52,7 +53,9 @@ export function combatConfigForRealm(overrides={}){
   if(rule.shots!==undefined&&(!Number.isSafeInteger(rule.shots)||rule.shots<1||rule.shots>12))throw Error('Ungültige Schusszahl.');
   if(rule.damagePerShot!==undefined&&(!Number.isFinite(rule.damagePerShot)||rule.damagePerShot<=0))throw Error('Ungültiger Trefferschaden.');
  }
- return {rapidFire:settings,shotMechanics};
+ const applyLegacyDamageBonuses=overrides.combat?.applyLegacyDamageBonuses??REALM_CONFIG.combat.applyLegacyDamageBonuses;
+ if(typeof applyLegacyDamageBonuses!=='boolean')throw Error('Ungültige Legacy-Bonus-Einstellung.');
+ return {rapidFire:settings,shotMechanics,applyLegacyDamageBonuses};
 }
 
 // Add an entry for each realm when multi-realm support is enabled.
@@ -77,6 +80,24 @@ export const REALM_COMBAT_OVERRIDES=Object.freeze({
    falke: Object.freeze({titan:Object.freeze({shots:4,damagePerShot:15,targeting:'locked'})}),
    titan: Object.freeze({falke:Object.freeze({shots:4,targeting:'distinct'}),titan:Object.freeze({shots:4,targeting:'locked'})}),
    waechter: Object.freeze({falke:Object.freeze({shots:2,targeting:'distinct'})})
+  })
+ })})}),
+ // Test4: Rollenbasierte OGame-artige Rapid-Fire-Matrix. Alte Schadensboni AUS.
+ test4: Object.freeze({combat: Object.freeze({
+  applyLegacyDamageBonuses:false,
+  rapidFire:Object.freeze({
+   enabled:true,maxExtraSalvos:3,allowInOrbitalOpening:false,
+   replaceChances:true,
+   chances:Object.freeze({
+    falke:Object.freeze({donner:.20,titan:.40}),
+    waechter:Object.freeze({falke:.75,flak:.25}),
+    donner:Object.freeze({waechter:.25,flak:.85,laser:.75,rail:.60,plasma:.40}),
+    titan:Object.freeze({falke:.85,waechter:.40,donner:.50,flak:.60,laser:.40,rail:.20}),
+    flak:Object.freeze({falke:.80,waechter:.20}),
+    laser:Object.freeze({falke:.40,waechter:.60}),
+    rail:Object.freeze({donner:.60,titan:.40}),
+    plasma:Object.freeze({donner:.40,titan:.60})
+   })
   })
  })})
 });
