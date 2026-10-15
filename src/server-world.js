@@ -6,6 +6,7 @@ import {validateSave} from './storage.js';
 import {galaxyFlight} from './galaxy.js';
 import {GALAXY_FLIGHT_RULE_VERSION} from './flight.js';
 import {attackFleet,attackFlight,warningFraction,resolveBattle,COMBAT_RULE_VERSION,loadPlunder,takeHulls,putHulls} from './combat.js';
+import {resolveBattleHybrid} from './combat-hybrid.js';
 export const DAY=86400000;
 export const COLONY_PROTECTION=3600000;
 const ms=v=>typeof v==='number'?v:Date.parse(v);
@@ -54,7 +55,13 @@ function resolveAttack(w,m,time){
  parked.push(...dockedRaids.map(r=>({id:'raid:'+r.id,owner:m.defender_id,commander:d.name+' · Rückkehrende Angriffsflotte',fleet:r.survivors,hulls:r.return_hulls,tech:r.combat.tech,shieldFactor:shieldFactor(r.shieldUntil,time)})));
  const repairs=repairDefense(p,m.defender_id,d.name,{...d.tech},shieldFactor(p.shieldUntil,time));
  const supporting=socialDefense(w,m.defender_id,m.to,time);if(supporting.length||parked.length||repairs.length)defense.groups=[{id:'host',owner:m.defender_id,commander:d.name,...defense},...parked,...repairs,...supporting];
- const result=resolveBattle({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,m.ruleVersion||1);
+ // Mission rules are pinned at launch; v4 is opt-in only until the log storage
+ // and admin controls are migrated. Existing missions retain their original engine.
+ const version=m.ruleVersion||1;
+ const resolver=version===4?resolveBattleHybrid:resolveBattle;
+ const result=version===4
+  ?resolver({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id)
+  :resolver({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,version);
  const repairBefore=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,repairs.reduce((n,g)=>n+(g.fleet[k]||0),0)]));
  if(repairs.length)reconcileRepairBattle(p,result);
  const repairAfter=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,(p.repairQueue||[]).filter(j=>j.key===k&&!j.restore).reduce((n,j)=>n+j.entries.length,0)]));
