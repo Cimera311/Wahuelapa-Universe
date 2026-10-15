@@ -12,8 +12,8 @@ test('v4 deterministic and preserves original inputs',()=>{
  assert.ok(x.trace.rounds.every(r=>r.shots.every(s=>s.shots>0)));
 });
 test('v4 sparse hulls survive and are available for repair',()=>{
- const out=resolveBattleHybrid({fleet:{falke:1},tech:{}},{fleet:{titan:1},tech:{}},'one');
- assert.equal(out.attacker.fleet.falke,undefined);
+ const out=resolveBattleHybrid({fleet:{titan:1},tech:{}},{fleet:{titan:1},tech:{}},'one');
+ assert.equal(out.attacker.fleet.titan,1);
  assert.equal(out.defender.fleet.titan,1);
  assert.ok(out.defender.hulls.titan?.[0]<1);
 });
