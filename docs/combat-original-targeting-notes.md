@@ -18,3 +18,13 @@ Eine zukünftige Realm-Konfiguration könnte beide Eigenschaften getrennt modell
 - `rapidFire.maxExtraSalvos`: Limit für zusätzliche Salven.
 
 **Nicht** ohne weitere Abstimmung diese früheren Ideen als bereits vorhandene oder freigegebene Kampfwerte ausgeben. Besonders die Falken-gegen-Titan-Vierfachschüsse müssen vor Implementierung gegen die bestehenden Schiffswerte geprüft werden.
+
+## Implementierter Benchmark-Test3 (15.10.2026)
+- Falke → Titan: 4 Treffer zu je 15 Basis-Schaden (bestehender +25-%-Bonus bleibt), gemeinsames Ziel.
+- Titan → Falke: 4 reguläre Treffer, möglichst vier unterschiedliche Falken.
+- Titan → Titan: 4 reguläre Treffer, alle auf denselben Titanen.
+- Wächter → Falke: 2 reguläre Treffer, möglichst zwei unterschiedliche Falken.
+- Wächter → andere: unveränderte v5-Zielbindung.
+- Rapid-Fire-Zusatzsalven in Test3 deaktiviert, um die Schussverteilung isoliert zu prüfen.
+- Alle anderen Paarungen nutzen die bisherigen v5-Regeln und Schadensboni.
+- Die Auswahl der Zielart folgt noch den existierenden Zielprioritäten. Diese Test3-Regeln verändern nicht die live geschaltete v5-Engine.
