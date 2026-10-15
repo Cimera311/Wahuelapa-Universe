@@ -61,7 +61,7 @@ function resolveAttack(w,m,time){
  const version=m.ruleVersion||1;
  const resolver=[4,5,6].includes(version)?resolveBattleHybrid:resolveBattle;
  const result=[4,5,6].includes(version)
-  ?resolver({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,version,version===6?REALM_COMBAT_OVERRIDES.test4:{})
+  ?resolver({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,version,version===6?(m.combatConfig||REALM_COMBAT_OVERRIDES.test4):{})
   :resolver({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,version);
  const repairBefore=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,repairs.reduce((n,g)=>n+(g.fleet[k]||0),0)]));
  if(repairs.length)reconcileRepairBattle(p,result);
@@ -165,7 +165,7 @@ function launchAttack(w,uid,action,id){
  subtract(from,vector([0,0,f.fuel]));const hulls=takeHulls(from,fleet);for(const [k,n] of Object.entries(fleet))from.ships[k]-=n;
  if(origin)origin.protection_ended=true;
  else for(const p of colonies)p.protection_ended=true;
- w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,ruleVersion:[3,4,5,6].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION,combat:{fleet,tech:{...s.tech},hulls},shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
+ w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,ruleVersion:[3,4,5,6].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION,combat:{fleet,tech:{...s.tech},hulls},...(w.settings.combat_engine===6?{combatConfig:structuredClone(REALM_COMBAT_OVERRIDES.test4)}:{}),shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
 }
 
 export function processWorld(snapshot,uid,request){
