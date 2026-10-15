@@ -45,3 +45,17 @@ export function combatConfigForRealm(overrides={}){
   if(typeof chance!=='number'||!Number.isFinite(chance)||chance<0||chance>1)throw Error('Ungültige Rapid-Fire-Chance.');
  return {rapidFire:settings};
 }
+
+// Add an entry for each realm when multi-realm support is enabled.
+// "main" uses the defaults above. "test" is an example of a separate balance profile.
+export const REALM_COMBAT_OVERRIDES=Object.freeze({
+ main: Object.freeze({}),
+ test: Object.freeze({combat: Object.freeze({rapidFire: Object.freeze({
+  maxExtraSalvos: 2,
+  chances: Object.freeze({titan:Object.freeze({falke:0.15})})
+ })})})
+});
+export function combatConfigForRealmId(realmId='main'){
+ if(!Object.hasOwn(REALM_COMBAT_OVERRIDES,realmId))throw Error('Unbekanntes Realm: '+realmId);
+ return combatConfigForRealm(REALM_COMBAT_OVERRIDES[realmId]);
+}
