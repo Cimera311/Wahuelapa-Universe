@@ -1,0 +1,54 @@
+name: Package Combat v4 Game Command
+on:
+  pull_request:
+    paths:
+      - 'src/combat-hybrid.js'
+      - 'src/combat.js'
+      - 'src/repair.js'
+      - 'src/server-world.js'
+      - 'src/server-service.js'
+      - 'src/combat-ui.js'
+      - 'src/combat-summary.js'
+      - 'supabase/combat-hybrid-v4.sql'
+      - 'supabase/combat-engine-control-v4.sql'
+      - 'tests/combat-hybrid*.test.js'
+      - '.github/workflows/package-combat-v4.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm ci
+      - name: Test game and combat integrations
+        run: npm test
+      - name: Build website
+        run: npm run build
+      - name: Bundle deployable Supabase Game Command
+        run: |
+          npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --format=esm --platform=neutral --target=es2022 --external:npm:* --outfile=game-command-v4.ts
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const path='game-command-v4.ts';
+          let source=readFileSync(path,'utf8');
+          for(const fragment of ['resolveBattleHybrid','imperium_set_combat_engine','initialGroups','finalGroups']){
+            if(!source.includes(fragment))throw Error('Game Command bundle missing: '+fragment);
+          }
+          writeFileSync(path,'// @ts-nocheck — Combat v4, generated from source. Deploy after SQL migrations.\n'+source);
+          NODE
+      - name: Upload new game command and SQL migrations
+        uses: actions/upload-artifact@v4
+        with:
+          name: combat-v4-deployment-${{ github.run_id }}
+          path: |
+            game-command-v4.ts
+            supabase/combat-engine-control-v4.sql
+            supabase/combat-hybrid-v4.sql
+          if-no-files-found: error
