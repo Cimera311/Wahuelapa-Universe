@@ -93,21 +93,27 @@ function fireRapid(shooters,enemies,random,summary,rapid,shotMechanics={}){
     const distributed=rule?.targeting==='distinct';
     const targets=distributed?pool.filter(g=>g.key===target.key):null;
     const used=new Set();
-    let salvoDamage=0;
     for(let shot=0;shot<shots;shot++){
      let choice=picked;
      if(distributed){
-      // Uniformly pick an unused unit of the same target type when available.
-      let available=0;
-      for(const g of targets)for(let i=0;i<g.count;i++)if(!used.has(g.id+':'+g.key+':'+g.indices[i]))available++;
-      if(available){
-       let offset=Math.floor(random()*available);
-       outer:for(const g of targets)for(let i=0;i<g.count;i++){
-        const idx=g.indices[i],key=g.id+':'+g.key+':'+idx;
-        if(used.has(key))continue;
-        if(offset--===0){choice=[g,idx];break outer;}
+      // Rejection sampling is near-constant time for large swarms.
+      // Fall back to a scan only when few unused targets remain.
+      let found=null;
+      for(let attempt=0;attempt<16;attempt++){
+       const candidate=sampled(targets,random);
+       if(!candidate)break;
+       if(!used.has(candidate[0].id+':'+candidate[0].key+':'+candidate[1])){found=candidate;break;}
+      }
+      if(!found){
+       for(const g of targets){
+        for(let i=0;i<g.count;i++){
+         const idx=g.indices[i];
+         if(!used.has(g.id+':'+g.key+':'+idx)){found=[g,idx];break;}
+        }
+        if(found)break;
        }
-      }else choice=sampled(targets,random);
+      }
+      choice=found??sampled(targets,random);
      }
      if(!choice)break;
      const [victim,index]=choice;
@@ -117,7 +123,7 @@ function fireRapid(shooters,enemies,random,summary,rapid,shotMechanics={}){
      victim.damage.set(index,(victim.damage.get(index)||0)+damage);
      const key=s.key+':'+victim.key;
      const item=summary[key]??={shooter:s.key,target:victim.key,shots:0,damage:0,rapidFireShots:0,rapidFireDamage:0,extraSalvos:0};
-     item.shots++;item.damage+=damage;salvoDamage+=damage;
+     item.shots++;item.damage+=damage;
      if(extra){item.rapidFireShots++;item.rapidFireDamage+=damage;}
     }
     if(extra){const k=s.key+':'+target.key;summary[k].extraSalvos++;}
