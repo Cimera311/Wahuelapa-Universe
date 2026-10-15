@@ -34,17 +34,23 @@ test('100% chance forces extra salvo, 0% does not',()=>{
  assert.ok(sum(full)>0);
 });
 
-test('test3 has individual shot mechanics and no random rapid fire',()=>{
- const cfg=combatConfigForRealmId('test3');
- assert.equal(cfg.rapidFire.enabled,false);
- assert.deepEqual(cfg.shotMechanics.falke.titan,{shots:4,damagePerShot:15,targeting:'locked'});
- assert.equal(cfg.shotMechanics.titan.falke.targeting,'distinct');
- assert.equal(cfg.shotMechanics.titan.titan.targeting,'locked');
- assert.equal(cfg.shotMechanics.waechter.falke.targeting,'distinct');
- const a={fleet:{titan:1},tech:{}},d={fleet:{falke:10},tech:{}};
- const battle=resolveBattleHybridV6(a,d,'test3',REALM_COMBAT_OVERRIDES.test3);
- const titanShots=battle.trace.rounds.flatMap(x=>x.shots).filter(x=>x.shooter==='titan');
- assert.ok(titanShots.length>0);
- assert.ok(titanShots.every(x=>x.extraSalvos===0));
- assert.deepEqual(battle,resolveBattleHybridV6(a,d,'test3',REALM_COMBAT_OVERRIDES.test3));
+
+test('Test4 matches the complete Rapid Fire matrix without legacy damage bonuses',()=>{
+ const c=combatConfigForRealmId('test4').rapidFire;
+ const expected={
+  falke:{donner:.20,titan:.40},
+  waechter:{falke:.75,flak:.25},
+  donner:{waechter:.25,flak:.85,laser:.75,rail:.60,plasma:.40},
+  titan:{falke:.85,waechter:.40,donner:.50,flak:.60,laser:.40,rail:.20},
+  flak:{falke:.80,waechter:.20},
+  laser:{falke:.40,waechter:.60},
+  rail:{donner:.60,titan:.40},
+  plasma:{donner:.40,titan:.60}
+ };
+ assert.deepEqual(c.chances,expected);
+ assert.equal(c.maxExtraSalvos,3);
+ const fleet={fleet:{falke:5},tech:{}},target={fleet:{titan:1},tech:{}};
+ const actual=resolveBattleHybridV6(fleet,target,'test4',REALM_COMBAT_OVERRIDES.test4);
+ assert.deepEqual(actual,resolveBattleHybridV6(fleet,target,'test4',REALM_COMBAT_OVERRIDES.test4));
+ assert.ok(actual.trace.rounds.flatMap(x=>x.shots).some(x=>x.shooter==='falke'));
 });
