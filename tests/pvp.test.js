@@ -68,10 +68,10 @@ test('Draws and cargo exhaustion do not plunder; warehouse overflow is included 
  assert.deepEqual(loadPlunder(vector([10000,10000,10000]),vector([0,0,0]),0,99999,vector([999,999,0]),false).cargo,vector([0,0,0]));
  const cap=loadPlunder(vector([10000,10000,10000]),vector([5000,0,0]),2000,3300,vector([999,999,0]),true);assert.equal(cap.loot.metal,3250);assert.equal(cap.loot.crystal,50);assert.equal(cap.salvage.metal,0);
 });
-test('Destroyed freighters lose their cargo capacity; debris excludes fuel and defense salvage stays local',()=>{
+test('Destroyed freighters lose their cargo capacity; debris excludes fuel and disabled defense generates normal salvage',()=>{
  const b=resolveBattle({fleet:{falke:1,karawane:1},tech:{},shieldFactor:0},{fleet:{titan:10,flak:1},tech:{}},ID);
  assert.equal(b.attacker.fleet.karawane||0,0);assert.equal(b.debris.fuel,0);
- const defense=resolveBattle({fleet:{titan:30},tech:{}},{fleet:{flak:1},tech:{}},ID);assert.equal(defense.defenseRepair.metal,168);assert.equal(defense.debris.metal,0);
+ const defense=resolveBattle({fleet:{titan:30},tech:{}},{fleet:{flak:1},tech:{}},ID);assert.equal(defense.defenseRepair.metal,0);assert.equal(defense.debris.metal,72);
 });
 test('Every successful raid takes up to 25% of current unprotected stock without a daily budget',()=>{
  let w=fixture();

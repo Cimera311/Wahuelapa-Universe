@@ -29,9 +29,10 @@ export function validateSave(input){
    for(const [lvl,info] of Object.entries(levels))check(/^(?:[1-9]|[12][0-9]|30)$/.test(lvl)&&Number(lvl)<=p.buildings[key]&&info&&typeof info==='object'&&info.cost&&RES.every(k=>integer(info.cost[k],1e12))&&integer(info.ms,8.64e15)&&info.ms>0);
   }check(job(p.shipjob,SHIPS)&&(!p.shipjob||integer(p.shipjob.count,Number.MAX_SAFE_INTEGER)&&p.shipjob.count>0));p.orbitaljob??=null;p.orbitalqueue??=[];check(job(p.orbitaljob,SHIPS)&&(!p.orbitaljob||SHIPS[p.orbitaljob.key].category==='defense'));check(Array.isArray(p.orbitalqueue)&&p.orbitalqueue.length+(p.orbitaljob?1:0)<=SHIP_QUEUE_LEGACY_LIMIT&&(!p.orbitalqueue.length||p.orbitaljob));}
  for(const p of s.planets){
+  p.disabledDefenses??={};check(p.disabledDefenses&&typeof p.disabledDefenses==='object'&&!Array.isArray(p.disabledDefenses)&&Object.entries(p.disabledDefenses).every(([k,n])=>SHIPS[k]?.category==='defense'&&integer(n,Number.MAX_SAFE_INTEGER)));
   p.repairQueue??=[];check(Array.isArray(p.repairQueue)&&p.repairQueue.length<=20&&(!p.repairQueue.length||p.buildings.repairDock>=1));
-  for(const j of p.repairQueue){check(integer(j.id,s.seq)&&j.id>0&&Object.hasOwn(SHIPS,j.key)&&isNum(j.start,s.time)&&integer(j.count,100000)&&j.count>0&&integer(j.completed,j.count)&&integer(j.lost,j.count)&&isNum(j.factor,1)&&j.factor>0&&Array.isArray(j.entries)&&j.entries.length>0&&j.entries.length+j.completed+j.lost===j.count);
-   for(const e of j.entries)check(isNum(e.hp,1)&&e.hp>0&&isNum(e.initialHp,1)&&e.initialHp>0&&e.initialHp<=e.hp&&isNum(e.workRemaining,8.64e15)&&e.credit&&RES.every(k=>isNum(e.credit[k]))&&e.credit.fuel===0);
+  for(const j of p.repairQueue){check(j.restore===undefined||j.restore===true&&SHIPS[j.key]?.category==='defense');check(integer(j.id,s.seq)&&j.id>0&&Object.hasOwn(SHIPS,j.key)&&isNum(j.start,s.time)&&integer(j.count,100000)&&j.count>0&&integer(j.completed,j.count)&&integer(j.lost,j.count)&&isNum(j.factor,1)&&j.factor>0&&Array.isArray(j.entries)&&j.entries.length>0&&j.entries.length+j.completed+j.lost===j.count);
+   for(const e of j.entries)check(isNum(e.hp,1)&&(j.restore||e.hp>0)&&isNum(e.initialHp,1)&&(j.restore||e.initialHp>0)&&e.initialHp<=e.hp&&isNum(e.workRemaining,8.64e15)&&e.credit&&RES.every(k=>isNum(e.credit[k]))&&e.credit.fuel===0);
   }
  }
  const shipIds=[];

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-15.01",
+  "latest": "2026-10-15.02",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -169,6 +169,13 @@
       "sourceCommit": "750763039418b1f65df77f906b3c6c1431290cda",
       "description": "Orbitalwerft: Ausbaukosten identisch zur Schiffswerft, Faktor 1.6 und kein Treibstoff",
       "sha256": "bd68d3f299041f25198bf2d8f0e67b1e5f7ae2fb80e58a1c98b07092d413515a"
+    },
+    {
+      "version": "2026-10-15.02",
+      "createdAt": "2026-10-15T08:25:22.836Z",
+      "sourceCommit": "d49874106c5b1468753b8e1ce66ddef173bb51e9",
+      "description": "Orbitalgeschütze reparierbar: 70 Prozent Material, volle Neubauzeit, 30 Prozent Trümmer",
+      "sha256": "bffa7a0ba92694e79e1f8a0a300b8bdc322495c176f504cb783a8cfdb1874b87"
     }
   ]
 }
