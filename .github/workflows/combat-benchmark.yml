@@ -21,6 +21,7 @@ on:
           - main
           - test
           - test2
+          - test3
       scenario:
         description: 'Scenario'
         required: true
