@@ -81,10 +81,17 @@ function fireLocked(shooters,enemies,random,summary){
 // An extra salvo uses the selected target's pair probability; failed rolls stop
 // the chain. Target selection for each extra salvo still follows priorities.
 // v6: OGame-inspired probabilistic extra salvos, independent of legacy damage bonuses.
+function rapidCandidates(shooter,enemies,rapid){
+ const active=enemies.filter(g=>g.count);
+ const combatants=active.filter(g=>['military','defense'].includes(SHIPS[g.key].category));
+ const eligible=combatants.length?combatants:active;
+ const preferred=eligible.filter(g=>(rapid.chances[shooter.key]?.[g.key]??0)>0);
+ return preferred.length?preferred:eligible;
+}
 function fireRapid(shooters,enemies,random,summary,rapid){
  for(const s of shooters){
   if(!s.count||!s.stat.attack)continue;
-  const pool=candidates(s,enemies);
+  const pool=rapidCandidates(s,enemies,rapid);
   if(!pool.length)continue;
   for(let unit=0;unit<s.count;unit++){
    let picked=sampled(pool,random),extra=0;
