@@ -36,3 +36,15 @@ test('v4 aggregates shots instead of storing individual per-shot logs',()=>{
  assert.ok(first.shots.length<=2);
  assert.equal(first.shots.reduce((n,s)=>n+s.shots,0),800);
 });
+
+test('v4 repair dock retains original slots including destroyed units',()=>{
+ const defender={groups:[
+  {id:'host',owner:'A',fleet:{},tech:{}},
+  {id:'repair:slot1',owner:'A',fleet:{falke:3},hulls:{falke:[.2,.4,.7]},tech:{}}
+ ]};
+ const out=resolveBattleHybrid({fleet:{titan:100},tech:{}},defender,'repair-destruction');
+ const dock=out.defenderGroups.find(g=>g.id==='repair:slot1');
+ assert.equal(dock.repairUnits.length,3);
+ assert.ok(dock.repairUnits.every(x=>x.maxHp===160));
+ assert.ok(dock.repairUnits.some(x=>x.hp<=1e-8));
+});
