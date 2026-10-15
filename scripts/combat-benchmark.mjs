@@ -10,7 +10,7 @@ const scenarios={
  orbital:{attacker:{titan:600},defender:{flak:1000,laser:200,rail:50,plasma:200}},
  large:{attacker:{titan:1000},defender:{falke:10000}},
  stress:{attacker:{titan:10000},defender:{falke:100000}},
- falke_titan:{attacker:{falke:400},defender:{titan:10}},
+ falke_titan:{attacker:{falke:300},defender:{titan:10}},
  titan_falke:{attacker:{titan:10},defender:{falke:320}},
  waechter_falke:{attacker:{waechter:40},defender:{falke:240}},
  waechter_titan:{attacker:{waechter:60},defender:{titan:20}},
