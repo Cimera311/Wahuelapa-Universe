@@ -53,6 +53,14 @@ export const REALM_COMBAT_OVERRIDES=Object.freeze({
  test: Object.freeze({combat: Object.freeze({rapidFire: Object.freeze({
   maxExtraSalvos: 2,
   chances: Object.freeze({titan:Object.freeze({falke:0.15})})
+ })})}),
+ test2: Object.freeze({combat: Object.freeze({rapidFire: Object.freeze({
+  maxExtraSalvos: 1,
+  chances: Object.freeze({
+   waechter: Object.freeze({falke:1}),
+   donner: Object.freeze({flak:1,laser:1}),
+   titan: Object.freeze({falke:1})
+  })
  })})})
 });
 export function combatConfigForRealmId(realmId='main'){
