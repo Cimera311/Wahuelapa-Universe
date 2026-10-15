@@ -85,8 +85,10 @@ function result(groups){
  return {fleet,hulls};
 }
 function total(groups){return groups.reduce((n,g)=>n+g.count,0);}
+function groupSummary(groups,side){return groups.map(g=>({side,key:g.key,groupId:g.id,...(g.owner?{owner:g.owner}:{}),count:g.count}));}
 export function resolveBattleHybrid(attacker,defender,seed){
  const a=cohorts(attacker,'attacker'),d=cohorts(defender,'host'),random=seeded(seed),rounds=[],aggregates=[];
+ const initialGroups=[...groupSummary(a,'attacker'),...groupSummary(d,'defender')];
  for(let round=0;round<=6;round++){
   if(!total(a)||!total(d))break;
   const opening=round===0;
@@ -123,5 +125,8 @@ export function resolveBattleHybrid(attacker,defender,seed){
  });
  return {outcome:ac&&!dc?'attacker':dc&&!ac?'defender':'draw',attacker:attackerAfter,defender:defenderAfter,debris,defenseRepair,rounds,...grouped,
   // v4 traces intentionally aggregate; v3's per-unit report reader must not consume these.
-  trace:{version:2,ruleVersion:4,seed:String(seed),rounds:aggregates}};
+  trace:{version:2,ruleVersion:4,seed:String(seed),initialGroups,
+   finalGroups:[...groupSummary(a,'attacker'),...groupSummary(d,'defender')],
+   tech:{attacker:{...attacker.tech},defender:{...defender.tech}},
+   shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},rounds:aggregates}};
 }
