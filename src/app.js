@@ -509,7 +509,7 @@ document.addEventListener('click',async e=>{
  if(b.dataset.action==='partner-invites'){tab='fleet';fleetSection='partners';render();window.scrollTo({top:0,behavior:'smooth'});}
   if(['pvp-open','pvp-target','pvp-defense'].includes(b.dataset.action)){if(b.dataset.to)pvpDraft.to=b.dataset.to;tab='fleet';fleetSection=b.dataset.action==='pvp-defense'?'defense':'pvp';render();void refreshGalaxy(true);void refreshReports();}
  if(b.dataset.action==='pvp-toggle'){await serverAction({type:'set-pvp',enabled:!cloud.pvp.enabled});settings();}
- if(['combat-engine-3','combat-engine-4'].includes(b.dataset.action)){await serverAction({type:'set-combat',engine:Number(b.dataset.action.at(-1))});settings();}
+ if(['combat-engine-3','combat-engine-4','combat-engine-5'].includes(b.dataset.action)){await serverAction({type:'set-combat',engine:Number(b.dataset.action.at(-1))});settings();}
  if(b.dataset.action==='pvp-repair'){selectFleetSection('repair');window.scrollTo({top:0,behavior:'smooth'});}
  if(b.dataset.action==='pvp-retry'&&cloud?.pending)await serverAction(cloud.pending);
 });

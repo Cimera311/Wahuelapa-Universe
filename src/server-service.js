@@ -11,7 +11,7 @@ export async function runServerCommand(db,uid,input){
  // Admin engine selection is persisted independently of world commits.
  // SQL RPC enforces pvp_admins; selecting the current value is idempotent.
  if(input.type==='set-combat'){
-  if(![3,4].includes(input.engine))throw Error('Unbekannte Kampfengine.');
+  if(![3,4,5].includes(input.engine))throw Error('Unbekannte Kampfengine.');
   value(await db.rpc('imperium_set_combat_engine',{p_uid:uid,p_engine:input.engine}));
   return runServerCommand(db,uid,{type:'sync'});
  }

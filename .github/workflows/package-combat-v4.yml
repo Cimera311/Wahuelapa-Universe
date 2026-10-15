@@ -1,4 +1,4 @@
-name: Package Combat v4 Game Command
+name: Package Combat v5 Game Command
 on:
   pull_request:
     paths:
@@ -10,8 +10,11 @@ on:
       - 'src/combat-ui.js'
       - 'src/combat-summary.js'
       - 'supabase/combat-hybrid-v4.sql'
+      - 'supabase/combat-hybrid-v5.sql'
       - 'supabase/combat-engine-control-v4.sql'
+      - 'supabase/combat-engine-control-v5.sql'
       - 'tests/combat-hybrid*.test.js'
+      - 'tests/combat-v5.test.js'
       - '.github/workflows/package-combat-v4.yml'
   workflow_dispatch:
 permissions:
@@ -33,22 +36,22 @@ jobs:
         run: npm run build
       - name: Bundle deployable Supabase Game Command
         run: |
-          npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --format=esm --platform=neutral --target=es2022 --external:npm:* --outfile=game-command-v4.ts
+          npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --format=esm --platform=neutral --target=es2022 --external:npm:* --outfile=game-command-v5.ts
           node --input-type=module <<'NODE'
           import {readFileSync,writeFileSync} from 'node:fs';
-          const path='game-command-v4.ts';
+          const path='game-command-v5.ts';
           let source=readFileSync(path,'utf8');
-          for(const fragment of ['resolveBattleHybrid','imperium_set_combat_engine','initialGroups','finalGroups']){
+          for(const fragment of ['fireLocked','imperium_set_combat_engine','initialGroups','finalGroups']){
             if(!source.includes(fragment))throw Error('Game Command bundle missing: '+fragment);
           }
-          writeFileSync(path,'// @ts-nocheck — Combat v4, generated from source. Deploy after SQL migrations.\n'+source);
+          writeFileSync(path,'// @ts-nocheck — Combat v5, generated from source. Deploy after SQL migrations.\n'+source);
           NODE
       - name: Upload new game command and SQL migrations
         uses: actions/upload-artifact@v4
         with:
-          name: combat-v4-deployment-${{ github.run_id }}
+          name: combat-v5-deployment-${{ github.run_id }}
           path: |
-            game-command-v4.ts
-            supabase/combat-engine-control-v4.sql
-            supabase/combat-hybrid-v4.sql
+            game-command-v5.ts
+            supabase/combat-engine-control-v5.sql
+            supabase/combat-hybrid-v5.sql
           if-no-files-found: error
