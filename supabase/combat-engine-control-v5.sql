@@ -10,6 +10,8 @@ create table if not exists public.pvp_combat_engine_log (
  engine integer not null check(engine in (3,4,5)),
  changed_at timestamptz not null default now()
 );
+alter table public.pvp_combat_engine_log drop constraint if exists pvp_combat_engine_log_engine_check;
+alter table public.pvp_combat_engine_log add constraint pvp_combat_engine_log_engine_check check(engine in (3,4,5));
 revoke all on public.pvp_combat_engine_log from public,anon,authenticated;
 create or replace function public.imperium_set_combat_engine(p_uid uuid,p_engine integer)
 returns integer language plpgsql security definer set search_path='' as $$
