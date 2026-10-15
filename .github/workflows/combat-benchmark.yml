@@ -33,6 +33,15 @@ on:
           - orbital
           - large
           - stress
+          - falke_titan
+          - titan_falke
+          - waechter_falke
+          - waechter_titan
+          - donner_flak
+          - donner_laser
+          - donner_orbital
+          - mixed_special
+          - special
           - all
       runs:
         description: 'Number of seeds (1-1000); large scenarios capped at 3'
