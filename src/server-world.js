@@ -164,7 +164,7 @@ function launchAttack(w,uid,action,id){
  subtract(from,vector([0,0,f.fuel]));const hulls=takeHulls(from,fleet);for(const [k,n] of Object.entries(fleet))from.ships[k]-=n;
  if(origin)origin.protection_ended=true;
  else for(const p of colonies)p.protection_ended=true;
- w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,ruleVersion:COMBAT_RULE_VERSION,combat:{fleet,tech:{...s.tech},hulls},shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
+ w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,ruleVersion:[3,4].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION,combat:{fleet,tech:{...s.tech},hulls},shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
 }
 
 export function processWorld(snapshot,uid,request){
@@ -191,7 +191,7 @@ export function processWorld(snapshot,uid,request){
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{orbitalRestoration:true,buildingDemolition:true,repairDock:true,debrisSalvage:true,shipQueue:true,partnerOrigins:true,cargoRetention:true,attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,orbitalProduction:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ return {enabled:w.settings.enabled,combatEngine:[3,4].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),features:{orbitalRestoration:true,buildingDemolition:true,repairDock:true,debrisSalvage:true,shipQueue:true,partnerOrigins:true,cargoRetention:true,attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,orbitalProduction:true,cancelShip:true,combatRules:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
  debris:w.planets.filter(p=>p.owner_id===uid&&!p.reserved).map(p=>({planet:p.id,...p.debris||zero()})),
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,awaitingUnload:!!m.awaitingUnload,cargo:{...m.cargo||zero()},arrival:m.arrival_at,returnAt:m.return_at})),
