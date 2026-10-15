@@ -10,6 +10,9 @@ test('Rapid Fire defaults and realm-specific overrides are isolated',()=>{
  assert.equal(testRealm.chances.titan.falke,.15);
  assert.equal(main.maxExtraSalvos,3);
  assert.equal(testRealm.maxExtraSalvos,2);
+ const test2=combatConfigForRealmId('test2').rapidFire;
+ assert.equal(test2.maxExtraSalvos,1);
+ for(const pairs of Object.values(test2.chances))for(const chance of Object.values(pairs))assert.equal(chance,1);
  assert.equal(REALM_CONFIG.combat.rapidFire.chances.donner.flak,.15);
  assert.throws(()=>combatConfigForRealm({combat:{rapidFire:{chances:{titan:{falke:1.1}}}}}));
  assert.throws(()=>combatConfigForRealmId('missing'));
