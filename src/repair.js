@@ -51,7 +51,7 @@ export function finishRepair(p,notify){const j=repairOrders(p)[0];if(!j||j.entri
 export function repairDefense(p,owner,commander,tech,shieldFactor){return repairOrders(p).filter(j=>!j.restore).map(j=>({id:'repair:'+j.id,owner,commander:commander+' · Reparaturdock',fleet:{[j.key]:j.entries.length},hulls:{[j.key]:j.entries.map(e=>e.hp)},tech,shieldFactor}));}
 export function reconcileRepairBattle(p,result){
  for(const j of [...repairOrders(p)].filter(j=>!j.restore)){
-  const finals=result.trace?.final.filter(u=>u.groupId==='repair:'+j.id)||result.defenderGroups?.find(g=>g.id==='repair:'+j.id)?.repairUnits||[];
+  const finals=result.trace?.final?.filter(u=>u.groupId==='repair:'+j.id)||result.defenderGroups?.find(g=>g.id==='repair:'+j.id)?.repairUnits||[];
   if(finals.length!==j.entries.length)throw Error('Reparaturdock: Kampfzuordnung fehlt.');
   j.entries=j.entries.flatMap((e,i)=>{const u=finals[i];if(u.hp<=1e-8){if(SHIPS[j.key].category==='defense'){p.disabledDefenses??={};p.disabledDefenses[j.key]=(p.disabledDefenses[j.key]||0)+1;}j.lost++;return [];}e.hp=Math.min(1,u.hp/u.maxHp);e.initialHp=e.hp;e.workRemaining=Math.max(1,SHIPS[j.key].time*1000*REPAIR_RATE*(1-e.hp)*j.factor);return [e];});
   if(!j.entries.length)p.repairQueue=p.repairQueue.filter(q=>q.id!==j.id);
