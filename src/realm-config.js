@@ -5,6 +5,7 @@ export const REALM_CONFIG = Object.freeze({
   galaxyFlightTimeFactor: 3,
   // Rapid Fire is experimental v6 only; editing this does not enable it live.
   combat: Object.freeze({
+    shotMechanics: Object.freeze({}),
     rapidFire: Object.freeze({
       enabled: true,
       maxExtraSalvos: 3,
@@ -43,7 +44,15 @@ export function combatConfigForRealm(overrides={}){
   throw Error('Ungültige Realm Rapid-Fire-Einstellungen.');
  for(const pairs of Object.values(chances))for(const chance of Object.values(pairs))
   if(typeof chance!=='number'||!Number.isFinite(chance)||chance<0||chance>1)throw Error('Ungültige Rapid-Fire-Chance.');
- return {rapidFire:settings};
+ const baseShots=REALM_CONFIG.combat.shotMechanics||{},patchShots=overrides.combat?.shotMechanics||{};
+ const shotMechanics=Object.fromEntries(Object.entries(baseShots).map(([ship,pairs])=>[ship,{...pairs}]));
+ for(const [ship,pairs] of Object.entries(patchShots))shotMechanics[ship]={...(shotMechanics[ship]||{}),...pairs};
+ for(const pairs of Object.values(shotMechanics))for(const rule of Object.values(pairs)){
+  if(!['locked','distinct'].includes(rule.targeting))throw Error('Ungültige Zielverteilung.');
+  if(rule.shots!==undefined&&(!Number.isSafeInteger(rule.shots)||rule.shots<1||rule.shots>12))throw Error('Ungültige Schusszahl.');
+  if(rule.damagePerShot!==undefined&&(!Number.isFinite(rule.damagePerShot)||rule.damagePerShot<=0))throw Error('Ungültiger Trefferschaden.');
+ }
+ return {rapidFire:settings,shotMechanics};
 }
 
 // Add an entry for each realm when multi-realm support is enabled.
@@ -61,7 +70,15 @@ export const REALM_COMBAT_OVERRIDES=Object.freeze({
    donner: Object.freeze({flak:1,laser:1}),
    titan: Object.freeze({falke:1})
   })
- })})})
+ })})}),
+ test3: Object.freeze({combat: Object.freeze({
+  rapidFire: Object.freeze({enabled:false}),
+  shotMechanics: Object.freeze({
+   falke: Object.freeze({titan:Object.freeze({shots:4,damagePerShot:15,targeting:'locked'})}),
+   titan: Object.freeze({falke:Object.freeze({shots:4,targeting:'distinct'}),titan:Object.freeze({shots:4,targeting:'locked'})}),
+   waechter: Object.freeze({falke:Object.freeze({shots:2,targeting:'distinct'})})
+  })
+ })})
 });
 export function combatConfigForRealmId(realmId='main'){
  if(!Object.hasOwn(REALM_COMBAT_OVERRIDES,realmId))throw Error('Unbekanntes Realm: '+realmId);
