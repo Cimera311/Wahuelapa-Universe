@@ -35,6 +35,20 @@ export function summarizeRound(header,page){
 }
 
 export function roundSummaryView(header,page){
+ if(header.version===2){
+  const pairs=page.shots||[],impacts=page.impacts||[];
+  return '<section class="battle-round-summary"><h3>Runde '+page.round+
+   (page.round===0?' · Orbitaler Erstschlag':' · Schlagabtausch')+
+   '</h3><p class="fine">Kompakte Hybrid-Kampfberechnung: Einträge je Schiffstyp, keine einzelnen Schüsse gespeichert.</p>'+
+   pairs.map(p=>'<article class="battle-exchange"><strong>'+reportEscape(p.shooter)+' → '+reportEscape(p.target)+'</strong><p>'+number(p.shots)+' Schüsse · '+number(p.damage)+' Schaden</p></article>').join('')+
+   '<h4>Schäden und Verluste</h4>'+
+   impacts.map(p=>'<article class="battle-impact-summary"><strong>'+reportEscape(p.key)+' · Gruppe '+reportEscape(p.groupId||'')+'</strong><p>'+
+   number(p.hitUnits)+' getroffen · '+number(p.shieldDamage)+' Schildschaden · '+number(p.hullDamage)+' Hüllenschaden</p><p>'+
+   (p.destroyed?'💥 '+number(p.destroyed)+' zerstört':'Keine Verluste')+
+   (p.overkill?' · '+number(p.overkill)+' Überschaden':'')+'</p></article>').join('')+
+   (!pairs.length?'<p>Keine Schüsse in dieser Runde.</p>':'')+'</section>';
+ }
+
  const {pairs,outcomes}=summarizeRound(header,page);
  const label=u=>reportEscape(u.name)+' <small>'+side(u.side)+'</small>';
  return '<section class="battle-round-summary"><h3>Runde '+page.round+(page.round===0?' · Orbitaler Erstschlag':' · Schlagabtausch')+'</h3><p class="fine">'+(page.round===0?'Nur Orbitalplattformen feuern. Angreifer können in Runde 0 nicht zurückschießen.':'Beide Seiten feuern gleichzeitig. Verluste gelten am Rundenende.')+'</p>'+pairs.map(p=>'<article class="battle-exchange"><strong>'+label(p.shooter)+' → '+label(p.target)+'</strong><p>'+number(p.shots)+' Schüsse · '+number(p.damage)+' berechneter Schaden</p></article>').join('')+'<h4>Was wurde beschädigt oder zerstört?</h4>'+outcomes.map(o=>'<article class="battle-impact-summary"><strong>'+label(o.target)+' · getroffen von '+reportEscape(o.sources.join(' + '))+'</strong><p>'+number(o.shield)+' Schild + '+number(o.hull)+' Hülle beschädigt</p><p class="'+(o.destroyed?'battle-loss':'')+'">'+(o.destroyed?'💥 '+number(o.destroyed)+' zerstört':'Keine Zerstörung')+(o.surviving?' · '+number(o.surviving)+' getroffene Einheiten überleben mit insgesamt '+number(o.hpAfter)+' Hülle':'')+'</p>'+(o.overkill?'<small>'+number(o.overkill)+' Überschaden · nicht auf andere Ziele übertragen</small>':'')+(o.sources.length>1?'<small>Gemeinsames Trefferergebnis; kein einzelner Klasse zugeschriebener Abschuss.</small>':'')+'</article>').join('')+(!pairs.length?'<p>Keine Schüsse in dieser Runde.</p>':'')+'</section>';

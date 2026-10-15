@@ -1,6 +1,28 @@
 import {reportEscape} from './reports-ui.js';
 const battleNumber=n=>Number(n||0).toLocaleString('de-DE',{maximumFractionDigits:2});
+function hybridBattleLogView(header,page,{round=-2,offset=0}={}){
+ const control=(text,r,o=0,disabled=false)=>'<button data-battle-round="'+r+'" data-battle-offset="'+o+'" '+(disabled?'disabled':'')+' aria-pressed="'+(r===round&&o===offset)+'">'+text+'</button>';
+ const nav=control('Start',-2)+(header.rounds||[]).map(q=>control(q.round===0?'Runde 0 · Orbitaler Erstschlag':'Runde '+q.round,q.round)).join('')+control('Ende',-1);
+ const initial={attacker:0,defender:0};for(const g of header.initialGroups||[])initial[g.side]=(initial[g.side]||0)+g.count;
+ const after=round===-2?{attacker:{count:initial.attacker},defender:{count:initial.defender}}:round===-1?(header.rounds||[]).at(-1)?.after||{attacker:{count:initial.attacker},defender:{count:initial.defender}}:page?.after;
+ const board=after?'<div class="battle-board">'+['attacker','defender'].map(side=>'<section><h3>'+(side==='attacker'?'Angreifer':'Verteidiger')+(side===header.ownSide?' · Du':'')+'</h3><p>'+reportEscape(header.participants?.[side]||'Commander')+'</p><strong>'+battleNumber(after[side]?.count||0)+' / '+battleNumber(initial[side])+' Einheiten</strong><progress max="'+Math.max(1,initial[side])+'" value="'+(after[side]?.count||0)+'"></progress></section>').join('')+'</div>':'';
+ let body='',total=0;
+ if(round<0){
+  const groups=round===-2?header.initialGroups||[]:header.finalGroups||[];
+  total=groups.length;
+  body='<h3>'+(round===-2?'Startzustand':'Endzustand')+' · Kampfgruppen</h3><div class="battle-units">'+groups.slice(offset,offset+200).map(g=>'<article><strong>'+reportEscape(g.key)+'</strong><p>'+battleNumber(g.count)+' Einheiten · '+(g.side==='attacker'?'Angreifer':'Verteidiger')+'</p>'+(g.owner?'<small>'+reportEscape(g.owner)+'</small>':'')+'</article>').join('')+'</div>';
+ }else if(page){
+  total=Math.max(page.shotTotal||0,page.impactTotal||0);
+  body='<h3>Aggregierte Schüsse und Treffer</h3><div class="battle-shot-table"><table><thead><tr><th>Schütze → Ziel</th><th>Schüsse</th><th>Schaden</th></tr></thead><tbody>'+(page.shots||[]).map(p=>'<tr><td>'+reportEscape(p.shooter)+' → '+reportEscape(p.target)+'</td><td>'+battleNumber(p.shots)+'</td><td>'+battleNumber(p.damage)+'</td></tr>').join('')+'</tbody></table></div><h3>Treffer nach Gruppe</h3><div class="battle-units">'+(page.impacts||[]).map(p=>'<article><strong>'+reportEscape(p.key)+'</strong><p>'+battleNumber(p.hitUnits)+' getroffen · '+battleNumber(p.destroyed)+' zerstört</p><small>Schild '+battleNumber(p.shieldDamage)+' · Hülle '+battleNumber(p.hullDamage)+' · Überschaden '+battleNumber(p.overkill)+'</small></article>').join('')+'</div>';
+ }
+ const details=body?'<details class="battle-raw-details"><summary>Gruppendetails anzeigen</summary>'+body+'</details>':'';
+ const pages=total>200?'<div class="battle-pages">'+control('← Zurück',round,Math.max(0,offset-200),offset===0)+'<span>'+Math.min(total,offset+1)+'–'+Math.min(total,offset+200)+' / '+total+'</span>'+control('Weiter →',round,offset+200,offset+200>=total)+'</div>':'';
+ const summaries=(header.rounds||[]).map(q=>'<tr><td>'+q.round+'</td><td>'+battleNumber(q.after?.attacker?.count)+'</td><td>'+battleNumber(q.after?.defender?.count)+'</td></tr>').join('');
+ return '<h2>Kampfprotokoll · Hybrid v4</h2><p>'+reportEscape(header.from||'')+' → '+reportEscape(header.to||'')+'</p><p class="fine">Kompakter Kampfbericht. Treffer werden nach Typ und Gruppe zusammengefasst; individuell beschädigte Schiffe bleiben im Reparatursystem erhalten.</p><div class="battle-round-nav">'+nav+'</div>'+board+pages+(page?.summaryHTML||'')+details+pages+
+ '<details><summary>Überlebende je Runde</summary><table><thead><tr><th>Runde</th><th>Angreifer</th><th>Verteidiger</th></tr></thead><tbody>'+summaries+'</tbody></table></details><details><summary>Reproduzierbarkeit</summary><p>Seed: <code>'+reportEscape(header.seed||'')+'</code></p></details>';
+}
 export function battleLogView(header,page=null,{round=-2,offset=0}={}){
+ if(header.version===2)return hybridBattleLogView(header,page,{round,offset});
  const units=new Map(header.initial.map(u=>[u.id,u]));
  const label=id=>{const u=units.get(id);return (u?.name||u?.key||'Einheit')+' · '+id+(u?.commander?' · '+u.commander:'');};
  const control=(text,r,o=0,disabled=false)=>'<button data-battle-round="'+r+'" data-battle-offset="'+o+'" '+(disabled?'disabled':'')+' aria-pressed="'+(r===round&&o===offset)+'">'+text+'</button>';
