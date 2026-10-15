@@ -33,3 +33,18 @@ test('100% chance forces extra salvo, 0% does not',()=>{
  assert.equal(sum(zero),0);
  assert.ok(sum(full)>0);
 });
+
+test('test3 has individual shot mechanics and no random rapid fire',()=>{
+ const cfg=combatConfigForRealmId('test3');
+ assert.equal(cfg.rapidFire.enabled,false);
+ assert.deepEqual(cfg.shotMechanics.falke.titan,{shots:4,damagePerShot:15,targeting:'locked'});
+ assert.equal(cfg.shotMechanics.titan.falke.targeting,'distinct');
+ assert.equal(cfg.shotMechanics.titan.titan.targeting,'locked');
+ assert.equal(cfg.shotMechanics.waechter.falke.targeting,'distinct');
+ const a={fleet:{titan:1},tech:{}},d={fleet:{falke:10},tech:{}};
+ const battle=resolveBattleHybridV6(a,d,'test3',REALM_COMBAT_OVERRIDES.test3);
+ const titanShots=battle.trace.rounds.flatMap(x=>x.shots).filter(x=>x.shooter==='titan');
+ assert.ok(titanShots.length>0);
+ assert.ok(titanShots.every(x=>x.extraSalvos===0));
+ assert.deepEqual(battle,resolveBattleHybridV6(a,d,'test3',REALM_COMBAT_OVERRIDES.test3));
+});
