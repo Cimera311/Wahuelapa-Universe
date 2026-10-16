@@ -437,6 +437,7 @@ function routePauseButton(m){return cloud?.authoritative&&!cloud.pvp?.features?.
 function renderOrderFlightPreview(form,flight,data){
  const output=document.getElementById('fleet-estimate');if(!output)return;
  const capacity=Math.max(0,flight.capacity),type=data.get('type');
+ const from=getPlanet(state,form.dataset.planet||state.active),to=getPlanet(state,data.get('to'));
  const cargo=Object.fromEntries(RES.map(k=>[k,Math.max(0,Number(orderValue(data.get(k)))||0)]));
  const isMax=RES.some(k=>orderValue(data.get(k))==='max');
  const used=RES.reduce((sum,k)=>sum+cargo[k],0);
@@ -444,7 +445,9 @@ function renderOrderFlightPreview(form,flight,data){
  const manifest=RES.map(k=>'<span>'+resourceIcon(k)+' '+LABEL[k]+': <strong>'+(orderValue(data.get(k))==='max'?'MAX':fmt(cargo[k]))+'</strong></span>').join('');
  const usedLabel=isMax?'MAX (bei Start berechnet)':fmt(used);
  output.innerHTML='<div class="order-preview-title">✦ Flugvorschau</div>'
- +'<div class="order-preview-grid"><span>Flotte</span><strong>'+fmt(count)+' Schiffe</strong>'
+ +'<div class="order-preview-grid"><span>Startplanet</span><strong>'+esc(from.name)+'</strong>'
+ +'<span>Zielplanet</span><strong>'+esc(to.name)+'</strong>'
+ +'<span>Flotte</span><strong>'+fmt(count)+' Schiffe</strong>'
  +'<span>Laderaum (belegt / gesamt)</span><strong>'+usedLabel+' / '+fmt(capacity)+'</strong>'
  +'<span>Noch verfügbar</span><strong>'+(isMax?'Wird berechnet':fmt(Math.max(0,capacity-used)))+'</strong>'
  +'<span>Flugzeit je Strecke</span><strong>'+duration(flight.ms)+'</strong>'
