@@ -557,3 +557,30 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .fleet-order-redesign .order-columns h3{letter-spacing:-.015em}
 .fleet-order-redesign .fleet-choice{border-color:#315b6d;border-radius:12px;background:linear-gradient(125deg,rgba(8,41,58,.94),rgba(5,27,42,.96))}
 @media(max-width:540px){.fleet-order-redesign{padding:16px}.fleet-order-redesign>h2{font-size:clamp(1.15rem,5.5vw,1.55rem)}.fleet-order-types-grid{gap:8px}.fleet-order-types-grid button{padding:10px;min-height:52px;gap:7px;font-size:.83rem}.fleet-order-type-icon{flex-basis:22px;font-size:20px}.fleet-order-redesign .order-columns{grid-template-columns:minmax(0,1fr)}}
+
+/* Orders-only v4: Routes and Overview deliberately retain their current styling. */
+.fleet-order-redesign .orders-v4 .order-columns{grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:16px}
+.fleet-order-redesign .orders-v4 .unified-fleet-list{display:grid;gap:9px}
+.fleet-order-redesign .orders-v4 .fleet-choice{grid-template-columns:66px minmax(0,1fr);gap:9px;padding:11px;border-radius:12px}
+.fleet-order-redesign .orders-v4 .fleet-choice>img{width:66px;height:66px;object-fit:contain;background:radial-gradient(circle,#17445a,#071925);border-radius:10px}
+.fleet-order-redesign .orders-v4 .fleet-choice-count{grid-column:1/-1;justify-content:flex-end;flex-wrap:wrap}
+.fleet-order-redesign .orders-v4 .fleet-choice-count label{flex:0 1 auto}
+.fleet-order-redesign .orders-v4 .fleet-choice-count input{width:68px}
+.fleet-order-redesign .orders-v4 .unified-cargo>label{padding:10px 0;border-bottom:1px solid #234354}
+.fleet-order-redesign .orders-v4 .unified-cargo>label:last-child{border-bottom:0}
+.fleet-order-redesign .orders-v4 .cargo-control{display:grid;grid-template-columns:minmax(0,1fr);gap:7px}
+.fleet-order-redesign .orders-v4 .cargo-control>input{min-height:42px}
+.fleet-order-redesign .orders-v4 .cargo-control .amount-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.fleet-order-redesign .orders-v4 .cargo-control .amount-shortcuts button{min-width:0;padding:7px 3px}
+.fleet-order-redesign .orders-v4 .order-summary{background:linear-gradient(140deg,#12384a,#081e30);border-color:#35758b;border-radius:13px}
+.order-preview-title{font-weight:800;font-size:1.1rem;color:#e4fbff;margin-bottom:10px}
+.order-preview-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 12px;align-items:baseline;font-size:.9rem}
+.order-preview-grid>span{color:#a8c5d5}
+.order-preview-grid>strong{font-variant-numeric:tabular-nums;text-align:right}
+.order-preview-manifest{border-top:1px solid #2b5266;margin-top:12px;padding-top:11px}
+.order-preview-manifest>span{display:block;color:#a8c5d5;font-size:.85rem;margin-bottom:9px}
+.order-preview-manifest>div{display:flex;flex-wrap:wrap;gap:7px}
+.order-preview-manifest>div>span{display:inline-flex;align-items:center;gap:4px;padding:6px 8px;background:#09283a;border:1px solid #315469;border-radius:9px}
+.order-preview-manifest .resource-art{width:21px;height:21px}
+@media(max-width:860px){.fleet-order-redesign .orders-v4 .order-columns{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:360px){.fleet-order-redesign .orders-v4 .fleet-choice-count{justify-content:flex-start}.order-preview-grid{font-size:.81rem}}
