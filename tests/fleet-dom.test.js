@@ -26,3 +26,8 @@ test('Mixed private orders work on a current server and are blocked before sendi
 test('A stale saved selection shows the actual shortage before dispatch',t=>{
  const {w,doc,api}=ui(t);api.show('orders');const form=doc.getElementById('fleet-order-form');input(w,form.querySelector('[name="fleet-karawane"]'),5);api.state().planets[0].ships.karawane=2;api.render();assert.match(doc.getElementById('fleet-estimate').textContent,/5 gewählt, nur 2 verfügbar/);assert.equal(doc.querySelector('#fleet-order-form [type="submit"]').disabled,true);
 });
+
+
+test('Fleet action chooser remains in normal flow rather than matching the fixed bottom navigation',t=>{
+ const {doc,api}=ui(t);api.show('orders');const chooser=doc.querySelector('.fleet-order-types');assert.ok(chooser);assert.equal(chooser.tagName,'DIV');assert.equal(chooser.closest('.unified-order')!==null,true);assert.equal(chooser.querySelectorAll('[data-order-mode]').length,5);assert.equal(chooser.querySelectorAll('button[aria-pressed="true"]').length,1);assert.equal(doc.querySelectorAll('nav.fleet-order-types').length,0);
+});
