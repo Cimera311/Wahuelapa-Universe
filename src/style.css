@@ -537,3 +537,23 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
  .tutorial-system-banner .sun{width:65px;height:65px}
  .tutorial-system-banner .map-planet{font-size:9px;letter-spacing:-.15px}
 }
+
+/* Fleet order UI — compact neon layout inspired by preview 1.
+   Scoped to the order editor so hangar, trade routes and PvP are unchanged. */
+.fleet-order-redesign{position:relative;overflow:hidden;isolation:isolate;border:1px solid #28566b;background:radial-gradient(ellipse at 95% 0%,rgba(8,117,166,.25),transparent 42%),radial-gradient(ellipse at 90% 42%,rgba(2,83,131,.13),transparent 48%),#0b1d2d}
+.fleet-order-redesign::before{content:"";position:absolute;top:0;right:0;width:58%;height:190px;z-index:-1;pointer-events:none;opacity:.45;background:radial-gradient(circle at 90% 20%,rgba(50,170,225,.4),transparent 55%),radial-gradient(circle at 60% 40%,rgba(25,104,155,.2) 1px,transparent 2px);background-size:auto,35px 35px}
+.fleet-order-redesign>h2{font-weight:750;letter-spacing:-.025em;line-height:1.25;margin:0 0 18px;padding:0 0 16px;border-bottom:1px solid #294756}
+.fleet-order-types{margin-bottom:22px}
+.fleet-order-types-label{display:block;margin-bottom:10px;color:#a7becb;font-size:.91rem;font-weight:600}
+.fleet-order-types-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fleet-order-types-grid button{display:flex;justify-content:flex-start;align-items:center;gap:12px;min-width:0;min-height:54px;padding:11px 14px;text-align:left;border:1px solid #31586c;border-radius:12px;background:rgba(4,24,39,.8);color:#acc3d1;box-shadow:none;font-weight:700;line-height:1.3;transition:background .15s,border-color .15s}
+.fleet-order-types-grid button[aria-pressed="true"]{color:#e1faff;background:linear-gradient(125deg,#10475b,#0f3348);border-color:#2de5f4;box-shadow:inset 0 0 0 1px rgba(45,229,244,.45),0 0 14px rgba(25,206,234,.13)}
+.fleet-order-types-grid button:focus-visible{outline:2px solid #64ecf7;outline-offset:3px}
+.fleet-order-type-icon{display:inline-grid;place-items:center;flex:0 0 27px;font-size:23px;font-weight:500;color:#77cfe1}
+.fleet-order-types-grid button[aria-pressed="true"] .fleet-order-type-icon{color:#4cecff}
+.fleet-order-redesign .unified-order-form>label:first-of-type{display:block;padding-top:14px;border-top:1px solid #294756;color:#afc5d2}
+.fleet-order-redesign .unified-order-form>label:first-of-type select{margin-top:8px;min-height:48px;border:1px solid #37657b;border-radius:11px;background-color:#061928;color:#e5f8ff}
+.fleet-order-redesign .order-columns{gap:14px}
+.fleet-order-redesign .order-columns h3{letter-spacing:-.015em}
+.fleet-order-redesign .fleet-choice{border-color:#315b6d;border-radius:12px;background:linear-gradient(125deg,rgba(8,41,58,.94),rgba(5,27,42,.96))}
+@media(max-width:540px){.fleet-order-redesign{padding:16px}.fleet-order-redesign>h2{font-size:clamp(1.15rem,5.5vw,1.55rem)}.fleet-order-types-grid{gap:8px}.fleet-order-types-grid button{padding:10px;min-height:52px;gap:7px;font-size:.83rem}.fleet-order-type-icon{flex-basis:22px;font-size:20px}.fleet-order-redesign .order-columns{grid-template-columns:minmax(0,1fr)}}
