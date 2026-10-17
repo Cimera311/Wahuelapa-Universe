@@ -163,6 +163,17 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .ships .compact-ship .ship-build-reason{margin:10px 0 0;padding:9px 10px;background:#3b2b1c66;border-radius:7px;font-size:12px}
 .ship-extra{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
 .ship-extra>p{margin:0 0 12px;font-size:13px}
+
+.ship-rapid-fire{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(7,22,36,.38)}
+.ship-rapid-fire-heading{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;margin-bottom:8px}
+.ship-rapid-fire-heading strong{font-size:14px}
+.ship-rapid-fire-heading small{color:var(--muted);font-size:12px}
+.ship-rapid-fire-targets{display:flex;gap:7px;flex-wrap:wrap}
+.ship-rapid-fire-target{display:inline-flex;align-items:center;flex-wrap:wrap;gap:7px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:12px;line-height:1.3;max-width:100%}
+.ship-rapid-fire-target strong{color:var(--cyan);font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
+.ship-rapid-fire .fine{margin:9px 0 0;font-size:12px;line-height:1.5}
+.ship-rapid-fire-inactive{color:var(--amber)}
+
 .ship-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .ship-detail-grid>div{min-width:0;overflow-wrap:anywhere}
 .ship-detail-grid>div+div{border-left:1px solid var(--line);padding-left:18px}
@@ -538,6 +549,62 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
  .tutorial-system-banner .sun{width:65px;height:65px}
  .tutorial-system-banner .map-planet{font-size:9px;letter-spacing:-.15px}
 }
+
+/* Fleet order UI — compact neon layout inspired by preview 1.
+   Scoped to the order editor so hangar, trade routes and PvP are unchanged. */
+.fleet-order-redesign{position:relative;overflow:hidden;isolation:isolate;border:1px solid #28566b;background:radial-gradient(ellipse at 95% 0%,rgba(8,117,166,.25),transparent 42%),radial-gradient(ellipse at 90% 42%,rgba(2,83,131,.13),transparent 48%),#0b1d2d}
+.fleet-order-redesign::before{content:"";position:absolute;top:0;right:0;width:58%;height:190px;z-index:-1;pointer-events:none;opacity:.45;background:radial-gradient(circle at 90% 20%,rgba(50,170,225,.4),transparent 55%),radial-gradient(circle at 60% 40%,rgba(25,104,155,.2) 1px,transparent 2px);background-size:auto,35px 35px}
+.fleet-order-redesign>h2{font-weight:750;letter-spacing:-.025em;line-height:1.25;margin:0 0 18px;padding:0 0 16px;border-bottom:1px solid #294756}
+.fleet-order-types{margin-bottom:22px}
+.fleet-order-types-label{display:block;margin-bottom:10px;color:#a7becb;font-size:.91rem;font-weight:600}
+.fleet-order-types-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fleet-order-types-grid button{display:flex;justify-content:flex-start;align-items:center;gap:12px;min-width:0;min-height:54px;padding:11px 14px;text-align:left;border:1px solid #31586c;border-radius:12px;background:rgba(4,24,39,.8);color:#acc3d1;box-shadow:none;font-weight:700;line-height:1.3;transition:background .15s,border-color .15s}
+.fleet-order-types-grid button[aria-pressed="true"]{color:#e1faff;background:linear-gradient(125deg,#10475b,#0f3348);border-color:#2de5f4;box-shadow:inset 0 0 0 1px rgba(45,229,244,.45),0 0 14px rgba(25,206,234,.13)}
+.fleet-order-types-grid button:focus-visible{outline:2px solid #64ecf7;outline-offset:3px}
+.fleet-order-type-icon{display:inline-grid;place-items:center;flex:0 0 27px;font-size:23px;font-weight:500;color:#77cfe1}
+.fleet-order-types-grid button[aria-pressed="true"] .fleet-order-type-icon{color:#4cecff}
+.fleet-order-redesign .unified-order-form>label:first-of-type{display:block;padding-top:14px;border-top:1px solid #294756;color:#afc5d2}
+.fleet-order-redesign .unified-order-form>label:first-of-type select{margin-top:8px;min-height:48px;border:1px solid #37657b;border-radius:11px;background-color:#061928;color:#e5f8ff}
+.fleet-order-redesign .order-columns{gap:14px}
+.fleet-order-redesign .order-columns h3{letter-spacing:-.015em}
+.fleet-order-redesign .fleet-choice{border-color:#315b6d;border-radius:12px;background:linear-gradient(125deg,rgba(8,41,58,.94),rgba(5,27,42,.96))}
+@media(max-width:540px){.fleet-order-redesign{padding:16px}.fleet-order-redesign>h2{font-size:clamp(1.15rem,5.5vw,1.55rem)}.fleet-order-types-grid{gap:8px}.fleet-order-types-grid button{padding:10px;min-height:52px;gap:7px;font-size:.83rem}.fleet-order-type-icon{flex-basis:22px;font-size:20px}.fleet-order-redesign .order-columns{grid-template-columns:minmax(0,1fr)}}
+
+/* Orders-only v4: Routes and Overview deliberately retain their current styling. */
+.fleet-order-redesign .orders-v4 .order-columns{grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:16px}
+.fleet-order-redesign .orders-v4 .unified-fleet-list{display:grid;gap:9px}
+.fleet-order-redesign .orders-v4 .fleet-choice{grid-template-columns:66px minmax(0,1fr);gap:9px;padding:11px;border-radius:12px}
+.fleet-order-redesign .orders-v4 .fleet-choice>img{width:66px;height:66px;object-fit:contain;background:radial-gradient(circle,#17445a,#071925);border-radius:10px}
+.fleet-order-redesign .orders-v4 .fleet-choice-count{grid-column:1/-1;justify-content:flex-end;flex-wrap:wrap}
+.fleet-order-redesign .orders-v4 .fleet-choice-count label{flex:0 1 auto}
+.fleet-order-redesign .orders-v4 .fleet-choice-count input{width:68px}
+.fleet-order-redesign .orders-v4 .unified-cargo>label{padding:10px 0;border-bottom:1px solid #234354}
+.fleet-order-redesign .orders-v4 .unified-cargo>label:last-child{border-bottom:0}
+.fleet-order-redesign .orders-v4 .cargo-control{display:grid;grid-template-columns:minmax(0,1fr);gap:7px}
+.fleet-order-redesign .orders-v4 .cargo-control>input{min-height:42px}
+.fleet-order-redesign .orders-v4 .cargo-control .amount-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.fleet-order-redesign .orders-v4 .cargo-control .amount-shortcuts button{min-width:0;padding:7px 3px}
+.fleet-order-redesign .orders-v4 .order-summary{background:linear-gradient(140deg,#12384a,#081e30);border-color:#35758b;border-radius:13px}
+.order-preview-title{font-weight:800;font-size:1.1rem;color:#e4fbff;margin-bottom:10px}
+.order-preview-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 12px;align-items:baseline;font-size:.9rem}
+.order-preview-grid>span{color:#a8c5d5}
+.order-preview-grid>strong{font-variant-numeric:tabular-nums;text-align:right}
+.order-preview-manifest{border-top:1px solid #2b5266;margin-top:12px;padding-top:11px}
+.order-preview-manifest>span{display:block;color:#a8c5d5;font-size:.85rem;margin-bottom:9px}
+.order-preview-manifest>div{display:flex;flex-wrap:wrap;gap:7px}
+.order-preview-manifest>div>span{display:inline-flex;align-items:center;gap:4px;padding:6px 8px;background:#09283a;border:1px solid #315469;border-radius:9px}
+.order-preview-manifest .resource-art{width:21px;height:21px}
+@media(max-width:860px){.fleet-order-redesign .orders-v4 .order-columns{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:360px){.fleet-order-redesign .orders-v4 .fleet-choice-count{justify-content:flex-start}.order-preview-grid{font-size:.81rem}}
+
+/* Pirate stations: isolated admin preview, with a visible public teaser. */
+.galaxy-menu-pirates{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch}
+.galaxy-menu-pirates>button{min-width:0;min-height:58px;padding:10px 6px;font-size:clamp(12px,2.8vw,16px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;line-height:1.2}
+.galaxy-menu-pirates>button:disabled{opacity:.75;cursor:not-allowed;background:#102331;color:#acc0ce;border-color:#385164}
+.pirate-soon{font-size:10px;letter-spacing:.04em;color:#f4c67c;white-space:nowrap}
+.pirate-heading{margin:28px 0 22px}.pirate-heading h1{margin:12px 0}.pirate-preview-notice{padding:14px 16px;border:1px solid #75613e;border-radius:12px;background:#30271966;font-size:13px;color:#dbc9a9;line-height:1.6}.pirate-preview-notice strong{color:#f4c67c}
+.pirate-layout{display:grid;grid-template-columns:minmax(260px,.9fr) minmax(0,1.25fr);gap:20px;align-items:start}.pirate-station-list{display:grid;gap:12px}.pirate-station-card{display:grid;grid-template-columns:76px minmax(0,1fr) 12px;gap:12px;align-items:center;width:100%;min-height:126px;text-align:left;background:#0b1d2a;color:#dce9f3;border:1px solid #2b4659;border-radius:14px;padding:12px;box-shadow:none}.pirate-station-card[aria-pressed=true]{border-color:#56d8e9;background:#102c3a;box-shadow:inset 3px 0 #56d8e9}.pirate-station-card:focus-visible{outline:2px solid #f4c67c;outline-offset:3px}.pirate-thumbnail{height:80px;display:grid;place-items:center;background:radial-gradient(ellipse,#64533944,transparent 72%)}.pirate-thumbnail img{width:100%;height:100%;object-fit:contain}.pirate-card-copy{display:flex;flex-direction:column;gap:5px;min-width:0;overflow-wrap:anywhere}.pirate-card-copy strong{font-size:16px}.pirate-card-copy small{font-size:12px;color:#9eb4c6}.pirate-tier{font-size:11px;color:#f4c67c;letter-spacing:.04em}.pirate-card-copy .pirate-sensor-ready{color:#7ee4c1}.pirate-card-copy .pirate-sensor-needed{color:#c1ad91}.pirate-detail{padding:0;overflow:hidden;min-width:0}.pirate-detail:focus{outline:none}.pirate-detail:focus-visible{outline:2px solid #56d8e9;outline-offset:3px}.pirate-art{position:relative;min-height:230px;padding:24px;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 65%,#87603244,transparent 65%),#06111c url('./assets/galaxy/nebula.webp') center/cover;border-bottom:1px solid #2b4659}.pirate-art>img{height:200px;width:100%;object-fit:contain;filter:drop-shadow(0 16px 20px #0009)}.pirate-art>.pirate-tier{position:absolute;top:14px;left:16px;right:16px}.pirate-art-caption{position:absolute;bottom:10px;right:14px;color:#a0b2c2;font-size:10px}.pirate-tier-4 .pirate-art,.pirate-tier-5 .pirate-art{background-color:#27191a}.pirate-detail-body{padding:22px}.pirate-detail-body h2{margin:8px 0 12px;font-size:25px}.pirate-detail-body>p{font-size:14px;line-height:1.6}.pirate-scan-status{display:grid;gap:6px;padding:14px 0;color:#63dae8}.pirate-scan-status span{font-size:13px;color:#aebfcc}.pirate-scan-status small{font-size:11px}.pirate-intel{margin:8px 0 18px;border:1px solid #294151;border-radius:10px;padding:4px 14px}.pirate-intel>div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #23394a;font-size:14px}.pirate-intel>div:last-child{border:0}.pirate-intel dd{margin:0;color:#9caebe}.pirate-actions{display:grid;gap:10px}.pirate-actions button{min-height:46px;font-size:14px;white-space:normal}.pirate-actions .pirate-attack{background:#30291c;border-color:#b58a44;color:#f4c67c}.pirate-salvage{margin-top:22px;padding-top:18px;border-top:1px solid #294151}.pirate-salvage h3{margin:0;font-size:16px}.pirate-salvage .pirate-actions{grid-template-columns:1fr 1fr}
+@media(max-width:760px){.pirate-layout{grid-template-columns:minmax(0,1fr)}.pirate-station-card{min-height:112px;grid-template-columns:68px minmax(0,1fr) 12px}.pirate-thumbnail{height:68px}.pirate-detail-body{padding:18px}.pirate-heading .eyebrow{font-size:10px;letter-spacing:.12em}.pirate-art>img{height:190px}}
 </style></head><body><div id="app"></div><div id="toast" role="status" aria-live="polite"></div><script type="module">const RES = ['metal','crystal','fuel'];
 const LABEL = {metal:'Metall',crystal:'Kristall',fuel:'Treibstoff'};
 const ICON = {metal:'◈',crystal:'◆',fuel:'▰'};
@@ -622,6 +689,20 @@ function attackSlots(level){return level>=10?4:level>=5?2:level>=1?1:0;}
 // fuelPower ist fuer ein kuenftiges Treibstoffkraftwerk reserviert (noch ohne Effekt).
 const REALM_CONFIG = Object.freeze({
   galaxyFlightTimeFactor: 3,
+  // Rapid Fire v6 rules; the active combat engine is selected by the administrator.
+  combat: Object.freeze({
+    rapidFire: Object.freeze({
+      enabled: true,
+      maxExtraSalvos: 3,
+      allowInOrbitalOpening: false,
+      // Chance per additional salvo, 0..1. All other attacker->target pairs: 0.
+      chances: Object.freeze({
+        waechter: Object.freeze({falke: 0.20}),
+        donner: Object.freeze({flak: 0.15,laser: 0.15}),
+        titan: Object.freeze({falke: 0.10})
+      })
+    })
+  }),
   powerExponents: Object.freeze({
     default: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
     Heimatwelt: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
@@ -633,6 +714,92 @@ const REALM_CONFIG = Object.freeze({
 function powerExponent(kind, plant) {
   return (REALM_CONFIG.powerExponents[kind] || REALM_CONFIG.powerExponents.default)[plant]
     ?? REALM_CONFIG.powerExponents.default[plant];
+}
+
+// Realm-specific overrides can be provided by each realm's server configuration.
+// Deep merge only the Rapid Fire fields; never share mutable maps across realms.
+function combatConfigForRealm(overrides={}){
+ const base=REALM_CONFIG.combat.rapidFire,patch=overrides.combat?.rapidFire||{};
+ const chances=patch.replaceChances?{}:Object.fromEntries(Object.entries(base.chances).map(([ship,pairs])=>[ship,{...pairs}]));
+ for(const [ship,pairs] of Object.entries(patch.chances||{}))chances[ship]={...(chances[ship]||{}),...pairs};
+ const settings={enabled:patch.enabled??base.enabled,maxExtraSalvos:patch.maxExtraSalvos??base.maxExtraSalvos,
+  allowInOrbitalOpening:patch.allowInOrbitalOpening??base.allowInOrbitalOpening,chances};
+ if(typeof settings.enabled!=='boolean'||typeof settings.allowInOrbitalOpening!=='boolean'||
+ !Number.isSafeInteger(settings.maxExtraSalvos)||settings.maxExtraSalvos<0||settings.maxExtraSalvos>10)
+  throw Error('Ungültige Realm Rapid-Fire-Einstellungen.');
+ for(const pairs of Object.values(chances))for(const chance of Object.values(pairs))
+  if(typeof chance!=='number'||!Number.isFinite(chance)||chance<0||chance>1)throw Error('Ungültige Rapid-Fire-Chance.');
+ return {rapidFire:settings};
+}
+
+// Add an entry for each realm when multi-realm support is enabled.
+// "main" uses the defaults above. "test" is an example of a separate balance profile.
+const REALM_COMBAT_OVERRIDES=Object.freeze({
+ main: Object.freeze({}),
+ test: Object.freeze({combat: Object.freeze({rapidFire: Object.freeze({
+  maxExtraSalvos: 2,
+  chances: Object.freeze({titan:Object.freeze({falke:0.15})})
+ })})}),
+ test2: Object.freeze({combat: Object.freeze({rapidFire: Object.freeze({
+  maxExtraSalvos: 1,
+  chances: Object.freeze({
+   waechter: Object.freeze({falke:1}),
+   donner: Object.freeze({flak:1,laser:1}),
+   titan: Object.freeze({falke:1})
+  })
+ })})}),
+ // Test4: Rollenbasierte Rapid-Fire-Matrix, ohne klassische Schadensboni.
+ test4: Object.freeze({combat: Object.freeze({
+  rapidFire:Object.freeze({
+   enabled:true,maxExtraSalvos:3,allowInOrbitalOpening:true,
+   replaceChances:true,
+   chances:Object.freeze({
+    falke:Object.freeze({donner:.20,titan:.40}),
+    waechter:Object.freeze({falke:.75,flak:.25}),
+    donner:Object.freeze({waechter:.25,flak:.85,laser:.75,rail:.60,plasma:.40}),
+    titan:Object.freeze({waechter:.40,donner:.50,flak:.60,laser:.40,rail:.20}),
+    flak:Object.freeze({falke:.80,waechter:.20}),
+    laser:Object.freeze({falke:.40,waechter:.60}),
+    rail:Object.freeze({donner:.60,titan:.40}),
+    plasma:Object.freeze({donner:.40,titan:.60})
+   })
+  })
+ })})
+});
+function combatConfigForRealmId(realmId='main'){
+ if(!Object.hasOwn(REALM_COMBAT_OVERRIDES,realmId))throw Error('Unbekanntes Realm: '+realmId);
+ return combatConfigForRealm(REALM_COMBAT_OVERRIDES[realmId]);
+}
+
+
+
+// Read the same Test4 values that the v6 battle engine uses. Never duplicate
+// Rapid Fire percentages in the UI, so balance changes are reflected here.
+const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const percent=value=>Number((value*100).toFixed(1)).toLocaleString('de-DE');
+
+function rapidFireTargets(key,combat=combatConfigForRealmId('test4').rapidFire){
+ if(!combat.enabled)return [];
+ return Object.entries(combat.chances[key]||{})
+  .filter(([target,chance])=>SHIPS[target]&&Number.isFinite(chance)&&chance>0)
+  .map(([target,chance])=>({key:target,name:SHIPS[target].name,chance}));
+}
+
+function rapidFireInfoHTML(key,engineVersion=null){
+ const sh=SHIPS[key];
+ if(!sh)return '';
+ const combat=combatConfigForRealmId('test4').rapidFire;
+ const entries=rapidFireTargets(key,combat);
+ const active=engineVersion===6;
+ const legacy=engineVersion!=null&&engineVersion!==6;
+ const subtitle=active?'v6 aktiv':legacy?'Nur bei v6':'Kampfengine v6';
+ const chips=entries.map(({name,chance})=>`<span class="ship-rapid-fire-target"><span>${escapeHTML(name)}</span><strong>${percent(chance)} %</strong></span>`).join('');
+ const description=!['military','defense'].includes(sh.category)
+  ?'<p class="fine">Keine Rapid-Fire-Funktion für diesen Schiffstyp.</p>'
+  :!entries.length
+   ?'<p class="fine">Keine Rapid-Fire-Ziele konfiguriert.</p>'
+   :`<div class="ship-rapid-fire-targets">${chips}</div><p class="fine">Chance auf eine weitere vollständige Salve gegen das jeweilige Ziel, nach jeder Zusatzsalve erneut geprüft. Maximal ${combat.maxExtraSalvos} Zusatzsalven pro Kampfrunde.${sh.category==='defense'?(combat.allowInOrbitalOpening?' Rapid Fire gilt auch beim orbitalen Erstschlag (Runde 0).':' Kein Rapid Fire beim orbitalen Erstschlag.') :''}</p>`;
+ return `<section class="ship-rapid-fire" aria-label="Rapid Fire"><div class="ship-rapid-fire-heading"><strong>⚡ Rapid Fire</strong><small>${subtitle}</small></div>${description}${legacy?'<p class="fine ship-rapid-fire-inactive">Aktuell gilt v5 ohne Rapid Fire. Die Werte gelten bei Aktivierung von v6.</p>':''}</section>`;
 }
 
 
@@ -856,7 +1023,7 @@ function finishRepair(p,notify){const j=repairOrders(p)[0];if(!j||j.entries[0]?.
 function repairDefense(p,owner,commander,tech,shieldFactor){return repairOrders(p).filter(j=>!j.restore).map(j=>({id:'repair:'+j.id,owner,commander:commander+' · Reparaturdock',fleet:{[j.key]:j.entries.length},hulls:{[j.key]:j.entries.map(e=>e.hp)},tech,shieldFactor}));}
 function reconcileRepairBattle(p,result){
  for(const j of [...repairOrders(p)].filter(j=>!j.restore)){
-  const finals=result.trace?.final.filter(u=>u.groupId==='repair:'+j.id)||result.defenderGroups?.find(g=>g.id==='repair:'+j.id)?.repairUnits||[];
+  const finals=result.trace?.final?.filter(u=>u.groupId==='repair:'+j.id)||result.defenderGroups?.find(g=>g.id==='repair:'+j.id)?.repairUnits||[];
   if(finals.length!==j.entries.length)throw Error('Reparaturdock: Kampfzuordnung fehlt.');
   j.entries=j.entries.flatMap((e,i)=>{const u=finals[i];if(u.hp<=1e-8){if(SHIPS[j.key].category==='defense'){p.disabledDefenses??={};p.disabledDefenses[j.key]=(p.disabledDefenses[j.key]||0)+1;}j.lost++;return [];}e.hp=Math.min(1,u.hp/u.maxHp);e.initialHp=e.hp;e.workRemaining=Math.max(1,SHIPS[j.key].time*1000*REPAIR_RATE*(1-e.hp)*j.factor);return [e];});
   if(!j.entries.length)p.repairQueue=p.repairQueue.filter(q=>q.id!==j.id);
@@ -1429,6 +1596,20 @@ function summarizeRound(header,page){
 }
 
 function roundSummaryView(header,page){
+ if(header.version===2){
+  const pairs=page.shots||[],impacts=page.impacts||[];
+  return '<section class="battle-round-summary"><h3>Runde '+page.round+
+   (page.round===0?' · Orbitaler Erstschlag':' · Schlagabtausch')+
+   '</h3><p class="fine">Kompakte Hybrid-Kampfberechnung: Einträge je Schiffstyp, keine einzelnen Schüsse gespeichert.</p>'+
+   pairs.map(p=>'<article class="battle-exchange"><strong>'+reportEscape(p.shooter)+' → '+reportEscape(p.target)+'</strong><p>'+number(p.shots)+' Schüsse · '+number(p.damage)+' Schaden</p></article>').join('')+
+   '<h4>Schäden und Verluste</h4>'+
+   impacts.map(p=>'<article class="battle-impact-summary"><strong>'+reportEscape(p.key)+' · Gruppe '+reportEscape(p.groupId||'')+'</strong><p>'+
+   number(p.hitUnits)+' getroffen · '+number(p.shieldDamage)+' Schildschaden · '+number(p.hullDamage)+' Hüllenschaden</p><p>'+
+   (p.destroyed?'💥 '+number(p.destroyed)+' zerstört':'Keine Verluste')+
+   (p.overkill?' · '+number(p.overkill)+' Überschaden':'')+'</p></article>').join('')+
+   (!pairs.length?'<p>Keine Schüsse in dieser Runde.</p>':'')+'</section>';
+ }
+
  const {pairs,outcomes}=summarizeRound(header,page);
  const label=u=>reportEscape(u.name)+' <small>'+side(u.side)+'</small>';
  return '<section class="battle-round-summary"><h3>Runde '+page.round+(page.round===0?' · Orbitaler Erstschlag':' · Schlagabtausch')+'</h3><p class="fine">'+(page.round===0?'Nur Orbitalplattformen feuern. Angreifer können in Runde 0 nicht zurückschießen.':'Beide Seiten feuern gleichzeitig. Verluste gelten am Rundenende.')+'</p>'+pairs.map(p=>'<article class="battle-exchange"><strong>'+label(p.shooter)+' → '+label(p.target)+'</strong><p>'+number(p.shots)+' Schüsse · '+number(p.damage)+' berechneter Schaden</p></article>').join('')+'<h4>Was wurde beschädigt oder zerstört?</h4>'+outcomes.map(o=>'<article class="battle-impact-summary"><strong>'+label(o.target)+' · getroffen von '+reportEscape(o.sources.join(' + '))+'</strong><p>'+number(o.shield)+' Schild + '+number(o.hull)+' Hülle beschädigt</p><p class="'+(o.destroyed?'battle-loss':'')+'">'+(o.destroyed?'💥 '+number(o.destroyed)+' zerstört':'Keine Zerstörung')+(o.surviving?' · '+number(o.surviving)+' getroffene Einheiten überleben mit insgesamt '+number(o.hpAfter)+' Hülle':'')+'</p>'+(o.overkill?'<small>'+number(o.overkill)+' Überschaden · nicht auf andere Ziele übertragen</small>':'')+(o.sources.length>1?'<small>Gemeinsames Trefferergebnis; kein einzelner Klasse zugeschriebener Abschuss.</small>':'')+'</article>').join('')+(!pairs.length?'<p>Keine Schüsse in dieser Runde.</p>':'')+'</section>';
@@ -1436,7 +1617,29 @@ function roundSummaryView(header,page){
 
 
 const battleNumber=n=>Number(n||0).toLocaleString('de-DE',{maximumFractionDigits:2});
+function hybridBattleLogView(header,page,{round=-2,offset=0}={}){
+ const control=(text,r,o=0,disabled=false)=>'<button data-battle-round="'+r+'" data-battle-offset="'+o+'" '+(disabled?'disabled':'')+' aria-pressed="'+(r===round&&o===offset)+'">'+text+'</button>';
+ const nav=control('Start',-2)+(header.rounds||[]).map(q=>control(q.round===0?'Runde 0 · Orbitaler Erstschlag':'Runde '+q.round,q.round)).join('')+control('Ende',-1);
+ const initial={attacker:0,defender:0};for(const g of header.initialGroups||[])initial[g.side]=(initial[g.side]||0)+g.count;
+ const after=round===-2?{attacker:{count:initial.attacker},defender:{count:initial.defender}}:round===-1?(header.rounds||[]).at(-1)?.after||{attacker:{count:initial.attacker},defender:{count:initial.defender}}:page?.after;
+ const board=after?'<div class="battle-board">'+['attacker','defender'].map(side=>'<section><h3>'+(side==='attacker'?'Angreifer':'Verteidiger')+(side===header.ownSide?' · Du':'')+'</h3><p>'+reportEscape(header.participants?.[side]||'Commander')+'</p><strong>'+battleNumber(after[side]?.count||0)+' / '+battleNumber(initial[side])+' Einheiten</strong><progress max="'+Math.max(1,initial[side])+'" value="'+(after[side]?.count||0)+'"></progress></section>').join('')+'</div>':'';
+ let body='',total=0;
+ if(round<0){
+  const groups=round===-2?header.initialGroups||[]:header.finalGroups||[];
+  total=groups.length;
+  body='<h3>'+(round===-2?'Startzustand':'Endzustand')+' · Kampfgruppen</h3><div class="battle-units">'+groups.slice(offset,offset+200).map(g=>'<article><strong>'+reportEscape(g.key)+'</strong><p>'+battleNumber(g.count)+' Einheiten · '+(g.side==='attacker'?'Angreifer':'Verteidiger')+'</p>'+(g.owner?'<small>'+reportEscape(g.owner)+'</small>':'')+'</article>').join('')+'</div>';
+ }else if(page){
+  total=Math.max(page.shotTotal||0,page.impactTotal||0);
+  body='<h3>Aggregierte Schüsse und Treffer</h3><div class="battle-shot-table"><table><thead><tr><th>Schütze → Ziel</th><th>Schüsse</th><th>Schaden</th></tr></thead><tbody>'+(page.shots||[]).map(p=>'<tr><td>'+reportEscape(p.shooter)+' → '+reportEscape(p.target)+'</td><td>'+battleNumber(p.shots)+'</td><td>'+battleNumber(p.damage)+'</td></tr>').join('')+'</tbody></table></div><h3>Treffer nach Gruppe</h3><div class="battle-units">'+(page.impacts||[]).map(p=>'<article><strong>'+reportEscape(p.key)+'</strong><p>'+battleNumber(p.hitUnits)+' getroffen · '+battleNumber(p.destroyed)+' zerstört</p><small>Schild '+battleNumber(p.shieldDamage)+' · Hülle '+battleNumber(p.hullDamage)+' · Überschaden '+battleNumber(p.overkill)+'</small></article>').join('')+'</div>';
+ }
+ const details=body?'<details class="battle-raw-details"><summary>Gruppendetails anzeigen</summary>'+body+'</details>':'';
+ const pages=total>200?'<div class="battle-pages">'+control('← Zurück',round,Math.max(0,offset-200),offset===0)+'<span>'+Math.min(total,offset+1)+'–'+Math.min(total,offset+200)+' / '+total+'</span>'+control('Weiter →',round,offset+200,offset+200>=total)+'</div>':'';
+ const summaries=(header.rounds||[]).map(q=>'<tr><td>'+q.round+'</td><td>'+battleNumber(q.after?.attacker?.count)+'</td><td>'+battleNumber(q.after?.defender?.count)+'</td></tr>').join('');
+ return '<h2>Kampfprotokoll · Hybrid v'+header.ruleVersion+'</h2><p>'+reportEscape(header.from||'')+' → '+reportEscape(header.to||'')+'</p><p class="fine">Kompakter Kampfbericht. Treffer werden nach Typ und Gruppe zusammengefasst; individuell beschädigte Schiffe bleiben im Reparatursystem erhalten.</p><div class="battle-round-nav">'+nav+'</div>'+board+pages+(page?.summaryHTML||'')+details+pages+
+ '<details><summary>Überlebende je Runde</summary><table><thead><tr><th>Runde</th><th>Angreifer</th><th>Verteidiger</th></tr></thead><tbody>'+summaries+'</tbody></table></details><details><summary>Reproduzierbarkeit</summary><p>Seed: <code>'+reportEscape(header.seed||'')+'</code></p></details>';
+}
 function battleLogView(header,page=null,{round=-2,offset=0}={}){
+ if(header.version===2)return hybridBattleLogView(header,page,{round,offset});
  const units=new Map(header.initial.map(u=>[u.id,u]));
  const label=id=>{const u=units.get(id);return (u?.name||u?.key||'Einheit')+' · '+id+(u?.commander?' · '+u.commander:'');};
  const control=(text,r,o=0,disabled=false)=>'<button data-battle-round="'+r+'" data-battle-offset="'+o+'" '+(disabled?'disabled':'')+' aria-pressed="'+(r===round&&o===offset)+'">'+text+'</button>';
@@ -1490,8 +1693,8 @@ function attackCard(m,state,pvp,galaxy,now=pvp.serverNow,cached=[],opened=new Se
 
 
 const fleetEscape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function fleetPicker(state,planet,{fleet={},extra={},prefix='fleet-',categories=['freighter']}={}){
- return '<div class="unified-fleet-list">'+Object.entries(SHIPS).filter(([,s])=>categories.includes(s.category)).map(([key,ship])=>{
+function fleetPicker(state,planet,{fleet={},extra={},prefix='fleet-',categories=['freighter'],availableOnly=false}={}){
+ return '<div class="unified-fleet-list">'+Object.entries(SHIPS).filter(([key,s])=>categories.includes(s.category)&&(!availableOnly||(planet.ships[key]||0)+(extra[key]||0)>0)).map(([key,ship])=>{
  const available=(planet.ships[key]||0)+(extra[key]||0),engine=shipFlightEngine(state,key,false);
  return `<div class="fleet-choice"><img src="./assets/${ship.image||key}.webp" alt="" width="64" height="64"><div class="fleet-choice-copy"><strong>${fleetEscape(ship.name)}</strong><small data-engine-label="${key}">${fleetEscape(TECHS[engine].name)} ${state.tech[engine]||0}${ship.cargo?' · '+cargoCapacity(state,1,key).toLocaleString('de-DE')+' Laderaum':''}</small></div><div class="fleet-choice-count"><button type="button" data-fleet-adjust="-1" aria-label="${ship.name} verringern">−</button><label><input name="${prefix+key}" data-fleet-ship="${key}" type="number" min="0" max="${available}" step="1" value="${fleet[key]||0}" aria-label="Anzahl ${ship.name}"><span aria-label="${available} verfügbar">/ <strong class="available-ships">${available.toLocaleString('de-DE')}</strong></span></label><button type="button" data-fleet-adjust="1" aria-label="${ship.name} erhöhen">+</button><button type="button" data-fleet-adjust="all">Alle</button></div></div>`;
  }).join('')+'</div>';
@@ -1502,6 +1705,43 @@ function cargoStep(capacity){return Math.max(1,Math.floor(capacity*.05));}
 function clampFleetCount(value,available){return Math.max(0,Math.min(available,Math.floor(Number(value)||0)));}
 
 const GAME_NEWS=[
+ {
+  date:'17.10.2026',
+  title:'⚔️ Balancing: Titanen ohne Rapid Fire gegen Falken',
+  status:'⚖️ Kampfengine v6 · Balancing',
+  items:[
+   '🛩️ Falkenschwärme erhalten mehr Luft zum Atmen: Titanen lösen gegen Falken ab sofort keine Rapid-Fire-Zusatzsalven mehr aus.',
+   '🚀 Die vier regulären Titan-Schüsse bleiben weiterhin zu einer Salve auf ein Ziel gebündelt. Die anderen Rapid-Fire-Paarungen und alle Grundkampfwerte bleiben unverändert.',
+   '⏳ Die Änderung gilt für neue Angriffe. Bereits gestartete Angriffe behalten ihre gespeicherten Kampfregeln.',
+   '💬 Wie wirkt sich das auf eure Flotten aus? Feedback gerne im Chat oder in der Wünschebox! ❤️'
+  ]
+ },
+ {
+  date:'17.10.2026',
+  title:'🛰️ Orbitaler Erstschlag: Rapid Fire jetzt ab Runde 0! ⚡',
+  status:'⚔️ Kampfsystem v6 · Feinschliff',
+  items:[
+   '🛡️ Flak, Laser, Railgun und Plasma können ihre Rapid-Fire-Zusatzsalven jetzt bereits beim orbitalen Erstschlag in Runde 0 auslösen – mit denselben Wahrscheinlichkeiten und maximal drei Extrasalven wie in den weiteren Runden.',
+   '🎯 Die angreifende Flotte schießt in Runde 0 weiterhin nicht zurück. Für v6 gelten dabei keine alten pauschalen Schadensboni mehr.',
+   '⚖️ Grundwerte für Angriff, Schild, Hülle sowie Baukosten bleiben unverändert. Bereits gestartete Angriffe behalten ihre beim Start festgelegten Kampfregeln.',
+   '💬 Wir vergleichen als Nächstes die Balance von Flotten und Orbitalverteidigung. Feedback und ungewöhnliche Kampfergebnisse gerne im Chat oder in der Wünschebox! ❤️'
+  ]
+ },
+ {
+  date:'17.10.2026',
+  title:'⚔️ Neue Kampfregeln: Zielbindung & Rapid Fire! 🚀',
+  status:'🔥 Kampfengine v5 & v6 · v6 jetzt aktiv',
+  items:[
+   '🎯 Mit v5 kam die Zielbindung: Die regulären Schüsse eines Schiffs konzentrieren sich auf ein gemeinsames Ziel, statt sich auf mehrere Gegner zu verteilen.',
+   '🔥 Jetzt ist v6 aktiv! Mit Rapid Fire haben bestimmte Schiffe und Orbitalgeschütze eine Chance auf zusätzliche volle Salven gegen passende Gegnertypen. Nach jeder Zusatzsalve entscheidet der Zufall erneut – maximal drei Zusatzsalven sind möglich.',
+   '🚀 Jede Einheit soll eine eigene Aufgabe haben: Wächter sind besonders gut gegen Falken, Donner greifen Orbitalverteidigungen effektiv an, Titanen bekämpfen vor allem feindliche Flotten. Flak, Laser, Railgun und Plasma erhalten ebenfalls eigene Stärken.',
+   '⚖️ Die früheren pauschalen Schadensboni gegen einzelne Gegnertypen entfallen in v6. Entscheidend sind jetzt eure Flottenzusammenstellung, die Grundkampfwerte und Rapid Fire.',
+   '🛡️ Der orbitale Erstschlag bleibt bestehen – ab diesem Update können Orbitalgeschütze auch in dieser Eröffnungsrunde Rapid Fire auslösen. Schilde, Hüllenschäden, Reparaturen und Trümmer funktionieren weiterhin.',
+   '⏳ Bereits gestartete Angriffe behalten ihre zugewiesene Kampfversion. Die neuen Regeln gelten für Angriffe, die mit v6 gestartet werden.',
+   '💬 Eure Meinung zählt: v6 läuft aktuell, aber v5 bleibt als Rückfalloption verfügbar. Wenn ihr euch nach den ersten Kämpfen die Zielbindung ohne Rapid Fire zurückwünscht, sagt es uns im Chat oder über die Wünschebox!',
+   '🐞 Bitte meldet auffällige Kampfergebnisse oder unerwartete Verluste. Wir schauen uns euer Feedback an und balancieren bei Bedarf nach. Viel Erfolg, Commander! ❤️'
+  ]
+ },
  {
   "date": "15.10.2026",
   "title": "🛠️ Orbitalgeschütze: ausgeschaltet heißt reparierbar! 🛡️",
@@ -1663,6 +1903,7 @@ function pvpSettings(pvp,busy=false,pending=false){
  if(!pvp)return '';
  return '<section class="panel pvp-setting">'+actionIcon('pvpPause')+'<h3>PvP '+(pvp.enabled?'aktiv':'pausiert')+'</h3><p>Eine Pause verhindert neue Angriffe. Laufende Kämpfe und Rückflüge werden weiter verarbeitet.</p>'+
  (pvp.isAdmin?'<button type="button" role="switch" aria-checked="'+pvp.enabled+'" data-action="pvp-toggle" '+(busy?'disabled':'')+'>'+(pvp.enabled?'PvP ausschalten':'PvP einschalten')+'</button>':'<p class="fine">Der PvP-Schalter ist nur für Administratoren verfügbar.</p>')+
+ (pvp.isAdmin?'<div class="pvp-engine-control"><h4>⚙️ Kampfengine für neue Angriffe</h4><p class="fine">v3: detaillierte Einzelberechnung · v4: schnelle Hybridgruppen. Laufende Angriffe bleiben unverändert.</p><button type="button" data-action="combat-engine-3" aria-pressed="'+(pvp.combatEngine===3)+'" '+(busy||pvp.combatEngine!==4?'disabled':'')+'>v3 · Debug</button> <button type="button" data-action="combat-engine-4" aria-pressed="'+(pvp.combatEngine===4)+'" '+(busy||pvp.combatEngine===4?'disabled':'')+'>v4 · Hybrid</button> <button type="button" data-action="combat-engine-5" aria-pressed="'+(pvp.combatEngine===5)+'" '+(busy||pvp.combatEngine===5?'disabled':'')+'>v5 · Zielbindung</button> <button type="button" data-action="combat-engine-6" aria-pressed="'+(pvp.combatEngine===6)+'" '+(busy||pvp.combatEngine===6?'disabled':'')+'>v6 · Rapid Fire</button><p>Aktiv: <strong>'+(pvp.combatEngine===6?'v6 · Rapid Fire':pvp.combatEngine===5?'v5 · Zielbindung':pvp.combatEngine===4?'v4 · Hybrid':'v3 · Einzelberechnung')+'</strong></p></div>':'')+
  (pending?'<button type="button" data-action="pvp-retry">Offenen Auftrag erneut prüfen</button>':'')+'</section>';
 }
 function pvpView(state,pvp,galaxy,busy=false,draft={},view={}){
@@ -1846,6 +2087,25 @@ function openCommunity(kind,context){
  return d;
 }
 
+// Presentation-only preview. No missions, rewards or persisted pirate state yet.
+const PIRATE_PREVIEW_STATIONS=Object.freeze([
+ {id:'smugglers',name:'Schmugglernest',tier:1,sensor:1,type:'Leichter Außenposten',description:'Zwischen Frachtcontainern und alten Antrieben haben Schmuggler ihr erstes Versteck errichtet.'},
+ {id:'outpost',name:'Piratenposten',tier:2,sensor:3,type:'Bewaffneter Stützpunkt',description:'Ein abgelegener Umschlagplatz mit eigenen Patrouillen. Hier wird fremde Fracht selten zurückgegeben.'},
+ {id:'harbor',name:'Raubritterhafen',tier:3,sensor:5,type:'Befestigter Raumhafen',description:'Hinter den Docktoren sammeln sich Freibeuter aus dem ganzen Sektor.'},
+ {id:'fortress',name:'Freibeuterfestung',tier:4,sensor:7,type:'Schwere Festung',description:'Bewaffnete Dockringe und massive Befestigungen sichern die Beute der Piraten.'},
+ {id:'headquarters',name:'Piratenhauptquartier',tier:5,sensor:10,type:'Zentrum der Piratenflotte',description:'Von dieser Station aus werden die Raubzüge koordiniert. Eine Herausforderung für erfahrene Commander.'}
+]);
+function piratePreviewAllowed(cloud){return !!cloud?.user?.id&&cloud?.pvp?.isAdmin===true;}
+function pirateNavigation(section,admin){
+ return `<div class="galaxy-menu galaxy-menu-pirates" aria-label="Kartenbereiche"><button type="button" data-action="galaxy-section" data-section="tutorial" aria-pressed="${section==='tutorial'}">Sonnensystem</button><button type="button" data-action="galaxy-section" data-section="shared" aria-pressed="${section==='shared'}">Galaxie</button><button type="button" data-action="galaxy-section" data-section="pirates" aria-pressed="${section==='pirates'}" ${admin?'':'disabled'}><span>Piraten</span><small class="pirate-soon">Coming soon</small></button></div>`;
+}
+function pirateStationsView(selected='smugglers',sensor=0){
+ const station=PIRATE_PREVIEW_STATIONS.find(s=>s.id===selected)||PIRATE_PREVIEW_STATIONS[0];
+ return `<section class="pirates-preview"><header class="pirate-heading"><span class="eyebrow">UNBEKANNTE SIGNALE · PERSÖNLICHE ZIELE</span><h1>Piratenstationen</h1><p>Wähle dein Ziel. Kläre die Station auf und bereite deine Flotte vor.</p><p class="pirate-preview-notice" role="status"><strong>Admin-Vorschau · Coming soon</strong><br>Nur die Oberfläche ist vorbereitet. Stationen, Sensoranforderungen und Stärken sind Entwürfe; Sonden, Angriffe, Beute und Bergung sind noch nicht aktiv.</p></header><div class="pirate-layout"><section class="pirate-station-list" aria-label="Piratenstation auswählen">${PIRATE_PREVIEW_STATIONS.map(s=>`<button type="button" class="pirate-station-card pirate-tier-${s.tier}" data-action="pirate-select" data-station="${s.id}" aria-pressed="${station.id===s.id}" aria-controls="pirate-details"><span class="pirate-thumbnail" aria-hidden="true"><img src="./assets/pvp-resource-v1/buildings/orbital.webp" alt="" loading="lazy"></span><span class="pirate-card-copy"><span class="pirate-tier">Stufe ${s.tier}</span><strong>${s.name}</strong><small>${s.type}</small><small class="${sensor>=s.sensor?'pirate-sensor-ready':'pirate-sensor-needed'}">${sensor>=s.sensor?'◉ Sensoranforderung erfüllt':'◇ Sensortechnik '+s.sensor+' benötigt'}</small></span><span aria-hidden="true">›</span></button>`).join('')}</section><section id="pirate-details" class="panel pirate-detail pirate-tier-${station.tier}" tabindex="-1" aria-labelledby="pirate-detail-title"><div class="pirate-art"><span class="pirate-tier">Stufe ${station.tier} · ${station.type}</span><img src="./assets/pvp-resource-v1/buildings/orbital.webp" alt="Vorläufige Stationsillustration"><span class="pirate-art-caption">Stationsillustration · Entwurf</span></div><div class="pirate-detail-body"><span class="eyebrow">PIRATENSTATION</span><h2 id="pirate-detail-title">${station.name}</h2><p>${station.description}</p><div class="pirate-scan-status"><strong>Aufklärung erforderlich</strong><span>Sensortechnik ${sensor} / ${station.sensor} <small>(Anforderung vorläufig)</small></span></div><dl class="pirate-intel"><div><dt>Flotte</dt><dd>Unbekannt</dd></div><div><dt>Verteidigung</dt><dd>Unbekannt</dd></div><div><dt>Ressourcen</dt><dd>Unbekannt</dd></div></dl><div class="pirate-actions"><button type="button" disabled>Sonde senden · Bald verfügbar</button><button type="button" class="pirate-attack" disabled>Angriff planen · Bald verfügbar</button></div><section class="pirate-salvage" aria-label="Depot und Bergung"><h3>Depot & Trümmerfeld</h3><p class="fine">Noch keine Einsatzdaten vorhanden.</p><div class="pirate-actions"><button type="button" disabled>Beute abholen</button><button type="button" disabled>Trümmer bergen</button></div></section><p class="fine">Geplant: ein Angriff pro Station alle 60 Minuten. Bergung und Abholung werden separat möglich.</p></div></section></div></section>`;
+}
+
+
+
 
 
 let repairSelectedKey='';
@@ -1946,6 +2206,7 @@ let routeEditId=0,routeSection='existing',routeQuery='',routeFilter='all';
 let socialMode='deliver',socialTarget='',orderMode='deliver';
 let fleetSection='overview',shipCategory='freighter';
 const fleetLastSection={hangar:'overview',pvp:'pvp',trade:'orders'};
+let pirateSelected='smugglers';
 let galaxySection='tutorial',galaxySystem='helion',galaxyTarget='',galaxyData=null,galaxyError='',galaxyBusy=false,galaxyRequest=0,galaxyLast=0,mapCleanup=null,galaxyCamera=null;
 
 const app=document.getElementById('app');let state=null,tab='overview',readOnly=false,storageOK=true,lastSave=0;
@@ -2107,7 +2368,10 @@ function galaxyMissionsHTML(){return galaxyData?.missions.length?`<h3>Galaxiefl�
 function galaxyOwnerLabel(p){return p.owner==='mine'?`${p.reserved?'Dein Kolonieschiff unterwegs':'Deine Kolonie'} · ${esc(p.commander||state.name)}`:p.owner==='foreign'?`${p.reserved?'Reserviert':'Besiedelt'} durch ${esc(p.commander||'Commander')}`:p.owner==='free'?'Unbesiedelt':'Besitzstatus noch nicht verfügbar';}
 let galaxyViewMode='atlas';
 function galaxy(p){
- const menu=`<div class="galaxy-menu" aria-label="Kartenbereiche">${button('Mein Sonnensystem','galaxy-section',`data-section="tutorial" aria-pressed="${galaxySection==='tutorial'}"`)}${button('Gemeinsame Galaxie','galaxy-section',`data-section="shared" aria-pressed="${galaxySection==='shared'}"`)}</div>`;
+ const pirateAdmin=piratePreviewAllowed(cloud);
+ if(galaxySection==='pirates'&&!pirateAdmin)galaxySection='tutorial';
+ const menu=pirateNavigation(galaxySection,pirateAdmin);
+ if(galaxySection==='pirates')return menu+pirateStationsView(pirateSelected,state.tech.scout);
  if(galaxySection==='tutorial')return menu+tutorialGalaxy(p);
  const systems=galaxyData?.systems||GALAXY_SYSTEMS,selected=systems.find(s=>s.id===galaxySystem)||systems[0],start=galaxyData?.start;
  const planets=(galaxyData?.planets||[]).filter(q=>q.system===selected.id),target=planets.find(q=>q.id===galaxyTarget)||planets[0];
@@ -2124,7 +2388,7 @@ function galaxyFailure(e){if(e instanceof CloudConflict){cloudBlocked=true;cloud
 function adoptGalaxy(result){if(cloud?.authoritative)adoptServer(result);else state=advance(result.state,gameNow());galaxyData=result.galaxy;cloudDirty=false;cloudLastSave=Date.now();cloudMessage='● Galaxie und Cloud abgeglichen';saveGame(state,localStorage,saveKey());localStorage.setItem(saveKey()+'-cloud-meta',JSON.stringify({revision:cloud.revision,pending:false}));}
 async function refreshGalaxy(force=false){if(!cloud?.user||!state||cloudBlocked||galaxyBusy||cloudSaving||readOnly||(!force&&Date.now()-galaxyLast<15000))return;const id=cloud.user.id,request=++galaxyRequest;galaxyBusy=true;galaxyError='';try{const data=await cloud.galaxyView();if(request!==galaxyRequest||id!==cloud?.user?.id)return;galaxyData=data;if(!state.galaxy||data.missions.some(m=>m.due<=data.serverNow)){if(!await flushCloud())return;const result=await cloud.galaxySync();if(request!==galaxyRequest||id!==cloud?.user?.id)return;adoptGalaxy(result);}galaxyLast=Date.now();}catch(e){if(request===galaxyRequest)galaxyError=galaxyFailure(e);}finally{if(request===galaxyRequest){galaxyBusy=false;if(tab==='galaxy'||tab==='fleet')render();}}}
 async function launchGalaxy(kind,target){if(readOnly||cloudBlocked||galaxyBusy||cloudSaving||!cloud?.user)return;const id=cloud.user.id,request=++galaxyRequest;galaxyBusy=true;galaxyError='';render();try{if(!await flushCloud())return;const result=await cloud.galaxySync({kind,from:state.active,to:target});if(request!==galaxyRequest||id!==cloud?.user?.id)return;adoptGalaxy(result);toast(kind==='scan'?'Fernsonde gestartet.':'Kolonieschiff gestartet; Planet reserviert.');}catch(e){if(request===galaxyRequest){galaxyError=galaxyFailure(e);toast(galaxyError);}}finally{if(request===galaxyRequest){galaxyBusy=false;render();}}}
-app.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b||b.disabled)return;switch(b.dataset.action){case 'galaxy-expand':galaxyExpanded=!galaxyExpanded;galaxyCamera=null;render();document.getElementById('galaxy-expand')?.focus();break;case 'galaxy-section':galaxyExpanded=false;galaxySection=b.dataset.section;render();void refreshGalaxy();break;case 'galaxy-atlas':galaxyViewMode='atlas';render();break;case 'galaxy-planets':galaxyViewMode='system';render();break;case 'galaxy-system':galaxyViewMode='system';galaxyExpanded=false;galaxyCamera=null;galaxySystem=b.dataset.system;galaxyTarget='';render();break;case 'galaxy-target':galaxyViewMode='planet';galaxyTarget=b.dataset.target;render();if(matchMedia('(max-width: 760px)').matches)document.querySelector('.galaxy-v2-detail')?.scrollIntoView({block:'start'});break;case 'galaxy-player':{const q=galaxyData?.players?.find(q=>q.id===b.dataset.player);if(q){document.querySelector('dialog')?.remove();const d=document.createElement('dialog');d.innerHTML=`<form method="dialog"><button aria-label="Schließen">×</button></form><h2>${esc(q.name)}</h2><p>Commander: ${esc(q.commander)}${q.is_me?' · Du':''}</p><p>Privates Sonnensystem. Planeten und Spielstand sind geschützt; andere Spieler können hier nicht hinfliegen.</p>`;document.body.append(d);d.showModal();}break;}case 'galaxy-home':document.querySelector('dialog')?.remove();galaxyExpanded=false;galaxyCamera=null;galaxySection='tutorial';render();break;case 'galaxy-refresh':void refreshGalaxy(true);break;case 'galaxy-scan':void launchGalaxy('scan',b.dataset.target);break;case 'galaxy-colony':void launchGalaxy('colony',b.dataset.target);break;}});
+app.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b||b.disabled)return;switch(b.dataset.action){case 'galaxy-expand':galaxyExpanded=!galaxyExpanded;galaxyCamera=null;render();document.getElementById('galaxy-expand')?.focus();break;case 'galaxy-section':{const next=b.dataset.section;if(!['tutorial','shared','pirates'].includes(next)||(next==='pirates'&&!piratePreviewAllowed(cloud)))break;galaxyExpanded=false;galaxySection=next;render();if(next==='shared')void refreshGalaxy();break;}case 'pirate-select':if(galaxySection!=='pirates'||!piratePreviewAllowed(cloud)||!PIRATE_PREVIEW_STATIONS.some(q=>q.id===b.dataset.station))break;pirateSelected=b.dataset.station;render();document.getElementById('pirate-details')?.focus({preventScroll:true});break;case 'galaxy-atlas':galaxyViewMode='atlas';render();break;case 'galaxy-planets':galaxyViewMode='system';render();break;case 'galaxy-system':galaxyViewMode='system';galaxyExpanded=false;galaxyCamera=null;galaxySystem=b.dataset.system;galaxyTarget='';render();break;case 'galaxy-target':galaxyViewMode='planet';galaxyTarget=b.dataset.target;render();if(matchMedia('(max-width: 760px)').matches)document.querySelector('.galaxy-v2-detail')?.scrollIntoView({block:'start'});break;case 'galaxy-player':{const q=galaxyData?.players?.find(q=>q.id===b.dataset.player);if(q){document.querySelector('dialog')?.remove();const d=document.createElement('dialog');d.innerHTML=`<form method="dialog"><button aria-label="Schließen">×</button></form><h2>${esc(q.name)}</h2><p>Commander: ${esc(q.commander)}${q.is_me?' · Du':''}</p><p>Privates Sonnensystem. Planeten und Spielstand sind geschützt; andere Spieler können hier nicht hinfliegen.</p>`;document.body.append(d);d.showModal();}break;}case 'galaxy-home':document.querySelector('dialog')?.remove();galaxyExpanded=false;galaxyCamera=null;galaxySection='tutorial';render();break;case 'galaxy-refresh':void refreshGalaxy(true);break;case 'galaxy-scan':void launchGalaxy('scan',b.dataset.target);break;case 'galaxy-colony':void launchGalaxy('colony',b.dataset.target);break;}});
 app.addEventListener('change',e=>{if(e.target.id==='galaxy-system-picker'){galaxySystem=e.target.value;galaxyTarget='';render();}});
 setInterval(()=>{if(state&&cloud?.user&&!document.hidden)void refreshGalaxy();},15000);
 function mountMap(){
@@ -2154,7 +2418,7 @@ function shipBuildCosts(info){return RES.map(k=>`<span class="ship-resource" tit
 function shipBuildTime(model){return `${shipDuration(model.info)}${model.valid&&model.count>1?' gesamt':' / Einheit'}`;}
 function shipyardCard(p,key,sh){
  const draftKey=shipBuildDraftKey(p,key),raw=shipBuildDrafts.get(draftKey)??'1',model=shipBuildModel(p,key,raw),open=shipDetailsOpened.has(draftKey),blocked=readOnly||cloudBlocked||galaxyBusy||cloudSaving;
- return `<article class="panel ship-card compact-ship" data-ship-card="${key}" data-planet="${esc(p.id)}"><div class="ship-build-row"><div class="ship-identity"><div class="ship-visual"><img src="${sh.asset||'./assets/'+(sh.image||key)+'.webp'}" alt="" width="768" height="768" loading="lazy" decoding="async"></div><div><h2>${esc(sh.name)}</h2><small>Einsatzbereit: <strong>${fmt(p.ships[key])}</strong></small>${sh.category==='defense'&&orbitCondition(p,key).damaged?orbitConditionHTML(p,key):''}</div></div><div class="ship-build-cost" data-ship-cost aria-label="Kosten des Bauauftrags">${shipBuildCosts(model.info)}</div><div class="ship-build-time"><span aria-hidden="true">◷</span><span data-ship-time>${shipBuildTime(model)}</span></div><div class="ship-build-actions"><div class="ship-quantity"><button type="button" data-ship-adjust="-1" aria-label="${esc(sh.name)}: Anzahl verringern" ${blocked||model.count<=1?'disabled':''}>−</button><input id="build-count-${key}" data-ship-count type="number" inputmode="numeric" min="1" step="1" value="${esc(raw)}" aria-label="Anzahl ${esc(sh.name)}" aria-invalid="${!model.valid}" aria-describedby="ship-reason-${key}" ${blocked?'disabled':''}><button type="button" data-ship-adjust="1" aria-label="${esc(sh.name)}: Anzahl erhöhen" ${blocked?'disabled':''}>+</button></div>${button((sh.category==='defense'?p.orbitaljob:p.shipjob)?'Einreihen':'Bauen','ship',`data-key="${key}" aria-label="${esc(sh.name)} bauen" aria-describedby="ship-reason-${key}"`,model.reason||blocked)}</div><button type="button" class="ship-details-toggle" data-ship-toggle aria-expanded="${open}" aria-controls="ship-details-${key}" aria-label="Details zu ${esc(sh.name)} ${open?'einklappen':'aufklappen'}"><span aria-hidden="true">${open?'⌃':'⌄'}</span></button></div><p class="requirement ship-build-reason" id="ship-reason-${key}" data-ship-reason role="status" ${model.reason?'':'hidden'}>${esc(model.reason)}</p><div class="ship-extra" id="ship-details-${key}" ${open?'':'hidden'}><p>${esc(sh.role)}</p><div class="ship-detail-grid"><div><span class="eyebrow">${sh.category==='defense'?'ORBITALE VERTEIDIGUNG':sh.tier?'TIER '+sh.tier:'BEWÄHRTES SCHIFF'}</span><p class="fine">${isFreighter(key)?`${fmt(cargoCapacity(state,1,key))} Laderaum / Schiff<br>`:''}${sh.category==='defense'?`Stationäre Verteidigung · Keine separate Trägerplattform erforderlich`:`Tempo ×${sh.speed.toLocaleString('de-DE')}<br>Verbrauch: ${sh.fuel} Treibstoff / Entfernungseinheit / Schiff vor Forschung`}</p><p class="fine" data-ship-full-time>Bei voller Energie: <span>${duration(model.info.ms)}</span>${model.valid&&model.count>1?' gesamt':' / Einheit'}.</p></div><div><strong>Voraussetzungen</strong><p class="fine">${sh.category==='defense'?'Orbitalwerft':'Schiffswerft'} ${sh.shipyard||1}<br>${esc(TECHS[sh.tech].name)} ${sh.techLevel||1}${sh.category==='defense'?'':`<br>${esc(TECHS[sh.engine||'drive'].name)} ${sh.engineLevel||0}`}</p></div></div></div></article>`;
+ return `<article class="panel ship-card compact-ship" data-ship-card="${key}" data-planet="${esc(p.id)}"><div class="ship-build-row"><div class="ship-identity"><div class="ship-visual"><img src="${sh.asset||'./assets/'+(sh.image||key)+'.webp'}" alt="" width="768" height="768" loading="lazy" decoding="async"></div><div><h2>${esc(sh.name)}</h2><small>Einsatzbereit: <strong>${fmt(p.ships[key])}</strong></small>${sh.category==='defense'&&orbitCondition(p,key).damaged?orbitConditionHTML(p,key):''}</div></div><div class="ship-build-cost" data-ship-cost aria-label="Kosten des Bauauftrags">${shipBuildCosts(model.info)}</div><div class="ship-build-time"><span aria-hidden="true">◷</span><span data-ship-time>${shipBuildTime(model)}</span></div><div class="ship-build-actions"><div class="ship-quantity"><button type="button" data-ship-adjust="-1" aria-label="${esc(sh.name)}: Anzahl verringern" ${blocked||model.count<=1?'disabled':''}>−</button><input id="build-count-${key}" data-ship-count type="number" inputmode="numeric" min="1" step="1" value="${esc(raw)}" aria-label="Anzahl ${esc(sh.name)}" aria-invalid="${!model.valid}" aria-describedby="ship-reason-${key}" ${blocked?'disabled':''}><button type="button" data-ship-adjust="1" aria-label="${esc(sh.name)}: Anzahl erhöhen" ${blocked?'disabled':''}>+</button></div>${button((sh.category==='defense'?p.orbitaljob:p.shipjob)?'Einreihen':'Bauen','ship',`data-key="${key}" aria-label="${esc(sh.name)} bauen" aria-describedby="ship-reason-${key}"`,model.reason||blocked)}</div><button type="button" class="ship-details-toggle" data-ship-toggle aria-expanded="${open}" aria-controls="ship-details-${key}" aria-label="Details zu ${esc(sh.name)} ${open?'einklappen':'aufklappen'}"><span aria-hidden="true">${open?'⌃':'⌄'}</span></button></div><p class="requirement ship-build-reason" id="ship-reason-${key}" data-ship-reason role="status" ${model.reason?'':'hidden'}>${esc(model.reason)}</p><div class="ship-extra" id="ship-details-${key}" ${open?'':'hidden'}><p>${esc(sh.role)}</p><div class="ship-detail-grid"><div><span class="eyebrow">${sh.category==='defense'?'ORBITALE VERTEIDIGUNG':sh.tier?'TIER '+sh.tier:'BEWÄHRTES SCHIFF'}</span><p class="fine">${isFreighter(key)?`${fmt(cargoCapacity(state,1,key))} Laderaum / Schiff<br>`:''}${sh.category==='defense'?`Stationäre Verteidigung · Keine separate Trägerplattform erforderlich`:`Tempo ×${sh.speed.toLocaleString('de-DE')}<br>Verbrauch: ${sh.fuel} Treibstoff / Entfernungseinheit / Schiff vor Forschung`}</p><p class="fine" data-ship-full-time>Bei voller Energie: <span>${duration(model.info.ms)}</span>${model.valid&&model.count>1?' gesamt':' / Einheit'}.</p></div><div><strong>Voraussetzungen</strong><p class="fine">${sh.category==='defense'?'Orbitalwerft':'Schiffswerft'} ${sh.shipyard||1}<br>${esc(TECHS[sh.tech].name)} ${sh.techLevel||1}${sh.category==='defense'?'':`<br>${esc(TECHS[sh.engine||'drive'].name)} ${sh.engineLevel||0}`}</p></div></div>${rapidFireInfoHTML(key,cloud?.pvp?.combatEngine??null)}</div></article>`;
 }
 function refreshShipyardCard(card){
  if(!card||!state)return;const p=state.planets.find(q=>q.id===card.dataset.planet);if(!p)return;
@@ -2280,9 +2544,32 @@ function orderValue(v){const x=String(v).trim().toLowerCase();return x==='max'?'
 function readRouteStops(form){return [...form.querySelectorAll('.route-stop')].map(row=>{const mode=row.querySelector('[name="stop-mode"]')?.value||'both';return {planet:row.querySelector('[name="stop-planet"]').value,load:Object.fromEntries(RES.map(k=>[k,mode==='unload'?0:orderValue(row.querySelector(`[name="load-${k}"]`).value)])),unload:Object.fromEntries(RES.map(k=>[k,mode==='load'?0:orderValue(row.querySelector(`[name="unload-${k}"]`).value)]))};});}
 function routePauseButton(m){return cloud?.authoritative&&!cloud.pvp?.features?.routePause?'':button(m.paused?'Fortsetzen':m.pauseRequested?'Pause verwerfen':'Am Startplaneten pausieren',m.paused?'resume-route':m.pauseRequested?'cancel-route-pause':'pause-route',`data-id="${m.id}"`,readOnly||m.stopping||m.awaitingUnload);}
 
+
+function renderOrderFlightPreview(form,flight,data){
+ const output=document.getElementById('fleet-estimate');if(!output)return;
+ const capacity=Math.max(0,flight.capacity),type=data.get('type');
+ const from=getPlanet(state,form.dataset.planet||state.active),to=getPlanet(state,data.get('to'));
+ const cargo=Object.fromEntries(RES.map(k=>[k,Math.max(0,Number(orderValue(data.get(k)))||0)]));
+ const isMax=RES.some(k=>orderValue(data.get(k))==='max');
+ const used=RES.reduce((sum,k)=>sum+cargo[k],0);
+ const fleet=readMixedFleet(form),count=Object.values(fleet).reduce((sum,n)=>sum+n,0);
+ const manifest=RES.map(k=>'<span>'+resourceIcon(k)+' '+LABEL[k]+': <strong>'+(orderValue(data.get(k))==='max'?'MAX':fmt(cargo[k]))+'</strong></span>').join('');
+ const usedLabel=isMax?'MAX (bei Start berechnet)':fmt(used);
+ output.innerHTML='<div class="order-preview-title">✦ Flugvorschau</div>'
+ +'<div class="order-preview-grid"><span>Startplanet</span><strong>'+esc(from.name)+'</strong>'
+ +'<span>Zielplanet</span><strong>'+esc(to.name)+'</strong>'
+ +'<span>Flotte</span><strong>'+fmt(count)+' Schiffe</strong>'
+ +'<span>Laderaum (belegt / gesamt)</span><strong>'+usedLabel+' / '+fmt(capacity)+'</strong>'
+ +'<span>Noch verfügbar</span><strong>'+(isMax?'Wird berechnet':fmt(Math.max(0,capacity-used)))+'</strong>'
+ +'<span>Flugzeit je Strecke</span><strong>'+duration(flight.ms)+'</strong>'
+ +'<span>Treibstoff gesamt</span><strong>'+fmt(flight.fuel*(type==='station'?1:2))+'</strong>'
+ +'<span>Langsamstes Schiff</span><strong>'+esc(SHIPS[flight.slowest].name)+'</strong></div>'
+ +'<div class="order-preview-manifest"><span>Geladene Rohstoffe'+(type==='collect'?' (Abholung)':'')+'</span><div>'+manifest+'</div></div>';
+}
+
 function fleetEstimates(){
  if(!state)return;const p=getPlanet(state,state.active),form=document.getElementById('fleet-order-form');
- if(form){const d=new FormData(form),to=state.planets.find(q=>q.id===d.get('to'));try{const fleet=readMixedFleet(form);fleetDispatchAction({type:d.get('type'),fleet});for(const [key,count] of Object.entries(fleet))if(count>(p.ships[key]||0))throw Error(`${SHIPS[key].name}: ${count} gewählt, nur ${p.ships[key]||0} verfügbar. Bitte die Auswahl anpassen.`);if(d.get('type')==='salvage'&&!RES.some(k=>(ownDebris(to?.id)[k]||0)>0))throw Error('An diesem Ziel liegen keine Trümmer.');const f=fleetLegInfo(state,p,to,fleet);document.getElementById('fleet-estimate').textContent=`${fmt(f.capacity)} Laderaum · ${duration(f.ms)} je Strecke · ${f.fuel*(d.get('type')==='station'?1:2)} Treibstoff insgesamt · langsamstes Schiff: ${SHIPS[f.slowest].name}`;form.querySelector('button[type="submit"]').disabled=readOnly||cloudBlocked;}catch(e){document.getElementById('fleet-estimate').textContent=e.message;form.querySelector('button[type="submit"]').disabled=true;}}
+ if(form){const d=new FormData(form),to=state.planets.find(q=>q.id===d.get('to'));try{const fleet=readMixedFleet(form);fleetDispatchAction({type:d.get('type'),fleet});for(const [key,count] of Object.entries(fleet))if(count>(p.ships[key]||0))throw Error(`${SHIPS[key].name}: ${count} gewählt, nur ${p.ships[key]||0} verfügbar. Bitte die Auswahl anpassen.`);if(d.get('type')==='salvage'&&!RES.some(k=>(ownDebris(to?.id)[k]||0)>0))throw Error('An diesem Ziel liegen keine Trümmer.');const f=fleetLegInfo(state,p,to,fleet);renderOrderFlightPreview(form,f,d);form.querySelector('button[type="submit"]').disabled=readOnly||cloudBlocked;}catch(e){document.getElementById('fleet-estimate').textContent=e.message;form.querySelector('button[type="submit"]').disabled=true;}}
 
  const route=document.getElementById('route-form');if(route){const output=document.getElementById('route-estimate'),submit=route.querySelector('[type=submit]');try{const fleet=checkedFleet(readMixedFleet(route)),stops=readRouteStops(route),home=getPlanet(state,route.dataset.planet);if(stops.length<2||stops.some((q,i)=>q.planet===stops[(i+1)%stops.length].planet))throw Error('Mindestens zwei Stopps, keine direkt aufeinanderfolgenden gleichen Planeten.');const f=routeInfo(state,stops,fleet),missing=Object.entries(fleet).some(([k,n])=>home.ships[k]<n),editing=Number(route.dataset.routeId)>0;output.innerHTML=`<div class="trade-metrics"><span><strong>${Object.values(fleet).reduce((a,b)=>a+b,0)}</strong> Schiffe</span><span><strong>${fmt(f.capacity)}</strong> Laderaum</span><span><strong>${duration(f.ms)}</strong> je Runde</span><span><strong>${f.fuel}</strong> Treibstoff / Runde</span></div><p class="fine">${SHIPS[f.slowest].name} bestimmt das Flottentempo. Forschungsboni und Sparflug sind berücksichtigt.</p>${missing?`<p class="${editing?'pending-change':'requirement'}">${editing?'Verfügbarkeit wird bei Rückkehr geprüft.':'Nicht genügend Schiffe am Startplanet.'}</p>`:''}`;submit.disabled=readOnly||cloudBlocked||(!editing&&missing);for(const row of route.querySelectorAll('.route-stop')){const q=getPlanet(state,row.querySelector('[name=stop-planet]').value);row.querySelector('summary').innerHTML=`${orb(q,'small')}<strong>${esc(q.name)}</strong><span>Bearbeiten</span>`;for(const k of RES)row.querySelector(`[data-stock="${k}"]`).textContent=fmt(q.resources[k]+q.depot[k]);}}catch(e){output.textContent=e.message;submit.disabled=true;}}
 
@@ -2356,6 +2643,7 @@ document.addEventListener('click',async e=>{
  if(b.dataset.action==='partner-invites'){tab='fleet';fleetSection='partners';render();window.scrollTo({top:0,behavior:'smooth'});}
   if(['pvp-open','pvp-target','pvp-defense'].includes(b.dataset.action)){if(b.dataset.to)pvpDraft.to=b.dataset.to;tab='fleet';fleetSection=b.dataset.action==='pvp-defense'?'defense':'pvp';render();void refreshGalaxy(true);void refreshReports();}
  if(b.dataset.action==='pvp-toggle'){await serverAction({type:'set-pvp',enabled:!cloud.pvp.enabled});settings();}
+ if(['combat-engine-3','combat-engine-4','combat-engine-5','combat-engine-6'].includes(b.dataset.action)){await serverAction({type:'set-combat',engine:Number(b.dataset.action.at(-1))});settings();}
  if(b.dataset.action==='pvp-repair'){selectFleetSection('repair');window.scrollTo({top:0,behavior:'smooth'});}
  if(b.dataset.action==='pvp-retry'&&cloud?.pending)await serverAction(cloud.pending);
 });
@@ -2458,19 +2746,19 @@ document.addEventListener('input',e=>{if(e.target.closest('#social-flight-form')
 function ownDebris(id){return cloud?.pvp?.debris?.find(d=>d.planet===id)||vector([0,0,0]);}
 function salvageOrderEditor(p){
  const targets=state.planets.filter(q=>q.id!==p.id&&q.system).sort((a,b)=>Number(RES.some(k=>ownDebris(b.id)[k]>0))-Number(RES.some(k=>ownDebris(a.id)[k]>0)));
- return `<section class="panel unified-order"><h2>${actionIcon('debris')} Trümmer bergen · Start: ${esc(p.name)}</h2>${orderNavigation()}${!targets.length?'<p>Wähle einen anderen eigenen Startplaneten, um die Trümmer vor deiner Galaxiekolonie zu bergen.</p>':`<form id="fleet-order-form" data-planet="${p.id}" class="unified-order-form"><input type="hidden" name="type" value="salvage"><label>Trümmerfeld an eigener Kolonie<select name="to">${targets.map(q=>`<option value="${esc(q.id)}">${esc(q.name)} · ${fmt(ownDebris(q.id).metal)} Metall / ${fmt(ownDebris(q.id).crystal)} Kristall</option>`).join('')}</select></label><div class="order-columns"><section><h3>1 · Bergungsflotte</h3>${fleetPicker(state,p,{categories:['freighter']})}</section><section><h3>2 · Trümmer einsammeln</h3><p>Die Frachter bergen bei Ankunft so viel Material, wie in ihren Laderaum passt: zuerst Metall, dann Kristall.</p><p class="fine">Die Rohstoffe kommen mit der Flotte nach ${esc(p.name)} zurück. Restliche Trümmer bleiben am Ziel. Ist das Lager bei Heimkehr voll, bleibt die Restladung an Bord.</p></section></div><div class="order-summary" id="fleet-estimate" role="status">Wähle deine Flotte.</div><button type="submit">Bergungsflug starten</button></form>`}</section>`;
+ return `<section class="panel unified-order fleet-order-redesign"><h2>${actionIcon('debris')} Trümmer bergen · Start: ${esc(p.name)}</h2>${orderNavigation()}${!targets.length?'<p>Wähle einen anderen eigenen Startplaneten, um die Trümmer vor deiner Galaxiekolonie zu bergen.</p>':`<form id="fleet-order-form" data-planet="${p.id}" class="unified-order-form orders-v4"><input type="hidden" name="type" value="salvage"><label>Trümmerfeld an eigener Kolonie<select name="to">${targets.map(q=>`<option value="${esc(q.id)}">${esc(q.name)} · ${fmt(ownDebris(q.id).metal)} Metall / ${fmt(ownDebris(q.id).crystal)} Kristall</option>`).join('')}</select></label><div class="order-columns"><section><h3>1 · Bergungsflotte</h3>${fleetPicker(state,p,{categories:['freighter'],availableOnly:true})}</section><section><h3>2 · Trümmer einsammeln</h3><p>Die Frachter bergen bei Ankunft so viel Material, wie in ihren Laderaum passt: zuerst Metall, dann Kristall.</p><p class="fine">Die Rohstoffe kommen mit der Flotte nach ${esc(p.name)} zurück. Restliche Trümmer bleiben am Ziel. Ist das Lager bei Heimkehr voll, bleibt die Restladung an Bord.</p></section></div><div class="order-summary" id="fleet-estimate" role="status">Wähle deine Flotte.</div><button type="submit">Bergungsflug starten</button></form>`}</section>`;
 }
-function fleetOrderEditor(p){if(orderMode==='salvage')return salvageOrderEditor(p);return `${cloud?.authoritative&&!cloud.pvp?.features?.cargoRetention?'<p class="notice">Der Spielserver benötigt noch die neue Game-command für Restladung im Frachter.</p>':''}<section class="panel unified-order"><h2>Flottenauftrag · ${esc(p.name)}</h2>${orderNavigation()}${state.planets.length<2?'<p>Besiedle eine zweite Welt für eigene Flottenaufträge.</p>':`<form id="fleet-order-form" data-planet="${p.id}" class="unified-order-form"><input type="hidden" name="type" value="${orderMode}"><label>Zielkolonie<select name="to">${planetOptions('',p.id)}</select></label><div class="order-columns"><section><h3>1 · Schiffe</h3>${fleetPicker(state,p,{categories:orderMode==='station'?['freighter','military','civil']:['freighter']})}</section><section><h3>2 · ${orderMode==='collect'?'Entnahme am Ziel':'Ladung'}</h3>${cargoFields()}<p class="fine">0 · +5 % des Flottenladeraums · MAX. Bei Abholen wird am Ziel geladen. MAX nutzt den freien Laderaum in der Reihenfolge Metall → Kristall → Treibstoff. Nicht abladbare Lieferung kehrt zum Start zurück. Auch dort volles Lager: Schiffe bleiben mit Restladung gebunden.</p></section></div><div class="order-summary" id="fleet-estimate" role="status">Wähle deine Flotte.</div><button type="submit">${orderMode==='collect'?'Abholflug starten':orderMode==='station'?'Flotte stationieren':'Lieferung starten'}</button></form>`}</section>`;}
+function fleetOrderEditor(p){if(orderMode==='salvage')return salvageOrderEditor(p);return `${cloud?.authoritative&&!cloud.pvp?.features?.cargoRetention?'<p class="notice">Der Spielserver benötigt noch die neue Game-command für Restladung im Frachter.</p>':''}<section class="panel unified-order fleet-order-redesign"><h2>Flottenauftrag · ${esc(p.name)}</h2>${orderNavigation()}${state.planets.length<2?'<p>Besiedle eine zweite Welt für eigene Flottenaufträge.</p>':`<form id="fleet-order-form" data-planet="${p.id}" class="unified-order-form orders-v4"><input type="hidden" name="type" value="${orderMode}"><label>Zielkolonie<select name="to">${planetOptions('',p.id)}</select></label><div class="order-columns"><section><h3>1 · Schiffe</h3>${fleetPicker(state,p,{categories:orderMode==='station'?['freighter','military','civil']:['freighter'],availableOnly:true})}</section><section><h3>2 · ${orderMode==='collect'?'Entnahme am Ziel':'Ladung'}</h3>${cargoFields().replaceAll('data-cargo-percent="5">+5 %','data-cargo-fraction="third">+⅓').replaceAll('data-cargo-set="max">MAX','data-cargo-fraction="half">+½</button><button type="button" data-cargo-set="max">MAX')}<p class="fine">0 · +⅓ · +½ · MAX. Bei Abholen wird am Ziel geladen. MAX nutzt den freien Laderaum in der Reihenfolge Metall → Kristall → Treibstoff. Nicht abladbare Lieferung kehrt zum Start zurück. Auch dort volles Lager: Schiffe bleiben mit Restladung gebunden.</p></section></div><div class="order-summary" id="fleet-estimate" role="status">Wähle deine Flotte.</div><button type="submit">${orderMode==='collect'?'Abholflug starten':orderMode==='station'?'Flotte stationieren':'Lieferung starten'}</button></form>`}</section>`;}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-order-mode],[data-social-link],[data-partner-target]');if(!b)return;if(b.dataset.orderMode){orderMode=b.dataset.orderMode;tab='fleet';fleetSection='orders';}else{socialMode=b.dataset.socialLink||b.dataset.mode||'deliver';socialTarget=b.dataset.partnerTarget||'';orderMode=socialMode==='support'?'support':'partner-deliver';tab='fleet';fleetSection='orders';}render();if(socialTarget){const select=document.getElementById('social-flight-form')?.elements.namedItem('to');if(select)select.value=socialTarget;socialTarget='';socialEstimate();}});
 document.addEventListener('change',e=>{if(e.target.name==='stop-mode'){const row=e.target.closest('.route-stop');for(const part of row.querySelectorAll('[data-stop-section]'))part.hidden=e.target.value!=='both'&&part.dataset.stopSection!==e.target.value;fleetEstimates();}});
 function selectedCapacity(form){return Object.entries(readMixedFleet(form)).reduce((n,[k,count])=>n+cargoCapacity(state,count,k),0);}
 function refreshFleetControls(form){updateFleetEngineLabels();if(form.id==='pvp-attack-form')updatePvPEstimate(form);else{fleetEstimates();socialEstimate();}}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-fleet-adjust],[data-cargo-set],[data-cargo-percent]');if(!b||b.disabled||readOnly||cloudBlocked)return;const form=b.closest('form');if(!form)return;
+document.addEventListener('click',e=>{const b=e.target.closest('[data-fleet-adjust],[data-cargo-set],[data-cargo-percent],[data-cargo-fraction]');if(!b||b.disabled||readOnly||cloudBlocked)return;const form=b.closest('form');if(!form)return;
  if(b.dataset.fleetAdjust){const input=b.closest('.fleet-choice').querySelector('[data-fleet-ship]');input.value=b.dataset.fleetAdjust==='all'?input.max:clampFleetCount(Number(input.value)+Number(b.dataset.fleetAdjust),Number(input.max));input.dispatchEvent(new Event('input',{bubbles:true}));return;}
  const input=b.closest('.cargo-control').querySelector('input'),cap=selectedCapacity(form),step=cargoStep(cap),value=orderValue(input.value),route=form.id==='route-form';
- let next=b.dataset.cargoPercent?Math.min(cap,(value==='max'?0:Number(value)||0)+step):b.dataset.cargoSet;
+ let next=b.dataset.cargoFraction?Math.min(cap,(value==='max'?0:Number(value)||0)+Math.ceil(cap*(b.dataset.cargoFraction==='third'?1/3:1/2))):b.dataset.cargoPercent?Math.min(cap,(value==='max'?0:Number(value)||0)+step):b.dataset.cargoSet;
  if(next==='max'&&!route){const key=RES.find(k=>input.name.endsWith(k)),p=getPlanet(state,state.active);let room=cap;const prefix=input.name.slice(0,-key.length);for(const k of RES)if(k!==key){const other=form.elements.namedItem(prefix+k);if(other)room-=Number(other.value)||0;}next=Math.max(0,room);if(form.id==='social-flight-form'&&prefix==='cargo-'){const to=cloud?.pvp?.social?.partners.flatMap(q=>q.planets).find(q=>q.id===form.elements.namedItem('to').value),voyageFuel=to?Object.entries(readMixedFleet(form)).reduce((n,[ship,count])=>n+2*sharedFlight(state,p,to,count,ship).fuel,0):0;next=Math.min(next,Math.floor(Math.max(0,p.resources[key]-(p.reserves?.[key]||0)-(key==='fuel'?voyageFuel:0))));}else if(form.id==='fleet-order-form')next='max';}
- if(b.dataset.cargoPercent&&!route){const key=RES.find(k=>input.name.endsWith(k)),prefix=input.name.slice(0,-key.length);let used=0;for(const k of RES)if(k!==key){const other=form.elements.namedItem(prefix+k);if(other)used+=Number(other.value)||0;}next=Math.max(0,Math.min(Number(next),cap-used));}
+ if((b.dataset.cargoPercent||b.dataset.cargoFraction)&&!route){const key=RES.find(k=>input.name.endsWith(k)),prefix=input.name.slice(0,-key.length);let used=0;for(const k of RES)if(k!==key){const other=form.elements.namedItem(prefix+k);if(other)used+=Number(other.value)||0;}next=Math.max(0,Math.min(Number(next),cap-used));}
  input.value=next;input.dispatchEvent(new Event('input',{bubbles:true}));refreshFleetControls(form);
 });
 document.addEventListener('input',e=>{if(!e.target.matches?.('[data-fleet-ship]'))return;e.target.value=clampFleetCount(e.target.value,Number(e.target.max));refreshFleetControls(e.target.closest('form'));});
@@ -2479,7 +2767,7 @@ function partnerTargetButtons(id){const partner=cloud?.pvp?.social?.partners.fin
 
 document.addEventListener('click',e=>{const b=e.target.closest('[data-action="news-open"]');if(!b)return;document.querySelector('dialog')?.remove();const d=document.createElement('dialog');d.className='news-dialog';d.innerHTML='<form method="dialog"><button aria-label="Schließen">×</button></form>'+newsView()+'<p><a href="./news.html" target="_blank" rel="noopener">Öffentliche Patchnotes öffnen ↗</a></p>';document.body.append(d);d.showModal();noticeMark('news',GAME_NEWS.map(n=>n.date+'|'+n.title));});
 
-function orderNavigation(){return `<div class="ship-categories">${[['deliver','Liefern'],['collect','Abholen'],['salvage','Trümmer bergen'],['station','Stationieren'],['support','Verteidigen']].map(([k,n])=>`<button type="button" data-order-mode="${k}" aria-pressed="${orderMode===k||k==='deliver'&&orderMode==='partner-deliver'}">${n}</button>`).join('')}</div><div class="partner-shortcuts"><button type="button" data-order-mode="deliver">Eigene Kolonien</button><button type="button" data-social-link="deliver">Partner beliefern</button><button type="button" data-social-link="support">Partner verteidigen</button></div>`;}
+function orderNavigation(){const actions=[['deliver','Liefern','📦'],['collect','Abholen','↙'],['salvage','Trümmer bergen','◈'],['station','Stationieren','⚑'],['support','Verteidigen','♢']];return `<div class="fleet-order-types" role="group" aria-label="Auftragstyp"><span class="fleet-order-types-label">Auftragstyp</span><div class="fleet-order-types-grid">${actions.map(([key,label,icon])=>`<button type="button" data-order-mode="${key}" aria-pressed="${orderMode===key||key==='deliver'&&orderMode==='partner-deliver'}"><span class="fleet-order-type-icon" aria-hidden="true">${icon}</span><span>${label}</span></button>`).join('')}</div></div>`;}
 
 function updateFleetEngineLabels(){if(!state)return;for(const form of document.querySelectorAll('#fleet-order-form,#social-flight-form,#pvp-attack-form,#route-form')){const from=getPlanet(state,form.dataset.planet||state.active),toId=form.querySelector('[name="to"]')?.value||form.querySelectorAll('[name="stop-planet"]')[1]?.value,to=state.planets.find(p=>p.id===toId)||cloud?.pvp?.social?.partners.flatMap(p=>p.planets).find(p=>p.id===toId)||galaxyData?.planets.find(p=>p.id===toId),remote=!!to&&(from.system||'tutorial')!==(to.system||'tutorial');for(const label of form.querySelectorAll('[data-engine-label]')){const k=label.dataset.engineLabel;try{const engine=shipFlightEngine(state,k,remote);label.textContent=TECHS[engine].name+' '+(state.tech[engine]||0)+(SHIPS[k].cargo?' · '+fmt(cargoCapacity(state,1,k))+' Laderaum':'');}catch(e){label.textContent=e.message;}}}}
 document.addEventListener('change',e=>{if(e.target.closest('#fleet-order-form,#social-flight-form,#pvp-attack-form,#route-form'))updateFleetEngineLabels();});
