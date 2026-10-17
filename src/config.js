@@ -32,7 +32,7 @@ export const TECHS = {
  energy:{name:'Energietechnik',description:'Je Stufe +10 % Energie; Stufe 3: Gezeitenkraftwerk.',cost:[200,180,50],time:15,lab:2,max:5}
 };
 export const SHIPS = {
- spyProbe:{name:'Spionagesonde',icon:'⌁',category:'civil',image:'probe',role:'Klärt persönliche Piratenstationen auf. Aktuell nur im Admin-PvE-Test nutzbar.',cost:[150,120,40],time:8,tech:'scout',techLevel:1,shipyard:1,cargo:0,speed:2,fuel:2},
+ spyProbe:{name:'Spionagesonde',icon:'⌁',category:'civil',image:'probe',role:'Klärt persönliche Piratenstationen auf. Benötigt die passende Sensortechnik für die Zielstufe.',cost:[150,120,40],time:8,tech:'scout',techLevel:1,shipyard:1,cargo:0,speed:2,fuel:2},
  probe:{name:'Erkundungssonde',icon:'⌁',category:'civil',role:'Erkundet unbekannte Welten.',cost:[90,60,20],time:5,tech:'scout',cargo:0,speed:1,fuel:1.5},
  transport:{name:'Kleiner Transporter',icon:'➤',category:'freighter',role:'Bewährter Allrounder für deine ersten Kolonien.',cost:[180,100,40],time:8,tech:'logistics',cargo:1000,speed:1,fuel:4},
  longProbe:{name:'Fernsonde',icon:'⌁',category:'civil',image:'probe',role:'Untersucht Planeten in der gemeinsamen Galaxie.',cost:[280,200,80],time:10,tech:'scout',techLevel:2,shipyard:2,engine:'ramjet',engineLevel:1,cargo:0,speed:1,fuel:3},

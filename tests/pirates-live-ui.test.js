@@ -4,8 +4,8 @@ import {ui,input,tick} from './helpers/game-ui.js';
 import {fixture,A,T} from './helpers/pvp-fixture.js';
 import {processWorld,projectPvP} from '../src/server-world.js';
 import {vector} from '../src/config.js';
-function mounted(t){
- let world=fixture();world.pirateVersion=1;world.piratePlayers=[];world.pirateConfig={flightTimeFactor:.1};world.settings.combat_engine=6;
+function mounted(t,admin=true){
+ let world=fixture();if(!admin)world.admins=[];world.pirateVersion=1;world.piratePlayers=[];world.pirateConfig={flightTimeFactor:.1};world.settings.combat_engine=6;
  const p=world.saves[0].state.planets[0];p.buildings.warehouse=6;p.resources=vector([10000,10000,10000]);p.ships.falke=100;p.ships.spyProbe=1;p.ships.karawane=2;
  world=processWorld(world,A,{type:'pirate',action:{op:'open'}});
  const out=ui(t,{state:world.saves[0].state}),calls=[];
@@ -26,4 +26,16 @@ test('Admin PvE planner uses available ships, keeps draft through refresh and su
 test('Spionage is dispatched separately from the selected origin',async t=>{
  const {doc,w,calls}=mounted(t);const origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));doc.querySelector('[data-action="pirate-scan"]').click();await tick();assert.equal(calls[0].action.op,'scan');
  assert.match(doc.querySelector('.pirate-flight-card').textContent,/Spionage/);
+});
+
+test('Ordinary player can launch a real attack while realm settings stay admin-only',async t=>{
+ const {doc,w,calls}=mounted(t,false);assert.equal(doc.getElementById('pirate-config-form'),null);
+ assert.doesNotMatch(doc.querySelector('.pirate-heading').textContent,/ADMIN-TEST/);
+ const origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
+ input(w,doc.querySelector('[data-fleet-ship="falke"]'),100);
+ doc.getElementById('pirate-fleet-form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();
+ assert.equal(calls[0].action.op,'attack');assert.ok(doc.querySelector('.pirate-flight-card'));
+});
+test('Admin still has the realm configuration form',t=>{
+ const {doc}=mounted(t);assert.ok(doc.getElementById('pirate-config-form'));
 });

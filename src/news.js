@@ -1,6 +1,19 @@
 export const GAME_NEWS=[
  {
   date:'17.10.2026',
+  title:'🏴‍☠️ Melis Piratenbande ist da – PvE für alle!',
+  status:'🚀 Piratenstationen · Jetzt freigeschaltet',
+  items:[
+   '🗺️ Unter Galaxie → Piraten warten fünf persönliche Stationen auf euch: vom Schmugglernest bis zum Piratenhauptquartier. Jeder Commander hat seine eigenen Ziele, Beute und Abklingzeiten.',
+   '🛰️ Baut Spionagesonden in der Werft und klärt euer Ziel vor dem Angriff auf. Die fünf Stufen benötigen Sensortechnik 1, 3, 5, 7 und 10. Feindflotte und Ressourcen werden erst nach Ankunft der Sonde sichtbar.',
+   '⚔️ Stellt eure Flotte zusammen und startet den Angriff! Eure echten Schiffe kämpfen und können verloren gehen. Nach der Ankunft läuft pro Station standardmäßig eine Stunde bis zum nächsten Angriff.',
+   '💎 Nehmt Frachter mit: Beute braucht Laderaum. Übrige Depotbeute könnt ihr nach einem Sieg bis zur Stationserneuerung separat abholen. Trümmer lassen sich auch während der Abklingzeit bergen; ihre Ablaufzeit steht beim Ziel.',
+   '🎨 Jede Stufe zeigt Melis Piratenbande im eigenen Bild. Animierte Flugrouten direkt bei den Stationen zeigen Hinflug, Rückflug und Ladung.',
+   '💬 Viel Spaß bei euren ersten Raubzügen! Feedback und Auffälligkeiten gerne im Chat oder in der Wünschebox. ❤️'
+  ]
+ },
+ {
+  date:'17.10.2026',
   title:'⚔️ Balancing: Titanen ohne Rapid Fire gegen Falken',
   status:'⚖️ Kampfengine v6 · Balancing',
   items:[

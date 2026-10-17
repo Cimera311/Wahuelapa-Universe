@@ -1,5 +1,5 @@
 -- Install after the existing PvP, partnerships and ranking patches.
--- Admin-only PvE persistence. Safe to repeat; does not reset pirates or player saves.
+-- Personal PvE persistence. Safe to repeat; does not reset pirates or player saves.
 begin;
 create table if not exists public.pirate_world (
  id boolean primary key default true check(id),
@@ -32,7 +32,7 @@ create or replace function public.imperium_pvp_commit(p_world jsonb,p_expected b
 returns boolean language plpgsql security definer set search_path='' as $$
 declare extra jsonb;
 begin
- if p_payload->>'type'='pirate' and not exists(select 1 from public.pvp_admins where user_id=p_uid) then raise exception 'ADMIN_REQUIRED';end if;
+ if p_payload->>'type'='pirate' and p_payload->'action'->>'op'='configure' and not exists(select 1 from public.pvp_admins where user_id=p_uid) then raise exception 'ADMIN_REQUIRED';end if;
  -- Original commit takes the global epoch lock. All additional writes are in this transaction.
  if not public.imperium_pvp_commit_before_pirates(p_world,p_expected,p_uid,p_request_id,p_payload) then return false;end if;
  -- Permit the previous handler to keep normal gameplay running between SQL and deployment.

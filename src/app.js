@@ -268,7 +268,7 @@ function galaxy(p){
  if(pirateDraftAccount!==cloud?.user?.id){pirateDraftAccount=cloud?.user?.id;pirateDraft={};pirateConfigDraft=null;pirateFlightOpened.clear();}
  if(galaxySection==='pirates'&&!pirateAdmin)galaxySection='tutorial';
  const menu=pirateNavigation(galaxySection,pirateAdmin);
- if(galaxySection==='pirates')return menu+pirateStationsView(pirateSelected,state.tech.scout,{data:cloud?.pvp?.pirates,state,draft:pirateDraft,opened:pirateFlightOpened,configDraft:pirateConfigDraft,busy:readOnly||cloudBlocked||galaxyBusy||cloudSaving,now:gameNow()});
+ if(galaxySection==='pirates')return menu+pirateStationsView(pirateSelected,state.tech.scout,{data:cloud?.pvp?.pirates,isAdmin:cloud?.pvp?.isAdmin===true,state,draft:pirateDraft,opened:pirateFlightOpened,configDraft:pirateConfigDraft,busy:readOnly||cloudBlocked||galaxyBusy||cloudSaving,now:gameNow()});
  if(galaxySection==='tutorial')return menu+tutorialGalaxy(p);
  const systems=galaxyData?.systems||GALAXY_SYSTEMS,selected=systems.find(s=>s.id===galaxySystem)||systems[0],start=galaxyData?.start;
  const planets=(galaxyData?.planets||[]).filter(q=>q.system===selected.id),target=planets.find(q=>q.id===galaxyTarget)||planets[0];
@@ -760,7 +760,7 @@ document.addEventListener('submit',async e=>{
  if(!['pirate-fleet-form','pirate-config-form'].includes(e.target.id))return;e.preventDefault();
  if(!piratePreviewAllowed(cloud)||readOnly||cloudBlocked)return;
  const form=e.target,d=new FormData(form);
- if(form.id==='pirate-config-form'){try{await serverAction({type:'pirate',action:{op:'configure',config:JSON.parse(d.get('config'))}});}catch(err){toast('Ungültiges JSON: '+err.message);}return;}
+ if(form.id==='pirate-config-form'){if(cloud?.pvp?.isAdmin!==true)return;try{await serverAction({type:'pirate',action:{op:'configure',config:JSON.parse(d.get('config'))}});}catch(err){toast('Ungültiges JSON: '+err.message);}return;}
  const op=d.get('op');
  capturePirateDraft(form);await serverAction({type:'pirate',action:{op,station:form.dataset.station,from:d.get('from'),fleet:pirateDraft.fleet}});
 });

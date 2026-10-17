@@ -1,5 +1,5 @@
 // @ts-nocheck — Generated dashboard bundle; edit source modules instead.
-// Game-command 2026-10-17.01 — Admin-PvE, Spionage, Piratenkaempfe und Bergung.
+// Game-command 2026-10-17.02 — Oeffentliches PvE, private Stationsdaten und Admin-Realm-Einstellungen.
 // supabase/functions/game-command/index.ts
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
 
@@ -36,7 +36,7 @@ var TECHS = {
   energy: { name: "Energietechnik", description: "Je Stufe +10 % Energie; Stufe 3: Gezeitenkraftwerk.", cost: [200, 180, 50], time: 15, lab: 2, max: 5 }
 };
 var SHIPS = {
-  spyProbe: { name: "Spionagesonde", icon: "\u2301", category: "civil", image: "probe", role: "Kl\xE4rt pers\xF6nliche Piratenstationen auf. Aktuell nur im Admin-PvE-Test nutzbar.", cost: [150, 120, 40], time: 8, tech: "scout", techLevel: 1, shipyard: 1, cargo: 0, speed: 2, fuel: 2 },
+  spyProbe: { name: "Spionagesonde", icon: "\u2301", category: "civil", image: "probe", role: "Kl\xE4rt pers\xF6nliche Piratenstationen auf. Ben\xF6tigt die passende Sensortechnik f\xFCr die Zielstufe.", cost: [150, 120, 40], time: 8, tech: "scout", techLevel: 1, shipyard: 1, cargo: 0, speed: 2, fuel: 2 },
   probe: { name: "Erkundungssonde", icon: "\u2301", category: "civil", role: "Erkundet unbekannte Welten.", cost: [90, 60, 20], time: 5, tech: "scout", cargo: 0, speed: 1, fuel: 1.5 },
   transport: { name: "Kleiner Transporter", icon: "\u27A4", category: "freighter", role: "Bew\xE4hrter Allrounder f\xFCr deine ersten Kolonien.", cost: [180, 100, 40], time: 8, tech: "logistics", cargo: 1e3, speed: 1, fuel: 4 },
   longProbe: { name: "Fernsonde", icon: "\u2301", category: "civil", image: "probe", role: "Untersucht Planeten in der gemeinsamen Galaxie.", cost: [280, 200, 80], time: 10, tech: "scout", techLevel: 2, shipyard: 2, engine: "ramjet", engineLevel: 1, cargo: 0, speed: 1, fuel: 3 },
@@ -1595,7 +1595,6 @@ function refreshPirates(w, time) {
 }
 function pirateReady(w, uid) {
   if (w.pirateVersion !== 1) throw Error("Piraten ben\xF6tigen zuerst die PvE-SQL und die neue Game-command.");
-  if (!w.admins.includes(uid)) throw Error("Piraten sind aktuell nur f\xFCr Administratoren freigegeben.");
 }
 function ensurePirateOwner(w, uid) {
   let row = pirateOwner(w, uid);
@@ -1611,6 +1610,7 @@ function pirateAction(w, uid, action, id, seed) {
   const s = pirateState(w, uid);
   if (!s) throw Error("Spielstand fehlt.");
   if (action.op === "configure") {
+    if (!w.admins.includes(uid)) throw Error("Nur Administratoren d\xFCrfen die Piraten-Realm-Einstellungen \xE4ndern.");
     w.pirateConfig = pirateConfig(action.config);
     return;
   }
@@ -1739,9 +1739,9 @@ function pirateFleetShadows(w) {
   for (const row of w.saves) row.state.pveFleets = (pirateOwner(w, row.user_id)?.missions || []).map((m) => ({ fleet: { ...m.fleet } }));
 }
 function projectPirates(w, uid) {
-  if (w.pirateVersion !== 1 || !w.admins.includes(uid)) return null;
+  if (w.pirateVersion !== 1 || !pirateState(w, uid)) return null;
   const row = pirateOwner(w, uid);
-  return { config: structuredClone(w.pirateConfig), stations: PIRATE_STATION_META.map((meta) => {
+  return { config: w.admins.includes(uid) ? structuredClone(w.pirateConfig) : { flightTimeFactor: w.pirateConfig.flightTimeFactor, fuelFactor: w.pirateConfig.fuelFactor }, stations: PIRATE_STATION_META.map((meta) => {
     const q = row?.stations[meta.id];
     return { ...meta, sensor: q?.sensor ?? w.pirateConfig.stations[meta.id].sensor, enabled: w.pirateConfig.enabled && w.pirateConfig.stations[meta.id].enabled, initialized: !!q, generation: q?.generation, refreshAt: q?.refreshAt || 0, nextAttackAt: q?.nextAttackAt || 0, defeated: !!q?.defeated, debris: { ...q?.debris || pirateZero() }, debrisExpiresAt: q?.debrisExpiresAt || 0, scan: q?.scan ? structuredClone(q.scan) : null };
   }), missions: structuredClone(row?.missions || []).map(({ seed, combatConfig, initialFleet, ...m }) => m), reports: structuredClone(row?.reports || []) };
@@ -2428,7 +2428,6 @@ function processWorld(snapshot, uid, request) {
   const s = stateOf(w, uid), start = w.starts.find((x) => x.user_id === uid);
   if (start) s.galaxy = { x: start.x, y: start.y };
   if (type === "command") {
-    if (action.type === "ship" && action.key === "spyProbe" && !w.admins.includes(uid)) throw Error("Spionagesonden sind vorerst nur f\xFCr Admins verf\xFCgbar.");
     if (!["build", "demolish", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "salvage", "route", "deliver", "repair", "cancel-repair", "resume-repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
     if (action.type === "salvage") {
       const target = w.planets.find((p) => p.id === action.to);
@@ -2468,7 +2467,7 @@ function projectPvP(w, uid) {
     serverNow: w.now,
     social: socialProjection(w, uid),
     pirates: projectPirates(w, uid),
-    features: { pirates: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
+    features: { pirates: w.pirateVersion === 1, piratesPublic: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,

@@ -18,12 +18,12 @@ export function refreshPirates(w,time){
   if(q.debrisExpiresAt&&time>=q.debrisExpiresAt){q.debris=pirateZero();q.debrisExpiresAt=0;}
  }
 }
-function pirateReady(w,uid){if(w.pirateVersion!==1)throw Error('Piraten benötigen zuerst die PvE-SQL und die neue Game-command.');if(!w.admins.includes(uid))throw Error('Piraten sind aktuell nur für Administratoren freigegeben.');}
+function pirateReady(w,uid){if(w.pirateVersion!==1)throw Error('Piraten benötigen zuerst die PvE-SQL und die neue Game-command.');}
 function ensurePirateOwner(w,uid){let row=pirateOwner(w,uid);if(!row){row={user_id:uid,stations:{},missions:[],reports:[]};w.piratePlayers.push(row);}refreshPirates(w,w.now);return row;}
 export function pirateAction(w,uid,action,id,seed){
  pirateReady(w,uid);
  const s=pirateState(w,uid);if(!s)throw Error('Spielstand fehlt.');
- if(action.op==='configure'){w.pirateConfig=pirateConfig(action.config);return;}
+ if(action.op==='configure'){if(!w.admins.includes(uid))throw Error('Nur Administratoren dürfen die Piraten-Realm-Einstellungen ändern.');w.pirateConfig=pirateConfig(action.config);return;}
  const row=ensurePirateOwner(w,uid);
  if(action.op==='open')return;
  const meta=PIRATE_STATION_META.find(x=>x.id===action.station),q=row.stations[action.station];
@@ -102,9 +102,9 @@ function returnPirate(w,row,m,time){
 export function settlePirates(w,time){if(w.pirateVersion!==1)return;for(const row of w.piratePlayers)for(const m of [...row.missions])if(m.awaitingUnload)returnPirate(w,row,m,time);}
 export function pirateFleetShadows(w){if(w.pirateVersion!==1)return;for(const row of w.saves)row.state.pveFleets=(pirateOwner(w,row.user_id)?.missions||[]).map(m=>({fleet:{...m.fleet}}));}
 export function projectPirates(w,uid){
- if(w.pirateVersion!==1||!w.admins.includes(uid))return null;
+ if(w.pirateVersion!==1||!pirateState(w,uid))return null;
  const row=pirateOwner(w,uid);
- return {config:structuredClone(w.pirateConfig),stations:PIRATE_STATION_META.map(meta=>{const q=row?.stations[meta.id];return {...meta,sensor:q?.sensor??w.pirateConfig.stations[meta.id].sensor,enabled:w.pirateConfig.enabled&&w.pirateConfig.stations[meta.id].enabled,initialized:!!q,generation:q?.generation,refreshAt:q?.refreshAt||0,nextAttackAt:q?.nextAttackAt||0,defeated:!!q?.defeated,debris:{...q?.debris||pirateZero()},debrisExpiresAt:q?.debrisExpiresAt||0,scan:q?.scan?structuredClone(q.scan):null};}),missions:structuredClone(row?.missions||[]).map(({seed,combatConfig,initialFleet,...m})=>m),reports:structuredClone(row?.reports||[])};
+ return {config:w.admins.includes(uid)?structuredClone(w.pirateConfig):{flightTimeFactor:w.pirateConfig.flightTimeFactor,fuelFactor:w.pirateConfig.fuelFactor},stations:PIRATE_STATION_META.map(meta=>{const q=row?.stations[meta.id];return {...meta,sensor:q?.sensor??w.pirateConfig.stations[meta.id].sensor,enabled:w.pirateConfig.enabled&&w.pirateConfig.stations[meta.id].enabled,initialized:!!q,generation:q?.generation,refreshAt:q?.refreshAt||0,nextAttackAt:q?.nextAttackAt||0,defeated:!!q?.defeated,debris:{...q?.debris||pirateZero()},debrisExpiresAt:q?.debrisExpiresAt||0,scan:q?.scan?structuredClone(q.scan):null};}),missions:structuredClone(row?.missions||[]).map(({seed,combatConfig,initialFleet,...m})=>m),reports:structuredClone(row?.reports||[])};
 }
 // Returning PvE fleets waiting for warehouse space remain vulnerable in the origin orbit.
 export function pirateDefense(w,uid,planet){return (pirateOwner(w,uid)?.missions||[]).filter(m=>m.awaitingUnload&&m.from===planet).map(m=>({id:'pirate:'+m.id,owner:uid,commander:'PvE-Rückkehrer',fleet:{...m.fleet},hulls:m.hulls,tech:m.tech}));}
