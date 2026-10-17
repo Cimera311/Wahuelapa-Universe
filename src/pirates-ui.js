@@ -1,7 +1,7 @@
 import {PIRATE_STATION_META,pirateFlight} from './pirates-config.js';
-import {SHIPS,RES,LABEL,TECHS,shipFlightEngine,planetImagePath} from './config.js';
-import {fleetEscape,clampFleetCount} from './fleet-controls.js';
-import {fleetCapacity,cargoCapacity} from './engine.js';
+import {SHIPS,RES,LABEL,planetImagePath} from './config.js';
+import {fleetEscape,fleetHangarPicker,updateFleetHangar} from './fleet-controls.js';
+import {fleetCapacity} from './engine.js';
 // One explicit mapping keeps station thumbnails, portraits and flight destinations aligned.
 export function pirateStationImage(id,thumbnail=false){
  const key=['smugglers','outpost','harbor','fortress','headquarters'].includes(id)?id:'smugglers';
@@ -72,28 +72,8 @@ export function updatePirateFlights(root,now){
 }
 
 
-// PvE pilot: each ship has one named numeric field; ranges are a synchronized input aid.
+// Preserve the PvE presentation while sharing the controls with fleet orders.
 export function pirateHangarPicker(state,planet,{fleet={},attack=true,disabled=false}={}){
- const ships=Object.entries(SHIPS).filter(([key,ship])=>(planet.ships[key]||0)>0&&(ship.category==='freighter'||attack&&ship.category==='military'));
- const selection=Object.fromEntries(ships.map(([key])=>[key,clampFleetCount(fleet[key],planet.ships[key])]).filter(([,n])=>n>0));
- return `<section class="pirate-hangar" aria-label="Flotte zusammenstellen"><div class="pirate-hangar-heading"><div><span class="eyebrow">DEIN HANGAR</span><h3>Flotte zusammenstellen</h3></div><span class="pirate-hangar-origin">${fleetEscape(planet.name)}</span></div><p class="pirate-hangar-hint">Menge ziehen oder direkt eingeben.</p>${['military','freighter'].map(category=>{
- const group=ships.filter(([,ship])=>ship.category===category);if(!group.length)return '';
- return `<section class="pirate-hangar-group"><h4>${category==='military'?'Angriffsflotte':'Transport & Beute'}<span>${group.length} ${group.length===1?'Schiffstyp':'Schiffstypen'}</span></h4>${group.map(([key,ship])=>{
-  const available=planet.ships[key],count=selection[key]||0,engine=shipFlightEngine(state,key,false),num=pirateNum;
-  return `<article class="pirate-hangar-card ${category}${count?' is-selected':''}" data-hangar-ship="${key}" style="--hangar-fill:${count/available*100}%"><div class="pirate-hangar-identity"><div class="pirate-hangar-art"><img src="./assets/${ship.image||key}.webp" alt="" width="100" height="80" decoding="async"><span class="pirate-hangar-thrust" aria-hidden="true"></span></div><div class="pirate-hangar-copy"><label for="pirate-count-${key}">${fleetEscape(ship.name)}</label><small>${num(available)} verfügbar</small></div><div class="pirate-hangar-number"><input id="pirate-count-${key}" name="fleet-${key}" data-fleet-ship="${key}" type="number" inputmode="numeric" min="0" max="${available}" step="1" value="${count}" aria-label="Anzahl ${fleetEscape(ship.name)}" ${disabled?'disabled':''}><span>ausgewählt</span></div></div><div class="pirate-hangar-controls"><button type="button" data-pirate-count="none" aria-label="Keine ${fleetEscape(ship.name)} auswählen" ${disabled?'disabled':''}>Keine</button><input type="range" min="0" max="${available}" step="1" value="${count}" data-pirate-range="${key}" aria-label="${fleetEscape(ship.name)} auswählen" aria-valuetext="${num(count)} von ${num(available)}" ${disabled?'disabled':''}><button type="button" data-pirate-count="all" aria-label="Alle ${fleetEscape(ship.name)} auswählen" ${disabled?'disabled':''}>Alle</button></div><details class="pirate-hangar-info"><summary>${ship.category==='freighter'?num(cargoCapacity(state,1,key))+' Laderaum je Schiff':'Kampfschiff · Stufe '+ship.tier}<span>Details</span></summary><p>${fleetEscape(ship.role)}<br>${fleetEscape(TECHS[engine].name)} ${state.tech[engine]||0}</p></details></article>`;
- }).join('')}</section>`;
- }).join('')||'<p class="pirate-hangar-empty">Keine passenden Schiffe auf dieser Welt verfügbar. Wähle einen anderen Startplaneten oder baue Schiffe in der Werft.</p>'}<div class="pirate-hangar-selection" role="status" aria-live="polite" aria-atomic="true"><div class="pirate-hangar-selection-title"><strong data-hangar-total>${pirateNum(Object.values(selection).reduce((a,n)=>a+n,0))} Schiffe</strong><span><b data-hangar-capacity>${pirateNum(fleetCapacity(state,selection))}</b> Laderaum</span></div><div class="pirate-hangar-manifest" data-hangar-manifest>${pirateHangarManifest(selection)}</div></div></section>`;
+ return fleetHangarPicker(state,planet,{fleet,categories:attack?['military','freighter']:['freighter'],disabled,idPrefix:'pirate',groupLabels:{military:'Angriffsflotte',freighter:'Transport & Beute'}});
 }
-function pirateHangarManifest(fleet){return Object.entries(fleet).filter(([,n])=>n>0).map(([key,n])=>`<span><img src="./assets/${SHIPS[key].image||key}.webp" alt="" width="32" height="26"><b>${pirateNum(n)}</b> ${fleetEscape(SHIPS[key].name)}</span>`).join('')||'<small>Noch keine Schiffe ausgewählt</small>';}
-export function updatePirateHangar(root,state){
- const fleet={};
- for(const card of root.querySelectorAll('[data-hangar-ship]')){
-  const input=card.querySelector('[data-fleet-ship]'),range=card.querySelector('[data-pirate-range]'),n=clampFleetCount(input.value,Number(input.max));
-  input.value=n;range.value=n;range.setAttribute('aria-valuetext',pirateNum(n)+' von '+pirateNum(Number(input.max)));
-  card.classList.toggle('is-selected',n>0);card.style.setProperty('--hangar-fill',(Number(input.max)?n/Number(input.max)*100:0)+'%');if(n)fleet[input.dataset.fleetShip]=n;
- }
- const total=root.querySelector('[data-hangar-total]');if(!total)return;
- const n=Object.values(fleet).reduce((a,b)=>a+b,0);total.textContent=pirateNum(n)+(n===1?' Schiff':' Schiffe');
- root.querySelector('[data-hangar-capacity]').textContent=pirateNum(fleetCapacity(state,fleet));
- root.querySelector('[data-hangar-manifest]').innerHTML=pirateHangarManifest(fleet);
-}
+export function updatePirateHangar(root,state){updateFleetHangar(root,state);}
