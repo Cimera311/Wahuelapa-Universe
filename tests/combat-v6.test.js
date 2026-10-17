@@ -41,7 +41,7 @@ test('Test4 matches the complete Rapid Fire matrix without legacy damage bonuses
   falke:{donner:.20,titan:.40},
   waechter:{falke:.75,flak:.25},
   donner:{waechter:.25,flak:.85,laser:.75,rail:.60,plasma:.40},
-  titan:{falke:.85,waechter:.40,donner:.50,flak:.60,laser:.40,rail:.20},
+  titan:{waechter:.40,donner:.50,flak:.60,laser:.40,rail:.20},
   flak:{falke:.80,waechter:.20},
   laser:{falke:.40,waechter:.60},
   rail:{donner:.60,titan:.40},
@@ -72,4 +72,15 @@ test('v6 opening salvo supports rapid fire with no old damage bonus',()=>{
  assert.equal(hit(disabled).extraSalvos,0);
  assert.equal(hit(disabled).damage,35);
  assert.deepEqual(enabled,resolveBattleHybridV6(attacker,defender,'opening-rapid',config(true)));
+});
+
+test('Test4 Titans do not receive Rapid Fire against Falcons',()=>{
+ const attacker={fleet:{titan:3},tech:{weapons:5}};
+ const defender={fleet:{falke:120},tech:{armor:5,shields:5}};
+ const result=resolveBattleHybridV6(attacker,defender,'titan-no-falke-rf',REALM_COMBAT_OVERRIDES.test4);
+ const shots=result.trace.rounds.flatMap(round=>round.shots).filter(shot=>shot.shooter==='titan'&&shot.target==='falke');
+ assert.ok(shots.length>0);
+ assert.ok(shots.every(shot=>shot.extraSalvos===0&&shot.rapidFireDamage===0));
+ assert.equal(combatConfigForRealmId('test4').rapidFire.chances.titan.falke,undefined);
+ assert.equal(combatConfigForRealmId('test4').rapidFire.chances.falke.titan,.40);
 });
