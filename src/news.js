@@ -1,6 +1,17 @@
 export const GAME_NEWS=[
  {
   date:'17.10.2026',
+  title:'🛰️ Orbitaler Erstschlag: Rapid Fire jetzt ab Runde 0! ⚡',
+  status:'⚔️ Kampfsystem v6 · Feinschliff',
+  items:[
+   '🛡️ Flak, Laser, Railgun und Plasma können ihre Rapid-Fire-Zusatzsalven jetzt bereits beim orbitalen Erstschlag in Runde 0 auslösen – mit denselben Wahrscheinlichkeiten und maximal drei Extrasalven wie in den weiteren Runden.',
+   '🎯 Die angreifende Flotte schießt in Runde 0 weiterhin nicht zurück. Für v6 gelten dabei keine alten pauschalen Schadensboni mehr.',
+   '⚖️ Grundwerte für Angriff, Schild, Hülle sowie Baukosten bleiben unverändert. Bereits gestartete Angriffe behalten ihre beim Start festgelegten Kampfregeln.',
+   '💬 Wir vergleichen als Nächstes die Balance von Flotten und Orbitalverteidigung. Feedback und ungewöhnliche Kampfergebnisse gerne im Chat oder in der Wünschebox! ❤️'
+  ]
+ },
+ {
+  date:'17.10.2026',
   title:'⚔️ Neue Kampfregeln: Zielbindung & Rapid Fire! 🚀',
   status:'🔥 Kampfengine v5 & v6 · v6 jetzt aktiv',
   items:[
