@@ -24,6 +24,8 @@ declare base jsonb;extra jsonb;
 begin
  base:=public.imperium_pvp_snapshot_before_pirates(p_uid,p_request_id);
  select data into extra from public.pirate_world where id;
+ -- Deleted accounts must not leave orphaned missions that block global catch-up.
+ extra:=jsonb_set(extra,'{piratePlayers}',coalesce((select jsonb_agg(r.value) from jsonb_array_elements(extra->'piratePlayers') r where exists(select 1 from public.game_saves g where g.user_id=(r.value->>'user_id')::uuid)),'[]'::jsonb));
  return base||extra||jsonb_build_object('pirateVersion',1);
 end $$;
 create or replace function public.imperium_pvp_commit(p_world jsonb,p_expected bigint,p_uid uuid,p_request_id uuid,p_payload jsonb)

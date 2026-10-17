@@ -43,6 +43,11 @@ test('PvE SQL: role boundaries, persistent scans/battles, receipt retries, ranki
   await assert.rejects(call({op:'attack',station:'smugglers',from:'home',fleet:{falke:1}}),/Cooldown/);
   assert.equal((await runServerCommand(rpc,B,{type:'sync'})).pvp.pirates,null);
  });
+ await t.test('Deleted accounts cannot leave orphaned missions that block world updates',async()=>{
+  await db.exec(`update public.pirate_world set data=jsonb_set(data,'{piratePlayers}',data->'piratePlayers'||'[ {"user_id":"00000000-0000-0000-0000-000000000099","stations":{},"missions":[],"reports":[]} ]'::jsonb)`);
+  await runServerCommand(rpc,A,{type:'sync'});
+  assert.equal((await db.query("select jsonb_array_length(data->'piratePlayers') as n from public.pirate_world")).rows[0].n,1);
+ });
  await t.test('Reinstallation preserves state; unchanged world data is not rewritten every sync',async()=>{
   const prior=(await db.query('select data from public.pirate_world')).rows[0].data;await db.exec(readFileSync('supabase/pirates-admin.sql','utf8'));assert.deepEqual((await db.query('select data from public.pirate_world')).rows[0].data,prior);
   const before=(await db.query('select xmin::text as v from public.pirate_world')).rows[0].v;await runServerCommand(rpc,A,{type:'sync'});assert.equal((await db.query('select xmin::text as v from public.pirate_world')).rows[0].v,before);
