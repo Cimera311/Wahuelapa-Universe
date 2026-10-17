@@ -8,7 +8,7 @@ export const GAME_NEWS=[
    '🔥 Jetzt ist v6 aktiv! Mit Rapid Fire haben bestimmte Schiffe und Orbitalgeschütze eine Chance auf zusätzliche volle Salven gegen passende Gegnertypen. Nach jeder Zusatzsalve entscheidet der Zufall erneut – maximal drei Zusatzsalven sind möglich.',
    '🚀 Jede Einheit soll eine eigene Aufgabe haben: Wächter sind besonders gut gegen Falken, Donner greifen Orbitalverteidigungen effektiv an, Titanen bekämpfen vor allem feindliche Flotten. Flak, Laser, Railgun und Plasma erhalten ebenfalls eigene Stärken.',
    '⚖️ Die früheren pauschalen Schadensboni gegen einzelne Gegnertypen entfallen in v6. Entscheidend sind jetzt eure Flottenzusammenstellung, die Grundkampfwerte und Rapid Fire.',
-   '🛡️ Der orbitale Erstschlag bleibt bestehen – in dieser Eröffnungsrunde gibt es keine Rapid-Fire-Zusatzsalven. Schilde, Hüllenschäden, Reparaturen und Trümmer funktionieren weiterhin.',
+   '🛡️ Der orbitale Erstschlag bleibt bestehen – ab diesem Update können Orbitalgeschütze auch in dieser Eröffnungsrunde Rapid Fire auslösen. Schilde, Hüllenschäden, Reparaturen und Trümmer funktionieren weiterhin.',
    '⏳ Bereits gestartete Angriffe behalten ihre zugewiesene Kampfversion. Die neuen Regeln gelten für Angriffe, die mit v6 gestartet werden.',
    '💬 Eure Meinung zählt: v6 läuft aktuell, aber v5 bleibt als Rückfalloption verfügbar. Wenn ihr euch nach den ersten Kämpfen die Zielbindung ohne Rapid Fire zurückwünscht, sagt es uns im Chat oder über die Wünschebox!',
    '🐞 Bitte meldet auffällige Kampfergebnisse oder unerwartete Verluste. Wir schauen uns euer Feedback an und balancieren bei Bedarf nach. Viel Erfolg, Commander! ❤️'
