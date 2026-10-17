@@ -668,3 +668,7 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .partner-hangar-section{min-width:0}.partner-order .pirate-hangar{margin-top:16px}.partner-order .order-columns{grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:20px;align-items:start}.partner-order-support .order-columns{grid-template-columns:minmax(0,1fr)}.partner-order #social-flight-form>button[type=submit]{width:100%;min-height:48px;border-radius:11px}.partner-order #social-estimate{line-height:1.8}.partner-order .pirate-hangar-heading h3{font-size:19px}.partner-order .order-columns>div{padding-top:15px;min-width:0}
 @media(max-width:860px){.partner-order .order-columns{grid-template-columns:minmax(0,1fr)}}
 @media(min-width:900px){.partner-order-support .pirate-hangar-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}.partner-order-support .pirate-hangar-group>h4{grid-column:1/-1}}
+
+/* Route fleet planning shares the hangar cards, with existing route stock included. */
+.route-hangar{margin:22px 0;min-width:0}.route-hangar>.fine{font-size:12px;line-height:1.7;color:#92afbf}.route-hangar .pirate-hangar{margin-top:16px}.route-hangar .pirate-hangar-copy>small{line-height:1.5}.route-hangar .pirate-hangar-heading h3{font-size:20px}
+@media(min-width:900px){.route-hangar .pirate-hangar-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}.route-hangar .pirate-hangar-group>h4{grid-column:1/-1}}
