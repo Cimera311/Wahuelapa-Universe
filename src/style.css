@@ -645,3 +645,10 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .awaiting .pirate-flight-heading time,.is-due .pirate-flight-heading time{grid-column:1/-1;text-align:left;font-size:11px;color:#f4bb6c;white-space:normal}
 @media(max-width:400px){.pirate-station-flights{padding:0 10px 8px}.pirate-flight-heading{gap:6px}.pirate-flight-route{gap:6px;grid-template-columns:minmax(50px,78px) minmax(60px,1fr) 24px}.pirate-flight-heading strong{font-size:11px}.pirate-flight-heading>span{font-size:10px}.pirate-flight-heading time{font-size:13px}}
 @media(prefers-reduced-motion:reduce){.pirate-flight-ship,.pirate-flight-fill{transition:none}.pirate-flight-ship::before{animation:none}}
+
+/* Finished Meli artwork: preserve the entire 3:2 scene in the station portrait. */
+.pirate-art{display:block;min-height:0;padding:0;aspect-ratio:3/2;background:#06111c}
+.pirate-art>img{display:block;width:100%;height:auto;object-fit:contain;filter:none}
+.pirate-art>.pirate-tier{top:12px;left:12px;right:auto;max-width:calc(100% - 24px);padding:6px 10px;background:#06111cdb;border:1px solid #88662f;border-radius:8px;line-height:1.4}
+.pirate-thumbnail{background:none}.pirate-thumbnail img{object-fit:contain}
+@media(max-width:400px){.pirate-heading h1{font-size:clamp(24px,7vw,28px);overflow-wrap:anywhere}.pirate-flight-destination>img{max-width:100%}}

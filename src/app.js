@@ -761,7 +761,7 @@ document.addEventListener('submit',async e=>{
  if(!piratePreviewAllowed(cloud)||readOnly||cloudBlocked)return;
  const form=e.target,d=new FormData(form);
  if(form.id==='pirate-config-form'){try{await serverAction({type:'pirate',action:{op:'configure',config:JSON.parse(d.get('config'))}});}catch(err){toast('Ungültiges JSON: '+err.message);}return;}
- const op=d.get('op');if(op==='attack'&&!d.has('ack')){toast('Bitte bestätige das Risiko echter Schiffsverluste.');return;}
+ const op=d.get('op');
  capturePirateDraft(form);await serverAction({type:'pirate',action:{op,station:form.dataset.station,from:d.get('from'),fleet:pirateDraft.fleet}});
 });
 
