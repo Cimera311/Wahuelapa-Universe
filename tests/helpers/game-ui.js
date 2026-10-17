@@ -9,7 +9,7 @@ export function ui(t,{state:initial,preferences={}}={}){
  w.localStorage.setItem('imperium-v1',JSON.stringify(initial||s));for(const [key,value] of Object.entries(preferences))w.localStorage.setItem(key,value);
  const files=JSON.parse(readFileSync('scripts/build.js','utf8').match(/const files=(\[[^\]]+\])/)[1].replaceAll("'",'"'));
  const source=files.map(f=>readFileSync('src/'+f+'.js','utf8').replace(/^import .*?;\s*$/gm,'').replace(/^export /gm,'')).join('\n').replace(/const CLOUD_CONFIG=\{\s*enabled:true/,'const CLOUD_CONFIG={enabled:false');
- w.eval(source+'\nglobalThis.fleetTest={state:()=>state,show(section){tab=section==="overview"?"overview":"fleet";fleetSection=section;render();},settings,tick,enableCloud(){CLOUD_CONFIG.enabled=true;},attach(c){cloud=c;cloudBlocked=false;},sync:flushCloud,render};');
+ w.eval(source+'\nglobalThis.fleetTest={state:()=>state,show(section){tab=section==="overview"?"overview":"fleet";fleetSection=section;render();},settings,tick,enableCloud(){CLOUD_CONFIG.enabled=true;},attach(c){cloud=c;cloudBlocked=false;},setGalaxy(data){galaxyData=data;},sync:flushCloud,render};');
  return {w,doc:w.document,api:w.fleetTest};
 }
 export function input(w,node,value){node.value=value;node.dispatchEvent(new w.Event('input',{bubbles:true}));}
