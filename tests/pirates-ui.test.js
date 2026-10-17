@@ -19,6 +19,11 @@ test('Server-confirmed admins can select stations without missions or save chang
  const {doc,api}=ui(t);api.attach({user:{id:'admin'},pvp:{isAdmin:true}});openGalaxy(doc);
  assert.equal(pirateButton(doc).disabled,false);pirateButton(doc).click();
  assert.equal(doc.querySelectorAll('[data-action="pirate-select"]').length,5);
+ for(const id of ['smugglers','outpost','harbor','fortress','headquarters']){
+  doc.querySelector(`[data-station="${id}"]`).click();
+  assert.equal(doc.querySelector('.pirate-art img').getAttribute('src'),`./assets/pirates-meli-v1/${id}.webp`);
+  assert.equal(doc.querySelector(`[data-station="${id}"] img`).getAttribute('src'),`./assets/pirates-meli-v1/${id}-thumb.webp`);
+ }
  const before=JSON.stringify(api.state());
  doc.querySelector('[data-station="fortress"]').click();
  assert.equal(doc.querySelector('#pirate-detail-title').textContent,'Freibeuterfestung');
