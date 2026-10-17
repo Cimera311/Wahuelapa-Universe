@@ -31,3 +31,10 @@ test('An unverified admin flag without an authenticated account does not open th
  const {doc,api}=ui(t);api.attach({pvp:{isAdmin:true}});openGalaxy(doc);
  assert.equal(pirateButton(doc).disabled,true);
 });
+
+test('Public-capable server unlocks pirates for ordinary signed-in players and removes Coming soon',t=>{
+ const {doc,api}=ui(t);api.attach({user:{id:'player'},pvp:{isAdmin:false,features:{piratesPublic:true}}});openGalaxy(doc);
+ assert.equal(pirateButton(doc).disabled,false);assert.doesNotMatch(pirateButton(doc).textContent,/Coming soon/);
+ pirateButton(doc).click();assert.ok(doc.querySelector('.pirates-preview'));
+ api.attach({pvp:{features:{piratesPublic:true}}});api.render();assert.equal(doc.querySelector('.pirates-preview'),null);
+});

@@ -10,8 +10,8 @@ let seq=0;
 const call=(w,action,uid=A)=>processWorld(w,uid,{type:'pirate',eventId:'pirate-'+ ++seq,combatSeed:'server-seed',action});
 const advance=(w,time)=>processWorld({...w,now:time},A,{type:'sync'});
 const row=w=>w.piratePlayers[0],home=w=>w.saves[0].state.planets[0];
-test('Admin-only ownership boundary; no hidden station fleet or resources are projected before a scan',()=>{
- const w=setup();assert.throws(()=>call(w,{op:'open'},B),/Administratoren/);assert.equal(projectPvP(w,B).pirates,null);
+test('Public personal ownership boundary; only admins receive full configuration',()=>{
+ let w=setup();w=call(w,{op:'open'},B);const publicData=projectPvP(w,B).pirates;assert.equal(publicData.stations.length,5);assert.deepEqual(Object.keys(publicData.config).sort(),['flightTimeFactor','fuelFactor']);assert.equal(publicData.stations[0].scan,null);assert.equal(projectPvP(w,B).features.piratesPublic,true);assert.throws(()=>call(w,{op:'configure',config:{enabled:false}},B),/Administrator/);assert.ok(projectPvP(w,A).pirates.config.stations);
  const q=projectPvP(w,A).pirates.stations[0];assert.equal(q.scan,null);assert.equal(q.fleet,undefined);assert.equal(q.resources,undefined);
  assert.throws(()=>call(w,{op:'attack',station:'not-real',from:'home',fleet:{falke:1}}),/Unbekannte/);
  assert.throws(()=>processWorld({...w,pirateVersion:undefined},A,{type:'pirate',action:{op:'open'}}),/SQL/);
