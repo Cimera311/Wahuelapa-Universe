@@ -49,8 +49,27 @@ test('Test4 matches the complete Rapid Fire matrix without legacy damage bonuses
  };
  assert.deepEqual(c.chances,expected);
  assert.equal(c.maxExtraSalvos,3);
+ assert.equal(c.allowInOrbitalOpening,true);
  const fleet={fleet:{falke:5},tech:{}},target={fleet:{titan:1},tech:{}};
  const actual=resolveBattleHybridV6(fleet,target,'test4',REALM_COMBAT_OVERRIDES.test4);
  assert.deepEqual(actual,resolveBattleHybridV6(fleet,target,'test4',REALM_COMBAT_OVERRIDES.test4));
  assert.ok(actual.trace.rounds.flatMap(x=>x.shots).some(x=>x.shooter==='falke'));
+});
+
+test('v6 opening salvo supports rapid fire with no old damage bonus',()=>{
+ const attacker={fleet:{falke:1},tech:{}},defender={fleet:{flak:1},tech:{}};
+ const config=allow=>({combat:{rapidFire:{enabled:true,maxExtraSalvos:3,
+  allowInOrbitalOpening:allow,replaceChances:true,chances:{flak:{falke:1}}}}});
+ const enabled=resolveBattleHybridV6(attacker,defender,'opening-rapid',config(true));
+ const disabled=resolveBattleHybridV6(attacker,defender,'opening-rapid',config(false));
+ const first=result=>result.trace.rounds.find(round=>round.round===0);
+ const hit=result=>first(result).shots.find(shot=>shot.shooter==='flak'&&shot.target==='falke');
+ assert.ok(first(enabled));
+ assert.equal(first(enabled).shots.some(shot=>shot.shooter==='falke'),false);
+ assert.equal(hit(enabled).extraSalvos,3);
+ assert.equal(hit(enabled).rapidFireDamage,105);
+ assert.equal(hit(enabled).damage,140);
+ assert.equal(hit(disabled).extraSalvos,0);
+ assert.equal(hit(disabled).damage,35);
+ assert.deepEqual(enabled,resolveBattleHybridV6(attacker,defender,'opening-rapid',config(true)));
 });
