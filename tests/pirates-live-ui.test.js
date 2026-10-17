@@ -63,3 +63,26 @@ test('Changing origin or mission resets selection and limits the hangar to ships
  origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='g-helion-p1';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
  assert.equal(doc.querySelector('[data-fleet-ship="karawane"]').max,'4');assert.equal(doc.querySelector('[data-fleet-ship="karawane"]').value,'0');
 });
+
+
+test('Changed cloud snapshot releases PvE controls and preserves the selected fleet after sync',async t=>{
+ const {doc,w,api,cloud}=mounted(t,false);
+ const origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
+ input(w,doc.querySelector('[data-pirate-range="falke"]'),37);
+ const original=cloud.gameRequest.bind(cloud);cloud.gameRequest=async request=>{const result=await original(request);result.state.seq++;return result;};
+ assert.equal(await api.sync(),true);
+ assert.equal(doc.querySelector('[data-pirate-range="falke"]').disabled,false);
+ assert.equal(doc.querySelector('[data-fleet-ship="falke"]').disabled,false);
+ assert.equal(doc.querySelector('[data-fleet-ship="falke"]').value,'37');
+ assert.equal(doc.querySelector('[data-hangar-ship="falke"] [data-pirate-count="all"]').disabled,false);
+ assert.equal(doc.querySelector('#pirate-fleet-form [type="submit"]').disabled,false);
+});
+for(const fail of [false,true])test('A view rendered during an in-flight cloud sync unlocks after '+(fail?'failure':'success'),async t=>{
+ const {doc,w,api,cloud}=mounted(t,false);
+ const origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
+ let complete;const original=cloud.gameRequest.bind(cloud);cloud.gameRequest=()=>new Promise((resolve,reject)=>{complete=async()=>fail?reject(Error('Offline')):resolve(await original({type:'sync'}));});
+ const syncing=api.sync();api.render();assert.equal(doc.querySelector('[data-pirate-range="falke"]').disabled,true);
+ await complete();assert.equal(await syncing,!fail);
+ assert.equal(doc.querySelector('[data-pirate-range="falke"]').disabled,false);
+ input(w,doc.querySelector('[data-pirate-range="falke"]'),22);assert.equal(doc.querySelector('[data-fleet-ship="falke"]').value,'22');
+});
