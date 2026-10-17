@@ -1,3 +1,5 @@
+// @ts-nocheck — Generated dashboard bundle; edit source modules instead.
+// Game-command 2026-10-17.01 — Admin-PvE, Spionage, Piratenkaempfe und Bergung.
 // supabase/functions/game-command/index.ts
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
 
@@ -34,6 +36,7 @@ var TECHS = {
   energy: { name: "Energietechnik", description: "Je Stufe +10 % Energie; Stufe 3: Gezeitenkraftwerk.", cost: [200, 180, 50], time: 15, lab: 2, max: 5 }
 };
 var SHIPS = {
+  spyProbe: { name: "Spionagesonde", icon: "\u2301", category: "civil", image: "probe", role: "Kl\xE4rt pers\xF6nliche Piratenstationen auf. Aktuell nur im Admin-PvE-Test nutzbar.", cost: [150, 120, 40], time: 8, tech: "scout", techLevel: 1, shipyard: 1, cargo: 0, speed: 2, fuel: 2 },
   probe: { name: "Erkundungssonde", icon: "\u2301", category: "civil", role: "Erkundet unbekannte Welten.", cost: [90, 60, 20], time: 5, tech: "scout", cargo: 0, speed: 1, fuel: 1.5 },
   transport: { name: "Kleiner Transporter", icon: "\u27A4", category: "freighter", role: "Bew\xE4hrter Allrounder f\xFCr deine ersten Kolonien.", cost: [180, 100, 40], time: 8, tech: "logistics", cargo: 1e3, speed: 1, fuel: 4 },
   longProbe: { name: "Fernsonde", icon: "\u2301", category: "civil", image: "probe", role: "Untersucht Planeten in der gemeinsamen Galaxie.", cost: [280, 200, 80], time: 10, tech: "scout", techLevel: 2, shipyard: 2, engine: "ramjet", engineLevel: 1, cargo: 0, speed: 1, fuel: 3 },
@@ -68,7 +71,7 @@ function costAt(item, level) {
 }
 var ROUTE_ECONOMY = { time: 1, fuel: 0.75 };
 function shipFlightEngine(s, key, remote = false) {
-  return remote && key === "falke" && (s.tech.assaultDrive || 0) >= 1 ? "ramjet" : SHIPS[key]?.engine || "drive";
+  return remote && key === "spyProbe" ? "ramjet" : remote && key === "falke" && (s.tech.assaultDrive || 0) >= 1 ? "ramjet" : SHIPS[key]?.engine || "drive";
 }
 function canFlyInterstellar(s, key) {
   const engine = shipFlightEngine(s, key, true);
@@ -76,6 +79,166 @@ function canFlyInterstellar(s, key) {
 }
 function attackSlots(level) {
   return level >= 10 ? 4 : level >= 5 ? 2 : level >= 1 ? 1 : 0;
+}
+
+// src/realm-config.js
+var REALM_CONFIG = Object.freeze({
+  galaxyFlightTimeFactor: 3,
+  // Rapid Fire v6 rules; the active combat engine is selected by the administrator.
+  combat: Object.freeze({
+    rapidFire: Object.freeze({
+      enabled: true,
+      maxExtraSalvos: 3,
+      allowInOrbitalOpening: false,
+      // Chance per additional salvo, 0..1. All other attacker->target pairs: 0.
+      chances: Object.freeze({
+        waechter: Object.freeze({ falke: 0.2 }),
+        donner: Object.freeze({ flak: 0.15, laser: 0.15 }),
+        titan: Object.freeze({ falke: 0.1 })
+      })
+    })
+  }),
+  powerExponents: Object.freeze({
+    default: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
+    Heimatwelt: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
+    Gesteinsplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
+    Eisplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
+    Ozeanplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 })
+  })
+});
+function powerExponent(kind, plant) {
+  return (REALM_CONFIG.powerExponents[kind] || REALM_CONFIG.powerExponents.default)[plant] ?? REALM_CONFIG.powerExponents.default[plant];
+}
+function combatConfigForRealm(overrides = {}) {
+  const base = REALM_CONFIG.combat.rapidFire, patch = overrides.combat?.rapidFire || {};
+  const chances = patch.replaceChances ? {} : Object.fromEntries(Object.entries(base.chances).map(([ship, pairs]) => [ship, { ...pairs }]));
+  for (const [ship, pairs] of Object.entries(patch.chances || {})) chances[ship] = { ...chances[ship] || {}, ...pairs };
+  const settings = {
+    enabled: patch.enabled ?? base.enabled,
+    maxExtraSalvos: patch.maxExtraSalvos ?? base.maxExtraSalvos,
+    allowInOrbitalOpening: patch.allowInOrbitalOpening ?? base.allowInOrbitalOpening,
+    chances
+  };
+  if (typeof settings.enabled !== "boolean" || typeof settings.allowInOrbitalOpening !== "boolean" || !Number.isSafeInteger(settings.maxExtraSalvos) || settings.maxExtraSalvos < 0 || settings.maxExtraSalvos > 10)
+    throw Error("Ung\xFCltige Realm Rapid-Fire-Einstellungen.");
+  for (const pairs of Object.values(chances)) for (const chance of Object.values(pairs))
+    if (typeof chance !== "number" || !Number.isFinite(chance) || chance < 0 || chance > 1) throw Error("Ung\xFCltige Rapid-Fire-Chance.");
+  return { rapidFire: settings };
+}
+var REALM_COMBAT_OVERRIDES = Object.freeze({
+  main: Object.freeze({}),
+  test: Object.freeze({ combat: Object.freeze({ rapidFire: Object.freeze({
+    maxExtraSalvos: 2,
+    chances: Object.freeze({ titan: Object.freeze({ falke: 0.15 }) })
+  }) }) }),
+  test2: Object.freeze({ combat: Object.freeze({ rapidFire: Object.freeze({
+    maxExtraSalvos: 1,
+    chances: Object.freeze({
+      waechter: Object.freeze({ falke: 1 }),
+      donner: Object.freeze({ flak: 1, laser: 1 }),
+      titan: Object.freeze({ falke: 1 })
+    })
+  }) }) }),
+  // Test4: Rollenbasierte Rapid-Fire-Matrix, ohne klassische Schadensboni.
+  test4: Object.freeze({ combat: Object.freeze({
+    rapidFire: Object.freeze({
+      enabled: true,
+      maxExtraSalvos: 3,
+      allowInOrbitalOpening: true,
+      replaceChances: true,
+      chances: Object.freeze({
+        falke: Object.freeze({ donner: 0.2, titan: 0.4 }),
+        waechter: Object.freeze({ falke: 0.75, flak: 0.25 }),
+        donner: Object.freeze({ waechter: 0.25, flak: 0.85, laser: 0.75, rail: 0.6, plasma: 0.4 }),
+        titan: Object.freeze({ waechter: 0.4, donner: 0.5, flak: 0.6, laser: 0.4, rail: 0.2 }),
+        flak: Object.freeze({ falke: 0.8, waechter: 0.2 }),
+        laser: Object.freeze({ falke: 0.4, waechter: 0.6 }),
+        rail: Object.freeze({ donner: 0.6, titan: 0.4 }),
+        plasma: Object.freeze({ donner: 0.4, titan: 0.6 })
+      })
+    })
+  }) })
+});
+
+// src/flight.js
+var GALAXY_FLIGHT_RULE_VERSION = 4;
+var ENGINE_SPEED_BONUS = 0.05;
+var ENGINE_FUEL_BONUS = 0.12;
+var FLIGHT_BASE_SCALE = 1.25 / 1.6;
+function sharedDistance(from, to, start) {
+  if (from.system && from.system === to.system) return Math.max(1, Math.abs((from.slot || from.distance || 0) - (to.slot || to.distance || 0)) * 0.15);
+  const a = from.system ? from : { ...start, slot: 0 }, b = to.system ? to : { ...start, slot: 0 };
+  if (![a.x, a.y, b.x, b.y].every(Number.isFinite)) throw Error("Der pers\xF6nliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.");
+  return Math.max(1, Math.hypot(a.x - b.x, a.y - b.y) / 40 + Math.abs((a.slot || 0) - (b.slot || 0)) * 0.15);
+}
+function sharedFlight(s, from, to, count = 1, ship = "transport", start = s.galaxy) {
+  const def = SHIPS[ship];
+  if (!def || def.speed <= 0) throw Error("Unbekanntes oder unbewegliches Schiff.");
+  const distance = sharedDistance(from, to, start), remote = (from.system || "tutorial") !== (to.system || "tutorial");
+  const engine = shipFlightEngine(s, ship, remote), factor = 1 + (s.tech[engine] || 0) * ENGINE_SPEED_BONUS, fuelFactor = 1 + (s.tech[engine] || 0) * ENGINE_FUEL_BONUS;
+  return { distance, ms: Math.ceil(Math.max(6e4, Math.ceil((120 + distance * 45) * FLIGHT_BASE_SCALE * 1e3 / (def.speed * factor))) * REALM_CONFIG.galaxyFlightTimeFactor), fuel: Math.ceil(def.fuel * distance * count / fuelFactor) };
+}
+
+// src/pirates-config.js
+var PIRATE_STATION_META = Object.freeze([
+  { id: "smugglers", name: "Schmugglernest", tier: 1, type: "Leichter Au\xDFenposten", description: "Ein Versteck zwischen alten Containern und Antrieben." },
+  { id: "outpost", name: "Piratenposten", tier: 2, type: "Bewaffneter St\xFCtzpunkt", description: "Ein Umschlagplatz mit eigenen Patrouillen." },
+  { id: "harbor", name: "Raubritterhafen", tier: 3, type: "Befestigter Raumhafen", description: "Hier sammeln sich die Freibeuter des Sektors." },
+  { id: "fortress", name: "Freibeuterfestung", tier: 4, type: "Schwere Festung", description: "Bewaffnete Dockringe sichern die erbeuteten Vorr\xE4te." },
+  { id: "headquarters", name: "Piratenhauptquartier", tier: 5, type: "Zentrum der Piratenflotte", description: "Von hier aus werden die gro\xDFen Raubz\xFCge koordiniert." }
+]);
+var PIRATE_REALM_DEFAULTS = Object.freeze({
+  enabled: true,
+  strengthFactor: 1,
+  resourceFactor: 1,
+  flightTimeFactor: 1,
+  fuelFactor: 1,
+  cooldownMinutes: 60,
+  debrisRate: 0.3,
+  debrisLifetimeHours: 24,
+  maxMissions: 20,
+  stations: {
+    smugglers: { enabled: true, sensor: 1, fleet: { falke: 3 }, resources: { metal: 2400, crystal: 1600, fuel: 400 }, tech: { weapons: 0, armor: 0, shields: 0 } },
+    outpost: { enabled: true, sensor: 3, fleet: { falke: 12, waechter: 2, flak: 2 }, resources: { metal: 9e3, crystal: 6e3, fuel: 1800 }, tech: { weapons: 1, armor: 1, shields: 1 } },
+    harbor: { enabled: true, sensor: 5, fleet: { falke: 30, waechter: 10, donner: 2, laser: 4 }, resources: { metal: 28e3, crystal: 22e3, fuel: 6e3 }, tech: { weapons: 2, armor: 2, shields: 2 } },
+    fortress: { enabled: true, sensor: 7, fleet: { falke: 60, waechter: 25, donner: 10, titan: 2, rail: 6 }, resources: { metal: 85e3, crystal: 65e3, fuel: 16e3 }, tech: { weapons: 3, armor: 3, shields: 3 } },
+    headquarters: { enabled: true, sensor: 10, fleet: { falke: 120, waechter: 60, donner: 30, titan: 12, plasma: 10 }, resources: { metal: 24e4, crystal: 18e4, fuel: 45e3 }, tech: { weapons: 5, armor: 5, shields: 5 } }
+  }
+});
+function pirateConfig(input = {}) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw Error("Ung\xFCltige Piratenkonfiguration.");
+  const c = structuredClone(PIRATE_REALM_DEFAULTS), keys = Object.keys(c);
+  if (Object.keys(input).some((k) => !keys.includes(k))) throw Error("Unbekannter Piratenfaktor.");
+  for (const k of keys) if (k !== "stations" && input[k] !== void 0) c[k] = input[k];
+  for (const k of ["strengthFactor", "resourceFactor", "flightTimeFactor", "fuelFactor"]) if (!Number.isFinite(c[k]) || c[k] < 0.1 || c[k] > 20) throw Error("Piratenfaktoren m\xFCssen zwischen 0,1 und 20 liegen.");
+  for (const [k, min, max] of [["cooldownMinutes", 1, 1440], ["debrisLifetimeHours", 1, 168], ["maxMissions", 1, 50]]) if (!Number.isSafeInteger(c[k]) || c[k] < min || c[k] > max) throw Error("Ung\xFCltiger Piratenwert: " + k);
+  if (typeof c.enabled !== "boolean" || !Number.isFinite(c.debrisRate) || c.debrisRate < 0 || c.debrisRate > 1) throw Error("Ung\xFCltige Aktivierung oder Tr\xFCmmerquote.");
+  if (input.stations !== void 0 && (!input.stations || typeof input.stations !== "object" || Array.isArray(input.stations) || Object.keys(input.stations).some((id) => !Object.hasOwn(c.stations, id)))) throw Error("Unbekannte Piratenstation.");
+  for (const meta of PIRATE_STATION_META) {
+    const patch = input.stations?.[meta.id] || {}, b = c.stations[meta.id];
+    if (Object.keys(patch).some((k) => !["enabled", "sensor", "fleet", "resources", "tech"].includes(k))) throw Error("Unbekannter Stationswert.");
+    Object.assign(b, structuredClone(patch));
+    if (typeof b.enabled !== "boolean" || !Number.isSafeInteger(b.sensor) || b.sensor < 0 || b.sensor > 100) throw Error("Ung\xFCltige Sensoranforderung.");
+    if (!b.fleet || Array.isArray(b.fleet) || !Object.keys(b.fleet).length || Object.entries(b.fleet).some(([k, n]) => !["military", "defense"].includes(SHIPS[k]?.category) || !Number.isSafeInteger(n) || n < 1 || n > 1e4) || Object.values(b.fleet).reduce((a, n) => a + n, 0) * c.strengthFactor > 1e5) throw Error("Ung\xFCltige Piratenbesatzung.");
+    if (!b.resources || Object.keys(b.resources).some((k) => !RES.includes(k)) || RES.some((k) => !Number.isSafeInteger(b.resources[k]) || b.resources[k] < 0 || b.resources[k] > 1e8)) throw Error("Ung\xFCltiges Piratendepot.");
+    if (!b.tech || Object.keys(b.tech).some((k) => !["weapons", "armor", "shields"].includes(k)) || ["weapons", "armor", "shields"].some((k) => !Number.isSafeInteger(b.tech[k]) || b.tech[k] < 0 || b.tech[k] > 5)) throw Error("Ung\xFCltige Piratenforschung.");
+  }
+  return c;
+}
+function pirateFlight(s, from, station, fleet, c) {
+  const target = { system: "tutorial", slot: 5 + station.tier, x: s.galaxy?.x || 0, y: s.galaxy?.y || 0 };
+  const origin = from.system ? from : { ...from, system: "tutorial", slot: from.distance || 0, x: target.x, y: target.y };
+  let ms2 = 0, fuel = 0, slowest = "";
+  for (const [k, n] of Object.entries(fleet)) {
+    if (origin.system !== "tutorial" && !canFlyInterstellar(s, k)) throw Error("F\xFCr " + SHIPS[k].name + " fehlt der Galaxieantrieb. Starte alternativ aus deinem Sonnensystem.");
+    const f = sharedFlight(s, origin, target, n, k);
+    if (f.ms > ms2) {
+      ms2 = f.ms;
+      slowest = k;
+    }
+    fuel += 2 * f.fuel;
+  }
+  return { ms: Math.max(1e3, Math.ceil(ms2 * c.flightTimeFactor)), fuel: Math.ceil(fuel * c.fuelFactor), slowest };
 }
 
 // src/repair.js
@@ -194,9 +357,9 @@ function finishRepair(p, notify) {
 function repairDefense(p, owner, commander, tech, shieldFactor2) {
   return repairOrders(p).filter((j) => !j.restore).map((j) => ({ id: "repair:" + j.id, owner, commander: commander + " \xB7 Reparaturdock", fleet: { [j.key]: j.entries.length }, hulls: { [j.key]: j.entries.map((e) => e.hp) }, tech, shieldFactor: shieldFactor2 }));
 }
-function reconcileRepairBattle(p, result) {
+function reconcileRepairBattle(p, result2) {
   for (const j of [...repairOrders(p)].filter((j2) => !j2.restore)) {
-    const finals = result.trace?.final.filter((u) => u.groupId === "repair:" + j.id) || result.defenderGroups?.find((g) => g.id === "repair:" + j.id)?.repairUnits || [];
+    const finals = result2.trace?.final?.filter((u) => u.groupId === "repair:" + j.id) || result2.defenderGroups?.find((g) => g.id === "repair:" + j.id)?.repairUnits || [];
     if (finals.length !== j.entries.length) throw Error("Reparaturdock: Kampfzuordnung fehlt.");
     j.entries = j.entries.flatMap((e, i) => {
       const u = finals[i];
@@ -217,42 +380,9 @@ function reconcileRepairBattle(p, result) {
   }
 }
 
-// src/realm-config.js
-var REALM_CONFIG = Object.freeze({
-  galaxyFlightTimeFactor: 3,
-  powerExponents: Object.freeze({
-    default: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Heimatwelt: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Gesteinsplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Eisplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Ozeanplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 })
-  })
-});
-function powerExponent(kind, plant) {
-  return (REALM_CONFIG.powerExponents[kind] || REALM_CONFIG.powerExponents.default)[plant] ?? REALM_CONFIG.powerExponents.default[plant];
-}
-
-// src/flight.js
-var GALAXY_FLIGHT_RULE_VERSION = 4;
-var ENGINE_SPEED_BONUS = 0.05;
-var ENGINE_FUEL_BONUS = 0.12;
-var FLIGHT_BASE_SCALE = 1.25 / 1.6;
-function sharedDistance(from, to, start) {
-  if (from.system && from.system === to.system) return Math.max(1, Math.abs((from.slot || from.distance || 0) - (to.slot || to.distance || 0)) * 0.15);
-  const a = from.system ? from : { ...start, slot: 0 }, b = to.system ? to : { ...start, slot: 0 };
-  if (![a.x, a.y, b.x, b.y].every(Number.isFinite)) throw Error("Der pers\xF6nliche Galaxie-Startplatz fehlt. Bitte die Galaxie aktualisieren.");
-  return Math.max(1, Math.hypot(a.x - b.x, a.y - b.y) / 40 + Math.abs((a.slot || 0) - (b.slot || 0)) * 0.15);
-}
-function sharedFlight(s, from, to, count = 1, ship = "transport", start = s.galaxy) {
-  const def = SHIPS[ship];
-  if (!def || def.speed <= 0) throw Error("Unbekanntes oder unbewegliches Schiff.");
-  const distance = sharedDistance(from, to, start), remote = (from.system || "tutorial") !== (to.system || "tutorial");
-  const engine = shipFlightEngine(s, ship, remote), factor = 1 + (s.tech[engine] || 0) * ENGINE_SPEED_BONUS, fuelFactor = 1 + (s.tech[engine] || 0) * ENGINE_FUEL_BONUS;
-  return { distance, ms: Math.ceil(Math.max(6e4, Math.ceil((120 + distance * 45) * FLIGHT_BASE_SCALE * 1e3 / (def.speed * factor))) * REALM_CONFIG.galaxyFlightTimeFactor), fuel: Math.ceil(def.fuel * distance * count / fuelFactor) };
-}
-
 // src/combat.js
 var COMBAT = {
+  spyProbe: { hp: 30, shield: 0, attack: 0, shots: 1 },
   probe: { hp: 30, shield: 0, attack: 0, shots: 1 },
   longProbe: { hp: 60, shield: 10, attack: 0, shots: 1 },
   colony: { hp: 250, shield: 30, attack: 0, shots: 1 },
@@ -360,7 +490,7 @@ function survivors(list) {
 function resolveBattleLegacy(attacker, defender, seed) {
   const a = combatSide(attacker), d = combatSide(defender), random = rng(seed), rounds = [];
   for (let i = 1; i <= 6; i++) {
-    let fire = function(shooters, targets) {
+    let fire2 = function(shooters, targets) {
       for (const u of shooters) if (u.attack) for (let shot = 0; shot < u.shots; shot++) {
         const target = targets[Math.floor(random() * targets.length)], hit = u.attack / u.shots * (1 + (u.bonus?.[target.key] || 0));
         damage.set(target, (damage.get(target) || 0) + hit);
@@ -369,8 +499,8 @@ function resolveBattleLegacy(attacker, defender, seed) {
     const aa2 = a.filter((u) => u.hp > 1e-8), dd2 = d.filter((u) => u.hp > 1e-8);
     if (!aa2.length || !dd2.length) break;
     const damage = /* @__PURE__ */ new Map();
-    fire(aa2, dd2);
-    fire(dd2, aa2);
+    fire2(aa2, dd2);
+    fire2(dd2, aa2);
     for (const [u, hit] of damage) {
       const shield = Math.min(u.shield, hit);
       u.shield -= shield;
@@ -405,9 +535,9 @@ function resolveBattle(attacker, defender, seed, version = COMBAT_RULE_VERSION) 
   }
   const snapshot = (u) => ({ ...u.owner ? { owner: u.owner, groupId: u.groupId, commander: u.commander } : {}, id: u.id, key: u.key, side: u.id[0] === "A" ? "attacker" : "defender", category: SHIPS[u.key].category, name: SHIPS[u.key].name, definition: { ...COMBAT[u.key], cost: [...SHIPS[u.key].cost] }, hp: Math.max(0, u.hp), maxHp: u.maxHp, shield: u.shield, maxShield: u.maxShield ?? combatStats(u.key, u.id[0] === "A" ? attacker.tech : defender.tech).shield, attack: u.attack, shots: u.shots, bonus: { ...u.bonus } });
   const initial = [...a, ...d].map(snapshot);
-  const total = (list) => ({ count: list.filter((u) => u.hp > 1e-8).length, hp: list.reduce((n, u) => n + Math.max(0, u.hp), 0), shield: list.filter((u) => u.hp > 1e-8).reduce((n, u) => n + u.shield, 0) });
+  const total2 = (list) => ({ count: list.filter((u) => u.hp > 1e-8).length, hp: list.reduce((n, u) => n + Math.max(0, u.hp), 0), shield: list.filter((u) => u.hp > 1e-8).reduce((n, u) => n + u.shield, 0) });
   for (let round = version === 3 ? 0 : 1; round <= 6; round++) {
-    let fire = function(shooters, targets) {
+    let fire2 = function(shooters, targets) {
       const military = targets.filter((t) => SHIPS[t.key].category === "military");
       const allowed = military.length ? targets.filter((t) => ["military", "defense"].includes(SHIPS[t.key].category)) : targets;
       const defense = allowed.filter((t) => SHIPS[t.key].category === "defense"), pools = /* @__PURE__ */ new Map();
@@ -429,8 +559,8 @@ function resolveBattle(attacker, defender, seed, version = COMBAT_RULE_VERSION) 
     const opening = version === 3 && round === 0, platforms = opening ? dd2.filter((u) => SHIPS[u.key].category === "defense") : [];
     if (opening && !platforms.length) continue;
     const damage = /* @__PURE__ */ new Map(), shots = [];
-    if (!opening) fire(aa2, dd2);
-    fire(opening ? platforms : dd2, aa2);
+    if (!opening) fire2(aa2, dd2);
+    fire2(opening ? platforms : dd2, aa2);
     const impacts = [];
     for (const [u, hit] of damage) {
       const hpBefore = u.hp, shieldBefore = u.shield, shieldDamage = Math.min(u.shield, hit), hullDamage = Math.min(Math.max(0, u.hp), hit - shieldDamage);
@@ -438,7 +568,7 @@ function resolveBattle(attacker, defender, seed, version = COMBAT_RULE_VERSION) 
       u.hp -= hit - shieldDamage;
       impacts.push({ target: u.id, damage: hit, shieldDamage, hullDamage, overkill: Math.max(0, hit - shieldDamage - hpBefore), hpBefore, shieldBefore, hpAfter: Math.max(0, u.hp), shieldAfter: u.hp > 1e-8 ? u.shield : 0, destroyed: u.hp <= 1e-8 });
     }
-    const after = { attacker: total(a), defender: total(d) };
+    const after = { attacker: total2(a), defender: total2(d) };
     rounds.push({ round, attacker: after.attacker.count, defender: after.defender.count });
     logs.push({ round, shots, impacts, after });
   }
@@ -1060,9 +1190,9 @@ function act(s, action, now = Date.now()) {
       if (dest.id === p.id) throw Error("W\xE4hle einen anderen Zielplaneten.");
       cargo = action.cargo;
       if (!cargo || RES.some((k) => !Number.isSafeInteger(cargo[k]) || cargo[k] < 0)) throw Error("Ladung muss aus nichtnegativen ganzen Zahlen bestehen.");
-      const total = RES.reduce((sum, k) => sum + cargo[k], 0);
-      if (!total) throw Error("W\xE4hle eine Ladung.");
-      if (total > cargoCapacity(n, count)) throw Error("Die Ladung \xFCbersteigt den Laderaum.");
+      const total2 = RES.reduce((sum, k) => sum + cargo[k], 0);
+      if (!total2) throw Error("W\xE4hle eine Ladung.");
+      if (total2 > cargoCapacity(n, count)) throw Error("Die Ladung \xFCbersteigt den Laderaum.");
     } else {
       if (p.system) throw Error("Tutorial-Sonden und Kolonieschiffe starten im Tutorial-System. W\xE4hle dort eine Heimatwelt.");
       dest = TARGETS.find((t) => t.id === action.to);
@@ -1203,6 +1333,437 @@ function act(s, action, now = Date.now()) {
   forecastShipJobs(n);
   for (const q of n.planets) forecastRepair(q, n.time, stats(n, q).ratio);
   return n;
+}
+
+// src/combat-hybrid.js
+function seeded(seed) {
+  let x = 2166136261;
+  for (const c of String(seed)) x = Math.imul(x ^ c.charCodeAt(0), 16777619) >>> 0;
+  return () => {
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
+    return (x >>> 0) / 4294967296;
+  };
+}
+function cohorts(side, label) {
+  const groups = side.groups || [{ id: label, owner: side.owner, commander: side.commander, ...side }];
+  return groups.flatMap((g) => Object.entries(g.fleet || {}).filter(([, n]) => n > 0).map(([key, n]) => {
+    if (!Number.isSafeInteger(n) || n < 0 || !COMBAT[key]) throw Error("Ung\xFCltiger Flottenbestand.");
+    const stat = combatStats(key, g.tech || {});
+    const hulls = g.hulls?.[key] || [];
+    const hp = new Float64Array(n), shield = new Float64Array(n), indices = new Uint32Array(n);
+    const factor = g.shieldFactor ?? 1;
+    for (let i = 0; i < n; i++) {
+      hp[i] = stat.hp * (hulls[i] ?? 1);
+      shield[i] = stat.shield * factor;
+      indices[i] = i;
+    }
+    return { id: g.id, key, owner: g.owner, commander: g.commander, stat, count: n, hp, shield, indices, damage: /* @__PURE__ */ new Map(), maxShield: stat.shield * factor };
+  }));
+}
+function sampled(pool, random) {
+  let total2 = 0;
+  for (const g of pool) total2 += g.count;
+  if (!total2) return null;
+  let offset = Math.floor(random() * total2);
+  for (const g of pool) {
+    if (offset < g.count) return [g, g.indices[offset]];
+    offset -= g.count;
+  }
+  return null;
+}
+function candidates(shooter, enemies) {
+  const active = enemies.filter((g) => g.count);
+  const military = active.filter((g) => SHIPS[g.key].category === "military");
+  const allowed = military.length ? active.filter((g) => ["military", "defense"].includes(SHIPS[g.key].category)) : active;
+  const bonus = allowed.filter((g) => (shooter.stat.bonus?.[g.key] || 0) > 0);
+  if (bonus.length) return bonus;
+  if (military.length) return military;
+  const defense = allowed.filter((g) => SHIPS[g.key].category === "defense");
+  return defense.length ? defense : allowed;
+}
+function fire(shooters, enemies, random, summary) {
+  for (const s of shooters) {
+    if (!s.count || !s.stat.attack) continue;
+    const pool = candidates(s, enemies);
+    if (!pool.length) continue;
+    const shots = s.stat.shots;
+    for (let i = 0; i < s.count * shots; i++) {
+      const picked = sampled(pool, random);
+      if (!picked) break;
+      const [target, index] = picked, bonus = s.stat.bonus?.[target.key] || 0;
+      const hit = s.stat.attack / shots * (1 + bonus);
+      target.damage.set(index, (target.damage.get(index) || 0) + hit);
+      const k = s.key + ":" + target.key;
+      const item = summary[k] ??= { shooter: s.key, target: target.key, shots: 0, damage: 0 };
+      item.shots++;
+      item.damage += hit;
+    }
+  }
+}
+function fireLocked(shooters, enemies, random, summary) {
+  for (const s of shooters) {
+    if (!s.count || !s.stat.attack) continue;
+    const pool = candidates(s, enemies);
+    if (!pool.length) continue;
+    const shots = s.stat.shots;
+    for (let unit = 0; unit < s.count; unit++) {
+      const picked = sampled(pool, random);
+      if (!picked) break;
+      const [target, index] = picked, bonus = s.stat.bonus?.[target.key] || 0;
+      const hit = s.stat.attack / shots * (1 + bonus);
+      target.damage.set(index, (target.damage.get(index) || 0) + hit * shots);
+      const k = s.key + ":" + target.key;
+      const item = summary[k] ??= { shooter: s.key, target: target.key, shots: 0, damage: 0 };
+      item.shots += shots;
+      item.damage += hit * shots;
+    }
+  }
+}
+function rapidCandidates(shooter, enemies, rapid) {
+  const active = enemies.filter((g) => g.count);
+  const combatants = active.filter((g) => ["military", "defense"].includes(SHIPS[g.key].category));
+  const eligible = combatants.length ? combatants : active;
+  const preferred = rapid.enabled ? eligible.filter((g) => (rapid.chances[shooter.key]?.[g.key] ?? 0) > 0) : [];
+  return preferred.length ? preferred : eligible;
+}
+function fireRapid(shooters, enemies, random, summary, rapid) {
+  for (const s of shooters) {
+    if (!s.count || !s.stat.attack) continue;
+    const pool = rapidCandidates(s, enemies, rapid);
+    if (!pool.length) continue;
+    for (let unit = 0; unit < s.count; unit++) {
+      let picked = sampled(pool, random), extra = 0;
+      while (picked) {
+        const [target, index] = picked;
+        const damage = s.stat.attack;
+        target.damage.set(index, (target.damage.get(index) || 0) + damage);
+        const k = s.key + ":" + target.key;
+        const item = summary[k] ??= { shooter: s.key, target: target.key, shots: 0, damage: 0, rapidFireShots: 0, rapidFireDamage: 0, extraSalvos: 0 };
+        item.shots += s.stat.shots;
+        item.damage += damage;
+        if (extra) {
+          item.rapidFireShots += s.stat.shots;
+          item.rapidFireDamage += damage;
+          item.extraSalvos++;
+        }
+        if (!rapid.enabled || extra >= rapid.maxExtraSalvos) break;
+        const chance = rapid.chances[s.key]?.[target.key] ?? 0;
+        if (!chance || random() >= chance) break;
+        extra++;
+        picked = sampled(pool, random);
+      }
+    }
+  }
+}
+function applyDamage(groups) {
+  const impacts = [];
+  for (const g of groups) {
+    let killed = 0, shieldDamage = 0, hullDamage = 0, overkill = 0;
+    for (const [i, hit] of g.damage) {
+      const absorbed = Math.min(g.shield[i], hit), hull = Math.min(Math.max(0, g.hp[i]), hit - absorbed);
+      g.shield[i] -= absorbed;
+      g.hp[i] -= hit - absorbed;
+      shieldDamage += absorbed;
+      hullDamage += hull;
+      overkill += Math.max(0, hit - absorbed - hull);
+      if (g.hp[i] <= 1e-8) killed++;
+    }
+    if (killed) {
+      let next = 0;
+      for (let j = 0; j < g.count; j++) {
+        const i = g.indices[j];
+        if (g.hp[i] > 1e-8) g.indices[next++] = i;
+      }
+      g.count = next;
+    }
+    if (g.damage.size) impacts.push({ key: g.key, groupId: g.id, hitUnits: g.damage.size, destroyed: killed, shieldDamage, hullDamage, overkill });
+    g.damage.clear();
+  }
+  return impacts;
+}
+function result(groups) {
+  const fleet = {}, hulls = {};
+  for (const g of groups) for (let j = 0; j < g.count; j++) {
+    const i = g.indices[j];
+    fleet[g.key] = (fleet[g.key] || 0) + 1;
+    if (g.hp[i] < g.stat.hp - 1e-8) (hulls[g.key] ??= []).push(g.hp[i] / g.stat.hp);
+  }
+  return { fleet, hulls };
+}
+function total(groups) {
+  return groups.reduce((n, g) => n + g.count, 0);
+}
+function groupSummary(groups, side) {
+  return groups.map((g) => ({ side, key: g.key, groupId: g.id, ...g.owner ? { owner: g.owner } : {}, count: g.count }));
+}
+function resolveBattleHybrid(attacker, defender, seed, experimentalVersion = 4, realmOverrides = {}) {
+  if (![4, 5, 6].includes(experimentalVersion)) throw Error("Unknown hybrid rules version");
+  const combatSettings = experimentalVersion === 6 ? combatConfigForRealm(realmOverrides) : null;
+  const rapid = combatSettings?.rapidFire;
+  const fireRound = experimentalVersion === 5 ? fireLocked : experimentalVersion === 6 ? (shooters, enemies, random2, summary) => fireRapid(shooters, enemies, random2, summary, rapid) : fire;
+  const a = cohorts(attacker, "attacker"), d = cohorts(defender, "host"), random = seeded(seed), rounds = [], aggregates = [];
+  const initialGroups = [...groupSummary(a, "attacker"), ...groupSummary(d, "defender")];
+  for (let round = 0; round <= 6; round++) {
+    if (!total(a) || !total(d)) break;
+    const opening = round === 0;
+    const platforms = opening ? d.filter((g) => SHIPS[g.key].category === "defense") : [];
+    if (opening && !platforms.length) continue;
+    const shots = {};
+    if (!opening) fireRound(a, d, random, shots);
+    if (opening && experimentalVersion === 6 && !rapid.allowInOrbitalOpening) fireRapid(platforms, a, random, shots, { ...rapid, enabled: false });
+    else fireRound(opening ? platforms : d, a, random, shots);
+    const impacts = applyDamage([...a, ...d]);
+    rounds.push({ round, attacker: total(a), defender: total(d) });
+    aggregates.push({ round, shots: Object.values(shots), impacts, after: { attacker: { count: total(a) }, defender: { count: total(d) } } });
+  }
+  const attackerAfter = result(a), defenderAfter = result(d);
+  const debris = vector([0, 0, 0]), defenseRepair = vector([0, 0, 0]);
+  for (const g of [...a, ...d]) {
+    const losses = g.hp.length - g.count, ship = SHIPS[g.key];
+    debris.metal += losses * ship.cost[0] * 0.3;
+    debris.crystal += losses * ship.cost[1] * 0.3;
+  }
+  for (const k of RES) {
+    debris[k] = Math.floor(debris[k]);
+    defenseRepair[k] = Math.floor(defenseRepair[k]);
+  }
+  const ac = total(a), dc = total(d);
+  const grouped = {};
+  if (defender.groups) grouped.defenderGroups = defender.groups.map((group) => {
+    const subset = d.filter((g) => g.id === group.id);
+    const out = result(subset);
+    if (group.id?.startsWith("repair:")) {
+      out.repairUnits = subset.flatMap((g) => Array.from({ length: g.hp.length }, (_, i) => ({
+        hp: Math.max(0, g.hp[i]),
+        maxHp: g.stat.hp
+      })));
+    }
+    return { id: group.id, owner: group.owner, ...out };
+  });
+  return {
+    outcome: ac && !dc ? "attacker" : dc && !ac ? "defender" : "draw",
+    attacker: attackerAfter,
+    defender: defenderAfter,
+    debris,
+    defenseRepair,
+    rounds,
+    ...grouped,
+    // v4 traces intentionally aggregate; v3's per-unit report reader must not consume these.
+    trace: {
+      version: 2,
+      ruleVersion: experimentalVersion,
+      seed: String(seed),
+      initialGroups,
+      finalGroups: [...groupSummary(a, "attacker"), ...groupSummary(d, "defender")],
+      tech: { attacker: { ...attacker.tech }, defender: { ...defender.tech } },
+      shieldFactors: { attacker: attacker.shieldFactor ?? 1, defender: defender.shieldFactor ?? 1 },
+      ...experimentalVersion === 6 ? { rapidFireRules: rapid } : {},
+      rounds: aggregates
+    }
+  };
+}
+
+// src/pirates-world.js
+var pirateZero = () => vector([0, 0, 0]);
+var pirateState = (w, uid) => w.saves.find((r) => r.user_id === uid)?.state;
+var pirateOwner = (w, uid) => w.piratePlayers?.find((r) => r.user_id === uid);
+function pirateLog(s, time, title, body) {
+  s.reports.unshift({ id: ++s.seq, time, title, body: body.slice(0, 1e3) });
+  s.reports = s.reports.slice(0, 60);
+}
+function spawnPirate(meta, c, time, old) {
+  const b = c.stations[meta.id];
+  return { id: meta.id, generation: (old?.generation || 0) + 1, sensor: b.sensor, enabled: b.enabled, tech: { ...b.tech }, fleet: Object.fromEntries(Object.entries(b.fleet).map(([k, n]) => [k, Math.max(1, Math.round(n * c.strengthFactor))])), hulls: {}, resources: vector(RES.map((k) => Math.floor(b.resources[k] * c.resourceFactor))), debris: { ...old?.debris || pirateZero() }, debrisExpiresAt: old?.debrisExpiresAt || 0, refreshAt: time + c.cooldownMinutes * 6e4, nextAttackAt: 0, scan: null, defeated: false, cooldownMs: c.cooldownMinutes * 6e4, debrisRate: c.debrisRate, debrisLifetimeMs: c.debrisLifetimeHours * 36e5 };
+}
+function preparePirates(w) {
+  if (w.pirateVersion !== 1) return;
+  w.pirateConfig = pirateConfig(w.pirateConfig || {});
+  w.piratePlayers ??= [];
+}
+function refreshPirates(w, time) {
+  if (w.pirateVersion !== 1) return;
+  for (const row of w.piratePlayers) for (const meta of PIRATE_STATION_META) {
+    let q = row.stations[meta.id];
+    if (!q || time >= q.refreshAt && !row.missions.some((m) => m.station === meta.id && m.kind === "attack" && m.status === "outbound")) q = row.stations[meta.id] = spawnPirate(meta, w.pirateConfig, time, q);
+    if (q.debrisExpiresAt && time >= q.debrisExpiresAt) {
+      q.debris = pirateZero();
+      q.debrisExpiresAt = 0;
+    }
+  }
+}
+function pirateReady(w, uid) {
+  if (w.pirateVersion !== 1) throw Error("Piraten ben\xF6tigen zuerst die PvE-SQL und die neue Game-command.");
+  if (!w.admins.includes(uid)) throw Error("Piraten sind aktuell nur f\xFCr Administratoren freigegeben.");
+}
+function ensurePirateOwner(w, uid) {
+  let row = pirateOwner(w, uid);
+  if (!row) {
+    row = { user_id: uid, stations: {}, missions: [], reports: [] };
+    w.piratePlayers.push(row);
+  }
+  refreshPirates(w, w.now);
+  return row;
+}
+function pirateAction(w, uid, action, id, seed) {
+  pirateReady(w, uid);
+  const s = pirateState(w, uid);
+  if (!s) throw Error("Spielstand fehlt.");
+  if (action.op === "configure") {
+    w.pirateConfig = pirateConfig(action.config);
+    return;
+  }
+  const row = ensurePirateOwner(w, uid);
+  if (action.op === "open") return;
+  const meta = PIRATE_STATION_META.find((x) => x.id === action.station), q = row.stations[action.station];
+  if (!meta || !q) throw Error("Unbekannte Piratenstation.");
+  if (!w.pirateConfig.enabled || !w.pirateConfig.stations[meta.id].enabled) throw Error("Diese Piratenstation ist pausiert.");
+  if (!["scan", "attack", "collect", "salvage"].includes(action.op)) throw Error("Unbekannter Piratenauftrag.");
+  if (row.missions.length >= w.pirateConfig.maxMissions) throw Error("Alle Piraten-Missionspl\xE4tze sind belegt.");
+  const from = getPlanet(s, action.from), kind = action.op;
+  let fleet;
+  if (kind === "scan") {
+    if ((s.tech.scout || 0) < q.sensor) throw Error("Sensortechnik " + q.sensor + " ben\xF6tigt.");
+    if (row.missions.some((m) => m.station === meta.id && m.kind === "scan" && m.status === "outbound")) throw Error("Eine Spionagesonde ist bereits unterwegs.");
+    fleet = { spyProbe: 1 };
+  } else if (kind === "attack") {
+    if (w.now < q.nextAttackAt || row.missions.some((m) => m.station === meta.id && m.kind === "attack" && m.status === "outbound")) throw Error("Diese Station hat noch Angriffs-Cooldown oder einen Angriff im Anflug.");
+    const slots = attackSlots(s.tech.military || 0), used = row.missions.filter((m) => m.kind === "attack").length + w.attacks.filter((m) => m.attacker_id === uid && m.status !== "returned").length;
+    if (used >= slots) throw Error("Alle Angriffspl\xE4tze sind belegt.");
+    fleet = attackFleet(action.fleet);
+  } else {
+    fleet = action.fleet;
+    if (!fleet || Array.isArray(fleet) || !Object.keys(fleet).length || Object.entries(fleet).some(([k, n]) => !isFreighter(k) || !Number.isSafeInteger(n) || n < 1)) throw Error("W\xE4hle verf\xFCgbare Frachter in ganzen Zahlen.");
+    if (kind === "collect" && !q.defeated) throw Error("Das Depot ist noch von Piraten bewacht.");
+    if (kind === "salvage" && !RES.some((k) => q.debris[k] > 0)) throw Error("Kein Tr\xFCmmerfeld vorhanden.");
+  }
+  for (const [k, n] of Object.entries(fleet)) if ((from.ships[k] || 0) < n) throw Error("Nicht gen\xFCgend verf\xFCgbare " + SHIPS[k].name + ".");
+  const f = pirateFlight(s, from, meta, fleet, w.pirateConfig);
+  settle(from);
+  if (from.resources.fuel < f.fuel) throw Error("Nicht genug Treibstoff f\xFCr Hin- und R\xFCckflug.");
+  const hulls = takeHulls(from, fleet);
+  from.resources.fuel -= f.fuel;
+  for (const [k, n] of Object.entries(fleet)) from.ships[k] -= n;
+  const version = [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION;
+  row.missions.push({ id, kind, station: meta.id, generation: q.generation, from: from.id, fleet: { ...fleet }, initialFleet: { ...fleet }, hulls, tech: { ...s.tech }, shieldUntil: from.shieldUntil || 0, startedAt: w.now, arrivalAt: w.now + f.ms, due: w.now + f.ms, duration: f.ms, status: "outbound", cargo: pirateZero(), fuel: f.fuel, ruleVersion: version, combatConfig: version === 6 ? structuredClone(REALM_COMBAT_OVERRIDES.test4) : {}, seed });
+  pirateLog(s, w.now, "Piratenauftrag gestartet", meta.name + " \xB7 " + { scan: "Spionagesonde", attack: "Angriff", collect: "Depot abholen", salvage: "Tr\xFCmmer bergen" }[kind] + " \xB7 Start: " + from.name);
+}
+function pirateEvents(w) {
+  if (w.pirateVersion !== 1) return [];
+  return w.piratePlayers.flatMap((row) => row.missions.map((m) => ({ time: m.awaitingUnload ? nextCargoSpaceEvent(pirateState(w, row.user_id), getPlanet(pirateState(w, row.user_id), m.from)) : m.due, id: m.id, kind: "pirate", mission: m, owner: row.user_id, order: m.status === "outbound" ? 2 : 3 })).filter((e) => Number.isFinite(e.time)));
+}
+function takePirateCargo(stock, room) {
+  const cargo = pirateZero();
+  for (const k of RES) {
+    const n = Math.min(Math.floor(stock[k]), room);
+    stock[k] -= n;
+    cargo[k] = n;
+    room -= n;
+  }
+  return cargo;
+}
+function pirateReport(row, r) {
+  row.reports.unshift(r);
+  row.reports = row.reports.slice(0, 30);
+}
+function arrivePirate(w, uid, m, time) {
+  const row = pirateOwner(w, uid), s = pirateState(w, uid), meta = PIRATE_STATION_META.find((x) => x.id === m.station);
+  if (m.status === "returning") {
+    returnPirate(w, row, m, time);
+    return;
+  }
+  refreshPirates(w, time);
+  const station = row.stations[m.station];
+  if (m.kind === "scan") {
+    if ((s.tech.scout || 0) >= station.sensor) {
+      station.scan = { at: time, generation: station.generation, fleet: { ...station.fleet }, resources: { ...station.resources }, tech: { ...station.tech } };
+      pirateLog(s, time, "Spionagebericht", meta.name + " aufgekl\xE4rt. Flotte und Depot im Piratenbereich einsehbar.");
+    } else pirateLog(s, time, "Spionage gescheitert", "Die Station ben\xF6tigt inzwischen h\xF6here Sensortechnik.");
+  } else if (m.kind === "attack") {
+    const resolver = [4, 5, 6].includes(m.ruleVersion) ? resolveBattleHybrid : resolveBattle;
+    const before = { ...station.fleet };
+    const result2 = resolver({ fleet: m.fleet, tech: m.tech, hulls: m.hulls, shieldFactor: m.shieldUntil ? Math.max(0, Math.min(1, 1 - (m.shieldUntil - time) / 3e5)) : 1 }, { fleet: station.fleet, tech: station.tech, hulls: station.hulls }, m.seed || m.id, m.ruleVersion, m.combatConfig);
+    const debris = pirateZero();
+    for (const [side, after] of [[m.fleet, result2.attacker.fleet], [before, result2.defender.fleet]]) for (const [k, n] of Object.entries(side)) {
+      const lost = n - (after[k] || 0);
+      debris.metal += lost * SHIPS[k].cost[0] * station.debrisRate;
+      debris.crystal += lost * SHIPS[k].cost[1] * station.debrisRate;
+    }
+    for (const k of RES) {
+      debris[k] = Math.floor(debris[k]);
+      station.debris[k] += debris[k];
+    }
+    if (RES.some((k) => debris[k] > 0)) station.debrisExpiresAt = time + station.debrisLifetimeMs;
+    station.fleet = result2.defender.fleet;
+    station.hulls = result2.defender.hulls;
+    station.defeated = !Object.values(station.fleet).some((n) => n > 0);
+    station.nextAttackAt = time + station.cooldownMs;
+    station.refreshAt = station.nextAttackAt;
+    m.fleet = result2.attacker.fleet;
+    m.hulls = result2.attacker.hulls;
+    m.shieldUntil = time + 3e5;
+    if (result2.outcome === "attacker") m.cargo = takePirateCargo(station.resources, fleetCapacity({ tech: m.tech }, m.fleet));
+    pirateReport(row, { id: m.id, station: m.station, at: time, outcome: result2.outcome, ruleVersion: m.ruleVersion, rounds: result2.rounds, attackerBefore: { ...m.initialFleet }, attackerAfter: { ...m.fleet }, defenderBefore: before, defenderAfter: { ...station.fleet }, cargo: { ...m.cargo }, debris });
+    pirateLog(s, time, "PvE-Kampfbericht", meta.name + " \xB7 " + (result2.outcome === "attacker" ? "Sieg" : result2.outcome === "defender" ? "Niederlage" : "Unentschieden") + " \xB7 " + result2.rounds.length + " Runden. Details unter Galaxie \u2192 Piraten.");
+    station.scan = null;
+  } else if (m.kind === "salvage") m.cargo = takePirateCargo(station.debris, fleetCapacity({ tech: m.tech }, m.fleet));
+  else if (station.defeated) m.cargo = takePirateCargo(station.resources, fleetCapacity({ tech: m.tech }, m.fleet));
+  else pirateLog(s, time, "Piraten-Abholung abgebrochen", "Die Station wurde erneuert. Dein Frachter kehrt ohne Beute zur\xFCck.");
+  if (!Object.values(m.fleet).some((n) => n > 0)) {
+    row.missions = row.missions.filter((x) => x.id !== m.id);
+    return;
+  }
+  m.status = "returning";
+  m.due = time + m.duration;
+}
+function returnPirate(w, row, m, time) {
+  const s = pirateState(w, row.user_id), p = getPlanet(s, m.from);
+  unloadCargo(p, m.cargo);
+  if (cargoPresent(m.cargo)) {
+    m.awaitingUnload = true;
+    return;
+  }
+  for (const [k, n] of Object.entries(m.fleet)) p.ships[k] += n;
+  putHulls(p, m.hulls);
+  p.shieldUntil = Math.max(p.shieldUntil || 0, m.shieldUntil || 0);
+  row.missions = row.missions.filter((x) => x.id !== m.id);
+  pirateLog(s, time, "Piratenflotte zur\xFCckgekehrt", PIRATE_STATION_META.find((x) => x.id === m.station).name + " \xB7 Schiffe und Ladung auf " + p.name + " eingetroffen.");
+}
+function settlePirates(w, time) {
+  if (w.pirateVersion !== 1) return;
+  for (const row of w.piratePlayers) for (const m of [...row.missions]) if (m.awaitingUnload) returnPirate(w, row, m, time);
+}
+function pirateFleetShadows(w) {
+  if (w.pirateVersion !== 1) return;
+  for (const row of w.saves) row.state.pveFleets = (pirateOwner(w, row.user_id)?.missions || []).map((m) => ({ fleet: { ...m.fleet } }));
+}
+function projectPirates(w, uid) {
+  if (w.pirateVersion !== 1 || !w.admins.includes(uid)) return null;
+  const row = pirateOwner(w, uid);
+  return { config: structuredClone(w.pirateConfig), stations: PIRATE_STATION_META.map((meta) => {
+    const q = row?.stations[meta.id];
+    return { ...meta, sensor: q?.sensor ?? w.pirateConfig.stations[meta.id].sensor, enabled: w.pirateConfig.enabled && w.pirateConfig.stations[meta.id].enabled, initialized: !!q, generation: q?.generation, refreshAt: q?.refreshAt || 0, nextAttackAt: q?.nextAttackAt || 0, defeated: !!q?.defeated, debris: { ...q?.debris || pirateZero() }, debrisExpiresAt: q?.debrisExpiresAt || 0, scan: q?.scan ? structuredClone(q.scan) : null };
+  }), missions: structuredClone(row?.missions || []).map(({ seed, combatConfig, initialFleet, ...m }) => m), reports: structuredClone(row?.reports || []) };
+}
+function pirateDefense(w, uid, planet2) {
+  return (pirateOwner(w, uid)?.missions || []).filter((m) => m.awaitingUnload && m.from === planet2).map((m) => ({ id: "pirate:" + m.id, owner: uid, commander: "PvE-R\xFCckkehrer", fleet: { ...m.fleet }, hulls: m.hulls, tech: m.tech }));
+}
+function reconcilePirateDefense(w, uid, groups, result2, time) {
+  const row = pirateOwner(w, uid);
+  for (const g of groups) {
+    const m = row.missions.find((x) => "pirate:" + x.id === g.id), after = result2.defenderGroups.find((x) => x.id === g.id);
+    m.fleet = after.fleet;
+    m.hulls = after.hulls;
+    m.shieldUntil = time + 3e5;
+    g.fleet = after.fleet;
+    let room = fleetCapacity({ tech: m.tech }, m.fleet);
+    for (const k of RES) {
+      m.cargo[k] = Math.min(m.cargo[k], room);
+      room -= m.cargo[k];
+    }
+    if (!Object.keys(m.fleet).length) row.missions = row.missions.filter((x) => x.id !== m.id);
+  }
 }
 
 // src/social-world.js
@@ -1512,6 +2073,7 @@ function validateSave(input) {
   check(new Set(shipIds).size === shipIds.length);
   check(job(s.research, TECHS) && (!s.research || s.research.level === s.tech[s.research.key] + 1 && ids.includes(s.research.planet)));
   check(Array.isArray(s.discovered) && s.discovered.length <= 3 && new Set(s.discovered).size === s.discovered.length && s.discovered.every((id) => TARGETS.some((t) => t.id === id)));
+  if (s.pveFleets !== void 0) check(Array.isArray(s.pveFleets) && s.pveFleets.length <= 50 && s.pveFleets.every((m) => m && m.fleet && typeof m.fleet === "object" && !Array.isArray(m.fleet) && Object.entries(m.fleet).every(([k, n]) => SHIPS[k]?.speed > 0 && integer(n, Number.MAX_SAFE_INTEGER) && n > 0)));
   check(Array.isArray(s.missions) && s.missions.length <= 100);
   const fleetOK = (f, military = false) => f && typeof f === "object" && !Array.isArray(f) && Object.keys(f).length > 0 && Object.entries(f).every(([k, n]) => (isFreighter(k) || military && ["military", "civil"].includes(SHIPS[k]?.category)) && integer(n, Number.MAX_SAFE_INTEGER) && n > 0);
   const repairIds = s.planets.flatMap((p) => p.repairQueue.map((j) => j.id));
@@ -1526,9 +2088,9 @@ function validateSave(input) {
       check(ids.includes(m.to) && m.from !== m.to);
       check(m.type === "station" || isFreighter(m.ship));
       if (m.type !== "transport") {
-        const total = RES.reduce((a, k) => a + m.cargo[k], 0);
+        const total2 = RES.reduce((a, k) => a + m.cargo[k], 0);
         const max = m.fleet ? Object.entries(m.fleet).reduce((a, [k, n]) => a + Math.floor((SHIPS[k]?.cargo || 0) * (1 + s.tech.logistics * 0.15)) * n, 0) : Math.floor(SHIPS[m.ship].cargo * (1 + s.tech.logistics * 0.15)) * m.count;
-        check(total <= max);
+        check(total2 <= max);
       }
     }
     if (m.awaitingUnload !== void 0) check(ids.includes(m.awaitingUnload) && m.awaitingUnload === (m.type === "station" ? m.to : m.type === "route" ? m.home : m.from) && !["probe", "colony"].includes(m.type) && RES.some((k) => m.cargo[k] > 0) && (m.type === "station" || m.type === "route" && m.index === 0 || m.phase === "return"));
@@ -1601,6 +2163,7 @@ function prepareWorld(snapshot) {
   w.admins ??= [];
   for (const p of w.planets) if (p.colonized_at) p.colonized_at = ms(p.colonized_at);
   for (const m of w.missions) for (const key of ["started_at", "arrival_at", "finish_at"]) m[key] = ms(m[key]);
+  preparePirates(w);
   return w;
 }
 function stateOf(w, id) {
@@ -1650,16 +2213,21 @@ function resolveAttack(w, m, time) {
   const parked = pausedRoutes.map((r) => ({ id: "route:" + r.id, owner: m.defender_id, commander: d.name + " \xB7 " + (r.name || "Wartet auf Lagerplatz"), fleet: { ...r.fleet || { [r.ship]: r.count } }, hulls: r.hulls, tech: { ...d.tech }, shieldFactor: shieldFactor(r.shieldUntil, time) }));
   const dockedRaids = w.attacks.filter((r) => r.awaitingUnload && r.status === "returning" && r.attacker_id === m.defender_id && r.from === m.to);
   parked.push(...dockedRaids.map((r) => ({ id: "raid:" + r.id, owner: m.defender_id, commander: d.name + " \xB7 R\xFCckkehrende Angriffsflotte", fleet: r.survivors, hulls: r.return_hulls, tech: r.combat.tech, shieldFactor: shieldFactor(r.shieldUntil, time) })));
+  const pveParked = pirateDefense(w, m.defender_id, m.to);
+  parked.push(...pveParked);
   const repairs = repairDefense(p, m.defender_id, d.name, { ...d.tech }, shieldFactor(p.shieldUntil, time));
   const supporting = socialDefense(w, m.defender_id, m.to, time);
   if (supporting.length || parked.length || repairs.length) defense.groups = [{ id: "host", owner: m.defender_id, commander: d.name, ...defense }, ...parked, ...repairs, ...supporting];
-  const result = resolveBattle({ ...m.combat, shieldFactor: shieldFactor(m.shieldUntil, time) }, defense, m.seed || m.id, m.ruleVersion || 1);
+  const version = m.ruleVersion || 1;
+  const resolver = [4, 5, 6].includes(version) ? resolveBattleHybrid : resolveBattle;
+  const result2 = [4, 5, 6].includes(version) ? resolver({ ...m.combat, shieldFactor: shieldFactor(m.shieldUntil, time) }, defense, m.seed || m.id, version, version === 6 ? m.combatConfig || REALM_COMBAT_OVERRIDES.test4 : {}) : resolver({ ...m.combat, shieldFactor: shieldFactor(m.shieldUntil, time) }, defense, m.seed || m.id, version);
+  if (pveParked.length) reconcilePirateDefense(w, m.defender_id, pveParked, result2, time);
   const repairBefore = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, repairs.reduce((n, g) => n + (g.fleet[k] || 0), 0)]));
-  if (repairs.length) reconcileRepairBattle(p, result);
+  if (repairs.length) reconcileRepairBattle(p, result2);
   const repairAfter = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, (p.repairQueue || []).filter((j) => j.key === k && !j.restore).reduce((n, j) => n + j.entries.length, 0)]));
-  const before = { ...p.ships }, homeResult = result.defenderGroups?.find((g) => g.id === "host") || result.defender;
+  const before = { ...p.ships }, homeResult = result2.defenderGroups?.find((g) => g.id === "host") || result2.defender;
   for (const r of pausedRoutes) {
-    const after = result.defenderGroups.find((g) => g.id === "route:" + r.id);
+    const after = result2.defenderGroups.find((g) => g.id === "route:" + r.id);
     r.fleet = after.fleet;
     r.hulls = after.hulls;
     let room = fleetCapacity(d, r.fleet);
@@ -1676,7 +2244,7 @@ function resolveAttack(w, m, time) {
     }
   }
   for (const r of dockedRaids) {
-    const after = result.defenderGroups.find((g) => g.id === "raid:" + r.id);
+    const after = result2.defenderGroups.find((g) => g.id === "raid:" + r.id);
     r.survivors = after.fleet;
     r.return_hulls = after.hulls;
     r.shieldUntil = time + 3e5;
@@ -1691,10 +2259,10 @@ function resolveAttack(w, m, time) {
     }
   }
   const hostBefore = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, before[k] + repairBefore[k] + parked.reduce((n, g) => n + (g.fleet[k] || 0), 0)]));
-  const hostAfter = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, (homeResult.fleet[k] || 0) + repairAfter[k] + pausedRoutes.reduce((n, r) => n + (r.fleet[k] || 0), 0) + dockedRaids.reduce((n, r) => n + (r.survivors[k] || 0), 0)]));
+  const hostAfter = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, (homeResult.fleet[k] || 0) + repairAfter[k] + pausedRoutes.reduce((n, r) => n + (r.fleet[k] || 0), 0) + dockedRaids.reduce((n, r) => n + (r.survivors[k] || 0), 0) + pveParked.reduce((n, g) => n + (g.fleet[k] || 0), 0)]));
   const supportReports = [];
   for (const group of supporting) {
-    const after = result.defenderGroups.find((g) => g.id === group.id), mission = w.socialMissions.find((x) => x.id === group.id);
+    const after = result2.defenderGroups.find((g) => g.id === group.id), mission = w.socialMissions.find((x) => x.id === group.id);
     mission.fleet = after.fleet;
     mission.hulls = after.hulls;
     let cargoRoom = fleetCapacity(stateOf(w, mission.owner), mission.fleet);
@@ -1715,24 +2283,24 @@ function resolveAttack(w, m, time) {
   p.hulls = homeResult.hulls;
   p.shieldUntil = time + 3e5;
   p.defenseSalvage ??= zero();
-  for (const k of RES) p.defenseSalvage[k] += result.defenseRepair[k];
+  for (const k of RES) p.defenseSalvage[k] += result2.defenseRepair[k];
   const bunker = Math.min(2e3, capacity(p) * 0.025 * (p.buildings.bunker || 0));
-  const cap = fleetCapacity({ tech: m.combat.tech }, result.attacker.fleet);
-  const field = vector(RES.map((k) => (target.debris?.[k] || 0) + result.debris[k]));
-  const cargo = loadPlunder(p.resources, p.depot, bunker, cap, field, result.outcome === "attacker");
+  const cap = fleetCapacity({ tech: m.combat.tech }, result2.attacker.fleet);
+  const field = vector(RES.map((k) => (target.debris?.[k] || 0) + result2.debris[k]));
+  const cargo = loadPlunder(p.resources, p.depot, bunker, cap, field, result2.outcome === "attacker");
   withdraw(p, cargo.loot);
   target.debris ??= zero();
   for (const k of RES) target.debris[k] = field[k] - cargo.salvage[k];
-  m.status = Object.keys(result.attacker.fleet).length ? "returning" : "returned";
+  m.status = Object.keys(result2.attacker.fleet).length ? "returning" : "returned";
   m.resolved_at = w.now;
-  m.survivors = result.attacker.fleet;
-  m.return_hulls = result.attacker.hulls;
+  m.survivors = result2.attacker.fleet;
+  m.return_hulls = result2.attacker.hulls;
   m.cargo = cargo.cargo;
   m.shieldUntil = time + 3e5;
-  if (result.trace) result.trace.participants = { attacker: a.name, defender: d.name + (supporting.length ? " mit " + supporting.map((g) => g.commander).join(", ") : "") };
-  m.report = { at: time, outcome: result.outcome, ruleVersion: m.ruleVersion || 1, traceAvailable: !!result.trace, ...result.trace ? { trace: result.trace } : {}, rounds: result.rounds, attackerBefore: m.fleet, attackerAfter: m.survivors, defenderBefore: Object.fromEntries(Object.keys(SHIPS).map((k) => [k, hostBefore[k] + supporting.reduce((n, g) => n + (g.fleet[k] || 0), 0)])), defenderAfter: Object.fromEntries(Object.keys(SHIPS).map((k) => [k, result.defender.fleet[k] || 0])), hostBefore, hostAfter, ...supporting.length ? { supporting: supportReports } : {}, loot: cargo.loot, salvage: cargo.salvage, debrisLeft: { ...target.debris }, defenseRepair: result.defenseRepair };
-  const outcome = result.outcome === "attacker" ? "Angreifer gewinnt" : result.outcome === "defender" ? "Verteidiger gewinnt" : "Unentschieden";
-  const body = outcome + " \xB7 " + target.meta.name + " \xB7 " + result.rounds.length + " Runden. Angreifer \xFCbrig: " + fleetText(m.survivors) + ". Beute M/K/T: " + RES.map((k) => cargo.loot[k]).join("/") + ". Tr\xFCmmer geborgen M/K: " + cargo.salvage.metal + "/" + cargo.salvage.crystal + ".";
+  if (result2.trace) result2.trace.participants = { attacker: a.name, defender: d.name + (supporting.length ? " mit " + supporting.map((g) => g.commander).join(", ") : "") };
+  m.report = { at: time, outcome: result2.outcome, ruleVersion: m.ruleVersion || 1, traceAvailable: !!result2.trace, ...result2.trace ? { trace: result2.trace } : {}, rounds: result2.rounds, attackerBefore: m.fleet, attackerAfter: m.survivors, defenderBefore: Object.fromEntries(Object.keys(SHIPS).map((k) => [k, hostBefore[k] + supporting.reduce((n, g) => n + (g.fleet[k] || 0), 0)])), defenderAfter: Object.fromEntries(Object.keys(SHIPS).map((k) => [k, result2.defender.fleet[k] || 0])), hostBefore, hostAfter, ...supporting.length ? { supporting: supportReports } : {}, loot: cargo.loot, salvage: cargo.salvage, debrisLeft: { ...target.debris }, defenseRepair: result2.defenseRepair };
+  const outcome = result2.outcome === "attacker" ? "Angreifer gewinnt" : result2.outcome === "defender" ? "Verteidiger gewinnt" : "Unentschieden";
+  const body = outcome + " \xB7 " + target.meta.name + " \xB7 " + result2.rounds.length + " Runden. Angreifer \xFCbrig: " + fleetText(m.survivors) + ". Beute M/K/T: " + RES.map((k) => cargo.loot[k]).join("/") + ". Tr\xFCmmer geborgen M/K: " + cargo.salvage.metal + "/" + cargo.salvage.crystal + ".";
   log(a, time, "PvP-Kampfbericht", body);
   log(d, time, "PvP-Kampfbericht", body);
 }
@@ -1769,7 +2337,7 @@ function collectWorldDebris(w, uid, s, m) {
 function advanceWorld(w) {
   let guard = 0;
   while (true) {
-    const events = socialEvents(w);
+    const events = [...socialEvents(w), ...pirateEvents(w)];
     for (const row of w.saves) for (const m of row.state.missions) if (m.type === "salvage" && m.phase === "outbound") events.push({ time: m.due, id: row.user_id + ":" + String(m.id).padStart(12, "0"), kind: "salvage", order: -1 });
     for (const m of w.missions) if (!m.completed) {
       if (m.kind === "scan" && !w.surveys.some((q) => q.user_id === m.user_id && q.planet_id === m.planet_id)) events.push({ time: m.arrival_at, id: m.id, kind: "survey", mission: m, order: 0 });
@@ -1789,6 +2357,8 @@ function advanceWorld(w) {
     if (!e || e.time > w.now) break;
     if (++guard > 1e4) throw Error("Zu viele f\xE4llige Ereignisse.");
     for (const row of w.saves) advance(row.state, e.time, (s, m) => collectWorldDebris(w, row.user_id, s, m));
+    refreshPirates(w, e.time);
+    if (e.kind === "pirate") arrivePirate(w, e.owner, e.mission, e.time);
     if (e.kind === "survey") survey(w, e.mission);
     if (e.kind === "galaxy") finishGalaxy(w, e.mission, e.time);
     if (e.kind === "battle") resolveAttack(w, e.mission, e.time);
@@ -1796,10 +2366,13 @@ function advanceWorld(w) {
     if (e.kind === "return") returnAttack(w, e.mission, e.time);
     settleSocialCargo(w, e.time);
     settleRaidCargo(w, e.time);
+    settlePirates(w, e.time);
   }
   for (const row of w.saves) advance(row.state, w.now, (s, m) => collectWorldDebris(w, row.user_id, s, m));
   settleSocialCargo(w, w.now);
   settleRaidCargo(w, w.now);
+  settlePirates(w, w.now);
+  refreshPirates(w, w.now);
   return w;
 }
 function launchGalaxy(w, uid, action, id) {
@@ -1834,7 +2407,7 @@ function launchAttack(w, uid, action, id) {
   } else if (!colonies.length) throw Error("F\xFCr Angriffe aus dem Heimatsystem ben\xF6tigst du mindestens eine eigene besiedelte Galaxiekolonie.");
   if (!target.protection_ended && w.now < (target.colonized_at || w.now) + COLONY_PROTECTION) throw Error("Diese Kolonie hat noch 1 Stunde Gr\xFCndungsschutz.");
   const slots = attackSlots(s.tech.military || 0);
-  if (w.attacks.filter((m) => m.attacker_id === uid && m.status !== "returned").length >= slots) throw Error("Alle " + slots + " Angriffspl\xE4tze sind belegt. Milit\xE4rtechnik 1 / 5 / 10 erlaubt 1 / 2 / 4 gleichzeitige Angriffsflotten.");
+  if (w.attacks.filter((m) => m.attacker_id === uid && m.status !== "returned").length + (w.piratePlayers?.find((r) => r.user_id === uid)?.missions.filter((m) => m.kind === "attack").length || 0) >= slots) throw Error("Alle " + slots + " Angriffspl\xE4tze sind belegt. Milit\xE4rtechnik 1 / 5 / 10 erlaubt 1 / 2 / 4 gleichzeitige Angriffsflotten.");
   const fleet = attackFleet(action.fleet);
   for (const [k, n] of Object.entries(fleet)) if ((from.ships[k] || 0) < n) throw Error("Nicht gen\xFCgend verf\xFCgbare Schiffe.");
   const f = attackFlight(s, from, target.meta, fleet), defender = stateOf(w, target.owner_id), fraction = warningFraction(defender.tech.scout || 0);
@@ -1843,7 +2416,7 @@ function launchAttack(w, uid, action, id) {
   for (const [k, n] of Object.entries(fleet)) from.ships[k] -= n;
   if (origin) origin.protection_ended = true;
   else for (const p of colonies) p.protection_ended = true;
-  w.attacks.push({ id, attacker_id: uid, defender_id: target.owner_id, from: from.id, to: target.id, fleet, hulls, ruleVersion: COMBAT_RULE_VERSION, combat: { fleet, tech: { ...s.tech }, hulls }, shieldUntil: from.shieldUntil || 0, started_at: w.now, warning_at: w.now + Math.ceil(f.ms * fraction), arrival_at: w.now + f.ms, return_at: w.now + 2 * f.ms, status: "outbound", fuel: f.fuel, slowest: f.slowest });
+  w.attacks.push({ id, attacker_id: uid, defender_id: target.owner_id, from: from.id, to: target.id, fleet, hulls, ruleVersion: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combat: { fleet, tech: { ...s.tech }, hulls }, ...w.settings.combat_engine === 6 ? { combatConfig: structuredClone(REALM_COMBAT_OVERRIDES.test4) } : {}, shieldUntil: from.shieldUntil || 0, started_at: w.now, warning_at: w.now + Math.ceil(f.ms * fraction), arrival_at: w.now + f.ms, return_at: w.now + 2 * f.ms, status: "outbound", fuel: f.fuel, slowest: f.slowest });
 }
 function processWorld(snapshot, uid, request) {
   const w = advanceWorld(prepareWorld(snapshot)), type = request.type, action = request.action || {};
@@ -1855,6 +2428,7 @@ function processWorld(snapshot, uid, request) {
   const s = stateOf(w, uid), start = w.starts.find((x) => x.user_id === uid);
   if (start) s.galaxy = { x: start.x, y: start.y };
   if (type === "command") {
+    if (action.type === "ship" && action.key === "spyProbe" && !w.admins.includes(uid)) throw Error("Spionagesonden sind vorerst nur f\xFCr Admins verf\xFCgbar.");
     if (!["build", "demolish", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "salvage", "route", "deliver", "repair", "cancel-repair", "resume-repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
     if (action.type === "salvage") {
       const target = w.planets.find((p) => p.id === action.to);
@@ -1863,7 +2437,8 @@ function processWorld(snapshot, uid, request) {
     }
     const updated = act(s, action, w.now);
     w.saves.find((r) => r.user_id === uid).state = updated;
-  } else if (type === "social") socialAction(w, uid, action, request.eventId || request.requestId);
+  } else if (type === "pirate") pirateAction(w, uid, action, request.eventId || request.requestId, request.combatSeed || request.requestId);
+  else if (type === "social") socialAction(w, uid, action, request.eventId || request.requestId);
   else if (type === "galaxy") launchGalaxy(w, uid, action, request.eventId || request.requestId);
   else if (type === "attack") {
     launchAttack(w, uid, action, request.eventId || request.requestId);
@@ -1879,16 +2454,21 @@ function processWorld(snapshot, uid, request) {
   } else if (!["new", "sync"].includes(type)) throw Error("Unbekannte Anfrage.");
   settleSocialCargo(w, w.now);
   settleRaidCargo(w, w.now);
+  settlePirates(w, w.now);
+  refreshPirates(w, w.now);
+  pirateFleetShadows(w);
   for (const row of w.saves) row.state = validateSave(row.state);
   return w;
 }
 function projectPvP(w, uid) {
   return {
     enabled: w.settings.enabled,
+    combatEngine: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION,
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
     social: socialProjection(w, uid),
-    features: { orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: COMBAT_RULE_VERSION, combatTrace: true },
+    pirates: projectPirates(w, uid),
+    features: { pirates: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,
@@ -1905,13 +2485,13 @@ function projectPvP(w, uid) {
 
 // src/server-service.js
 var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-var value = (result) => {
-  if (result.error) {
-    const e = Error(result.error.message);
+var value = (result2) => {
+  if (result2.error) {
+    const e = Error(result2.error.message);
     e.status = 503;
     throw e;
   }
-  return result.data;
+  return result2.data;
 };
 async function missionId(uid, requestId) {
   const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(uid.toLowerCase() + ":" + requestId.toLowerCase()))).slice(0, 16);
@@ -1924,6 +2504,11 @@ async function runServerCommand(db, uid, input) {
   if (!uuid.test(uid) || !input || typeof input !== "object") throw Error("Ung\xFCltige Anfrage.");
   const mutating = input.type !== "sync";
   if (mutating && !uuid.test(input.requestId)) throw Error("Eine eindeutige Auftrags-ID fehlt.");
+  if (input.type === "set-combat") {
+    if (![3, 4, 5, 6].includes(input.engine)) throw Error("Unbekannte Kampfengine.");
+    value(await db.rpc("imperium_set_combat_engine", { p_uid: uid, p_engine: input.engine }));
+    return runServerCommand(db, uid, { type: "sync" });
+  }
   const requestId = mutating ? input.requestId : null;
   const eventId = mutating ? await missionId(uid, requestId) : null, combatSeed = crypto.randomUUID();
   for (let retry = 0; retry < 5; retry++) {
@@ -1954,8 +2539,8 @@ Deno.serve(async (req) => {
     if (error || !data.user) return new Response(JSON.stringify({ error: "Anmeldung abgelaufen." }), { status: 401, headers });
     const raw = await req.text();
     if (raw.length > 32e3) return new Response(JSON.stringify({ error: "Anfrage zu gro\xDF." }), { status: 413, headers });
-    const result = await runServerCommand(db, data.user.id, JSON.parse(raw));
-    return new Response(JSON.stringify(result), { headers });
+    const result2 = await runServerCommand(db, data.user.id, JSON.parse(raw));
+    return new Response(JSON.stringify(result2), { headers });
   } catch (error) {
     const status = error instanceof Error && "status" in error ? Number(error.status) : 400;
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Serverfehler." }), { status, headers });

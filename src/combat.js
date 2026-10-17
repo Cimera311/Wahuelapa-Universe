@@ -1,6 +1,7 @@
 import {RES,SHIPS,vector,shipFlightEngine,canFlyInterstellar} from './config.js';
 import {sharedDistance,sharedFlight} from './flight.js';
 export const COMBAT={
+ spyProbe:{hp:30,shield:0,attack:0,shots:1},
  probe:{hp:30,shield:0,attack:0,shots:1},longProbe:{hp:60,shield:10,attack:0,shots:1},
  colony:{hp:250,shield:30,attack:0,shots:1},starColony:{hp:500,shield:80,attack:0,shots:1},
  transport:{hp:100,shield:20,attack:0,shots:1},kurier:{hp:80,shield:10,attack:0,shots:1},

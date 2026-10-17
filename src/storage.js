@@ -50,6 +50,7 @@ export function validateSave(input){
  check(new Set(shipIds).size===shipIds.length);
  check(job(s.research,TECHS)&&(!s.research||s.research.level===s.tech[s.research.key]+1&&ids.includes(s.research.planet)));
  check(Array.isArray(s.discovered)&&s.discovered.length<=3&&new Set(s.discovered).size===s.discovered.length&&s.discovered.every(id=>TARGETS.some(t=>t.id===id)));
+ if(s.pveFleets!==undefined)check(Array.isArray(s.pveFleets)&&s.pveFleets.length<=50&&s.pveFleets.every(m=>m&&m.fleet&&typeof m.fleet==='object'&&!Array.isArray(m.fleet)&&Object.entries(m.fleet).every(([k,n])=>SHIPS[k]?.speed>0&&integer(n,Number.MAX_SAFE_INTEGER)&&n>0)));
  check(Array.isArray(s.missions)&&s.missions.length<=100);
  const fleetOK=(f,military=false)=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length>0&&Object.entries(f).every(([k,n])=>(isFreighter(k)||military&&['military','civil'].includes(SHIPS[k]?.category))&&integer(n,Number.MAX_SAFE_INTEGER)&&n>0);
  const repairIds=s.planets.flatMap(p=>p.repairQueue.map(j=>j.id));
