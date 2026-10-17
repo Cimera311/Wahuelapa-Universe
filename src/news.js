@@ -1,6 +1,17 @@
 export const GAME_NEWS=[
  {
   date:'17.10.2026',
+  title:'⚔️ Balancing: Titanen ohne Rapid Fire gegen Falken',
+  status:'⚖️ Kampfengine v6 · Balancing',
+  items:[
+   '🛩️ Falkenschwärme erhalten mehr Luft zum Atmen: Titanen lösen gegen Falken ab sofort keine Rapid-Fire-Zusatzsalven mehr aus.',
+   '🚀 Die vier regulären Titan-Schüsse bleiben weiterhin zu einer Salve auf ein Ziel gebündelt. Die anderen Rapid-Fire-Paarungen und alle Grundkampfwerte bleiben unverändert.',
+   '⏳ Die Änderung gilt für neue Angriffe. Bereits gestartete Angriffe behalten ihre gespeicherten Kampfregeln.',
+   '💬 Wie wirkt sich das auf eure Flotten aus? Feedback gerne im Chat oder in der Wünschebox! ❤️'
+  ]
+ },
+ {
+  date:'17.10.2026',
   title:'🛰️ Orbitaler Erstschlag: Rapid Fire jetzt ab Runde 0! ⚡',
   status:'⚔️ Kampfsystem v6 · Feinschliff',
   items:[
