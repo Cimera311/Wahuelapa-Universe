@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-17.01",
+  "latest": "2026-10-17.02",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -183,6 +183,13 @@
       "sourceCommit": "792bae5bd09ac5a88a52e579a66ec6c3cd22d34a",
       "description": "Admin-PvE: persoenliche Piratenstationen, Spionagesonden, Kampf, Cooldown, Realm-Faktoren, Abholung und Bergung",
       "sha256": "7fdcb9e6102ca10cafc49c294310120cefadf2b807379d4b64cde50477847184"
+    },
+    {
+      "version": "2026-10-17.02",
+      "createdAt": "2026-10-17T16:37:18.917Z",
+      "sourceCommit": "fe463ab75772fd016937b3d4aebdb5a4a867d209",
+      "description": "Piraten-PvE für alle Spieler, private Gegnerdaten und Admin-Realm-Einstellungen",
+      "sha256": "0272b2934577c0cd9355348df909137b5469531ecaf21a62e160d7fccf0c5656"
     }
   ]
 }
