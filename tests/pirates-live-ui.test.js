@@ -43,21 +43,21 @@ test('Admin still has the realm configuration form',t=>{
 test('PvE hangar range, exact input and shortcuts share one bounded launch manifest and survive refresh',async t=>{
  const {doc,w,api,calls}=mounted(t,false);
  const origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
- const range=doc.querySelector('[data-pirate-range="falke"]');input(w,range,43);
+ const range=doc.querySelector('[data-hangar-range="falke"]');input(w,range,43);
  assert.equal(doc.querySelector('[data-fleet-ship="falke"]').value,'43');assert.match(doc.querySelector('[data-hangar-total]').textContent,/43 Schiffe/);assert.ok(range.closest('article').classList.contains('is-selected'));
  assert.equal(range.getAttribute('aria-valuetext'),'43 von 100');assert.match(doc.getElementById('pirate-estimate').textContent,/Aurelia → Schmugglernest/);
  input(w,doc.querySelector('[data-fleet-ship="falke"]'),500);assert.equal(range.value,'100');
  input(w,doc.querySelector('[data-fleet-ship="falke"]'),-2);assert.equal(range.value,'0');assert.equal(range.closest('article').classList.contains('is-selected'),false);
- const cargo=doc.querySelector('[data-hangar-ship="karawane"]');cargo.querySelector('[data-pirate-count="all"]').click();
- assert.equal(cargo.querySelector('[data-pirate-range]').value,'2');assert.ok(Number(doc.querySelector('[data-hangar-capacity]').textContent.replaceAll('.',''))>0);
- cargo.querySelector('[data-pirate-count="none"]').click();assert.equal(cargo.querySelector('[data-fleet-ship]').value,'0');
- input(w,range,43);api.render();assert.equal(doc.querySelector('[data-pirate-range="falke"]').value,'43');
+ const cargo=doc.querySelector('[data-hangar-ship="karawane"]');cargo.querySelector('[data-hangar-count="all"]').click();
+ assert.equal(cargo.querySelector('[data-hangar-range]').value,'2');assert.ok(Number(doc.querySelector('[data-hangar-capacity]').textContent.replaceAll('.',''))>0);
+ cargo.querySelector('[data-hangar-count="none"]').click();assert.equal(cargo.querySelector('[data-fleet-ship]').value,'0');
+ input(w,range,43);api.render();assert.equal(doc.querySelector('[data-hangar-range="falke"]').value,'43');
  doc.getElementById('pirate-fleet-form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();
  assert.deepEqual(JSON.parse(JSON.stringify(calls[0].action.fleet)),{falke:43});
 });
 test('Changing origin or mission resets selection and limits the hangar to ships usable for that task',t=>{
  const {doc,w}=mounted(t,false);let origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
- input(w,doc.querySelector('[data-pirate-range="falke"]'),80);
+ input(w,doc.querySelector('[data-hangar-range="falke"]'),80);
  const op=doc.querySelector('#pirate-fleet-form [name="op"]');op.value='salvage';op.dispatchEvent(new w.Event('change',{bubbles:true}));
  assert.equal(doc.querySelector('[data-hangar-ship="falke"]'),null);assert.match(doc.querySelector('[data-hangar-total]').textContent,/0 Schiffe/);assert.ok(doc.querySelector('[data-hangar-ship="karawane"]'));
  origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='g-helion-p1';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
@@ -68,21 +68,21 @@ test('Changing origin or mission resets selection and limits the hangar to ships
 test('Changed cloud snapshot releases PvE controls and preserves the selected fleet after sync',async t=>{
  const {doc,w,api,cloud}=mounted(t,false);
  const origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
- input(w,doc.querySelector('[data-pirate-range="falke"]'),37);
+ input(w,doc.querySelector('[data-hangar-range="falke"]'),37);
  const original=cloud.gameRequest.bind(cloud);cloud.gameRequest=async request=>{const result=await original(request);result.state.seq++;return result;};
  assert.equal(await api.sync(),true);
- assert.equal(doc.querySelector('[data-pirate-range="falke"]').disabled,false);
+ assert.equal(doc.querySelector('[data-hangar-range="falke"]').disabled,false);
  assert.equal(doc.querySelector('[data-fleet-ship="falke"]').disabled,false);
  assert.equal(doc.querySelector('[data-fleet-ship="falke"]').value,'37');
- assert.equal(doc.querySelector('[data-hangar-ship="falke"] [data-pirate-count="all"]').disabled,false);
+ assert.equal(doc.querySelector('[data-hangar-ship="falke"] [data-hangar-count="all"]').disabled,false);
  assert.equal(doc.querySelector('#pirate-fleet-form [type="submit"]').disabled,false);
 });
 for(const fail of [false,true])test('A view rendered during an in-flight cloud sync unlocks after '+(fail?'failure':'success'),async t=>{
  const {doc,w,api,cloud}=mounted(t,false);
  const origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
  let complete;const original=cloud.gameRequest.bind(cloud);cloud.gameRequest=()=>new Promise((resolve,reject)=>{complete=async()=>fail?reject(Error('Offline')):resolve(await original({type:'sync'}));});
- const syncing=api.sync();api.render();assert.equal(doc.querySelector('[data-pirate-range="falke"]').disabled,true);
+ const syncing=api.sync();api.render();assert.equal(doc.querySelector('[data-hangar-range="falke"]').disabled,true);
  await complete();assert.equal(await syncing,!fail);
- assert.equal(doc.querySelector('[data-pirate-range="falke"]').disabled,false);
- input(w,doc.querySelector('[data-pirate-range="falke"]'),22);assert.equal(doc.querySelector('[data-fleet-ship="falke"]').value,'22');
+ assert.equal(doc.querySelector('[data-hangar-range="falke"]').disabled,false);
+ input(w,doc.querySelector('[data-hangar-range="falke"]'),22);assert.equal(doc.querySelector('[data-fleet-ship="falke"]').value,'22');
 });
