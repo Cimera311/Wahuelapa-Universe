@@ -14,6 +14,9 @@ function mounted(t){
 }
 test('Admin PvE planner uses available ships, keeps draft through refresh and submits a confirmed real attack',async t=>{
  const {doc,w,api,calls}=mounted(t);const form=doc.getElementById('pirate-fleet-form');assert.ok(form);
+ assert.equal(doc.querySelector('.pirate-art img').getAttribute('src'),'./assets/pirates-meli-v1/smugglers.webp');
+ assert.equal(new Set([...doc.querySelectorAll('.pirate-thumbnail img')].map(img=>img.getAttribute('src'))).size,5);
+ assert.doesNotMatch(doc.querySelector('.pirate-art-caption').textContent,/Platzhalter|folgen/);
  const origin=form.querySelector('[name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
  const updated=doc.getElementById('pirate-fleet-form');assert.ok(updated.querySelector('[data-fleet-ship="falke"]'));assert.equal(updated.querySelector('[data-fleet-ship="titan"]'),null);
  input(w,updated.querySelector('[data-fleet-ship="falke"]'),100);input(w,updated.querySelector('[data-fleet-ship="karawane"]'),1);
