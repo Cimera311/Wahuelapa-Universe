@@ -607,3 +607,41 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 
 /* Admin PvE missions and reports; station art is intentionally a placeholder. */
 .pirate-detail form>label{display:grid;gap:7px;margin:16px 0}.pirate-detail select{width:100%;max-width:100%}.pirate-detail .pirate-intel>div{align-items:flex-start}.pirate-detail .pirate-intel dt{flex:0 0 90px}.pirate-detail .pirate-intel dd{text-align:right;overflow-wrap:anywhere;max-width:70%}.pirate-scan-actions{display:grid;gap:8px;margin:16px 0}.pirate-scan-actions small{font-size:12px;color:var(--muted)}.pirate-detail .pirate-confirm{display:flex;align-items:flex-start;font-size:13px;line-height:1.5}.pirate-confirm input{width:18px;min-width:18px;margin-top:3px}.pirate-detail .fleet-choice{grid-template-columns:48px minmax(0,1fr);padding:10px}.pirate-detail .fleet-choice>img{width:48px;height:48px}.pirate-detail .fleet-choice-count{grid-column:1/-1;justify-content:flex-end}.pirate-missions,.pirate-reports,.pirate-realm{margin-top:22px}.pirate-missions article{padding:12px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.pirate-missions p{font-size:13px}.pirate-reports details{padding:12px 0;border-top:1px solid var(--line)}.pirate-reports summary,.pirate-realm summary{cursor:pointer;line-height:1.6;overflow-wrap:anywhere}.pirate-reports p{font-size:13px;overflow-wrap:anywhere}.pirate-realm textarea{box-sizing:border-box;width:100%;font:12px/1.5 monospace;background:#061623;color:#d3e5ee;border:1px solid #345062;border-radius:8px;padding:12px;resize:vertical}.pirate-realm label{display:grid;gap:10px}.pirate-realm button{margin-top:12px}
+
+/* Live pirate flights are grouped with their target, not in a detached mission list. */
+.pirate-mission-summary{font-size:12px;color:var(--muted);margin:0 0 14px}
+.pirate-station-group{min-width:0;border:1px solid #2b4659;border-radius:14px;overflow:hidden;background:#0b1d2a}
+.pirate-station-group.is-selected{border-color:#56d8e9;box-shadow:inset 3px 0 #56d8e9}
+.pirate-station-group>.pirate-station-card{border:0;border-radius:0;min-height:108px;background:transparent;box-shadow:none}
+.pirate-station-group>.pirate-station-card[aria-pressed=true]{background:#102c3a;box-shadow:none}
+.pirate-station-group>.pirate-station-card:hover{background:#143344}
+.pirate-station-group>.pirate-station-card:focus-visible{outline-offset:-4px}
+.pirate-station-flights{padding:0 14px 10px}
+.pirate-flight-card{--mission-color:#64dae6;min-width:0;padding:12px 0 8px;border-top:1px solid #294454;isolation:isolate}
+.pirate-flight-attack{--mission-color:#f4bb6c}.pirate-flight-collect{--mission-color:#8fe0ac}.pirate-flight-salvage{--mission-color:#bba1f4}
+.pirate-flight-heading{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12px;line-height:1.4}
+.pirate-flight-heading strong{color:var(--mission-color);font-size:12px}.pirate-flight-heading>span{font-size:11px;color:#93acbd;text-align:right}
+.pirate-flight-heading time{color:#e1eff6;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pirate-flight-route{display:grid;grid-template-columns:minmax(55px,95px) minmax(65px,1fr) 28px;gap:12px;align-items:center;min-height:45px}
+.pirate-flight-origin{display:flex;align-items:center;gap:6px;min-width:0;font-size:11px;color:#afc4d2}
+.pirate-flight-origin>img{flex-shrink:0;object-fit:contain;border-radius:50%;width:20px;height:20px}
+.pirate-flight-origin>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pirate-flight-destination{display:grid;place-items:center}.pirate-flight-destination>img{width:26px;height:26px;object-fit:contain}
+.pirate-flight-lane{position:relative;height:24px;margin:0 10px;min-width:0;background:linear-gradient(#294454,#294454) center/100% 2px no-repeat}
+.pirate-flight-lane::before,.pirate-flight-lane::after{content:'';position:absolute;top:9px;width:6px;height:6px;border-radius:50%;border:1px solid #658294;background:#0b1d2a}
+.pirate-flight-lane::before{left:-3px}.pirate-flight-lane::after{right:-3px}
+.pirate-flight-fill{position:absolute;left:0;top:11px;height:2px;width:var(--flight-progress);background:var(--mission-color);box-shadow:0 0 6px var(--mission-color);transition:width 1s linear}
+.returning .pirate-flight-fill{left:auto;right:0}
+.pirate-flight-ship{position:absolute;top:50%;left:var(--flight-position);width:34px;height:24px;transform:translate(-50%,-50%);transition:left 1s linear;z-index:1}
+.pirate-flight-ship>img{position:relative;z-index:1;width:34px;height:24px;object-fit:contain;transform:rotate(45deg);filter:drop-shadow(0 0 4px #06111c)}
+.returning .pirate-flight-ship>img{transform:rotate(225deg)}
+.pirate-flight-ship::before{content:'';position:absolute;top:10px;right:24px;width:17px;height:4px;border-radius:100%;background:linear-gradient(90deg,transparent,var(--mission-color));box-shadow:0 0 8px var(--mission-color);animation:pirate-thrust .8s ease-in-out infinite alternate;transform-origin:right center}
+.returning .pirate-flight-ship::before{right:auto;left:24px;background:linear-gradient(90deg,var(--mission-color),transparent);transform-origin:left center}
+@keyframes pirate-thrust{from{transform:scaleX(.7);opacity:.5}to{transform:scaleX(1.2);opacity:.95}}
+.pirate-flight-details{font-size:11px;color:#95afc0}.pirate-flight-details>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:28px;list-style:none}
+.pirate-flight-details>summary::-webkit-details-marker{display:none}.pirate-flight-details[open]>summary>span{transform:rotate(180deg)}
+.pirate-flight-details p{font-size:11px;line-height:1.6;margin:5px 0;overflow-wrap:anywhere}
+.awaiting .pirate-flight-ship::before,.is-due .pirate-flight-ship::before{display:none}
+.awaiting .pirate-flight-heading time,.is-due .pirate-flight-heading time{grid-column:1/-1;text-align:left;font-size:11px;color:#f4bb6c;white-space:normal}
+@media(max-width:400px){.pirate-station-flights{padding:0 10px 8px}.pirate-flight-heading{gap:6px}.pirate-flight-route{gap:6px;grid-template-columns:minmax(50px,78px) minmax(60px,1fr) 24px}.pirate-flight-heading strong{font-size:11px}.pirate-flight-heading>span{font-size:10px}.pirate-flight-heading time{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.pirate-flight-ship,.pirate-flight-fill{transition:none}.pirate-flight-ship::before{animation:none}}
