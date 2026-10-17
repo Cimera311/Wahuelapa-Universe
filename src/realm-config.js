@@ -71,7 +71,7 @@ export const REALM_COMBAT_OVERRIDES=Object.freeze({
     falke:Object.freeze({donner:.20,titan:.40}),
     waechter:Object.freeze({falke:.75,flak:.25}),
     donner:Object.freeze({waechter:.25,flak:.85,laser:.75,rail:.60,plasma:.40}),
-    titan:Object.freeze({falke:.85,waechter:.40,donner:.50,flak:.60,laser:.40,rail:.20}),
+    titan:Object.freeze({waechter:.40,donner:.50,flak:.60,laser:.40,rail:.20}),
     flak:Object.freeze({falke:.80,waechter:.20}),
     laser:Object.freeze({falke:.40,waechter:.60}),
     rail:Object.freeze({donner:.60,titan:.40}),
