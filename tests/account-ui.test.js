@@ -44,12 +44,10 @@ test('Report reads isolate accounts and reject a late response after logout',asy
 test('A newer report request wins when earlier filters return late',async()=>{const {controller:c}=ui();const cloud=fakeCloud(engine.newGame('A'),1),replies=[];cloud.reports=()=>new Promise(r=>replies.push(r));c.attach(cloud);await c.loadAccount();const old=c.refreshReports(),fresh=c.refreshReports();replies[1]({items:[{id:'new',time:2}],total:1});await fresh;replies[0]({items:[{id:'old',time:1}],total:1});await old;assert.equal(c.reportData.items[0].id,'new');});
 test('Report accordions capture current DOM state before periodic rendering',()=>{const {controller:c,doc}=ui();doc.querySelectorAll=()=>[{dataset:{reportId:'battle'},open:true},{dataset:{uiKey:'mission:one'},open:true}];c.captureReportUI();assert.equal(c.reportOpened.has('battle'),true);assert.equal(c.reportOpened.has('mission:one'),true);doc.querySelectorAll=()=>[{dataset:{reportId:'battle'},open:false}];c.captureReportUI();assert.equal(c.reportOpened.has('battle'),false);assert.equal(c.reportOpened.has('mission:one'),true);});
 
-// Exercise submit bubbling through both app and document listeners, as in the browser.
+// Invitation/permission bubbling uses this lightweight controller fixture.
+// Flight-form bubbling is covered with real DOM validation in partner-hangar-ui.test.js.
 for(const [id,op,fields] of [
  ['social-invite-form','invite',{friend:'b',delivery:'on',defense:'on'}],
- ['social-flight-form','deliver',{to:'g-orion-p1','fleet-karawane':'2','cargo-metal':'100'}],
- ['social-flight-form','support',{to:'g-orion-p1','fleet-waechter':'3'}],
- ['social-flight-form','trade-offer',{to:'g-orion-p1','fleet-karawane':'1','cargo-metal':'100','payment-crystal':'50'}],
  ['rights-form','permissions',{delivery:'on'}]
 ])test(`Partner ${op} submission sends exactly one social request during event bubbling`,async()=>{
  class FormDataMock{constructor(form){this.fields=form.fields;}get(key){return this.fields[key]??null;}has(key){return Object.hasOwn(this.fields,key);}}
@@ -58,9 +56,6 @@ for(const [id,op,fields] of [
  await submit({id,dataset:{op,id:'partner-id'},fields,classList:{contains:cls=>id==='rights-form'&&cls==='social-rights-form'}});
  assert.equal(requests.length,1);assert.equal(requests[0].type,'social');assert.equal(requests[0].action.op,op);
  if(op==='invite')assert.deepEqual(requests[0].action,{op,friend:'b',delivery:true,defense:true});
- if(op==='deliver')assert.deepEqual(requests[0].action.fleet,{karawane:2});
- if(op==='support')assert.deepEqual(requests[0].action.fleet,{waechter:3});
- if(op==='trade-offer')assert.equal(requests[0].action.payment.crystal,50);
  if(op==='permissions')assert.deepEqual(requests[0].action,{op,id:'partner-id',delivery:true,defense:false});
  assert.equal(c.galaxyBusy,false);
 });
