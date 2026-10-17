@@ -85,7 +85,7 @@ function rapidCandidates(shooter,enemies,rapid){
  const active=enemies.filter(g=>g.count);
  const combatants=active.filter(g=>['military','defense'].includes(SHIPS[g.key].category));
  const eligible=combatants.length?combatants:active;
- const preferred=eligible.filter(g=>(rapid.chances[shooter.key]?.[g.key]??0)>0);
+ const preferred=rapid.enabled?eligible.filter(g=>(rapid.chances[shooter.key]?.[g.key]??0)>0):[];
  return preferred.length?preferred:eligible;
 }
 function fireRapid(shooters,enemies,random,summary,rapid){
@@ -159,7 +159,7 @@ export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4
   if(opening&&!platforms.length)continue;
   const shots={};
   if(!opening)fireRound(a,d,random,shots);
-  if(opening&&experimentalVersion===6&&!rapid.allowInOrbitalOpening)fireLocked(platforms,a,random,shots);
+  if(opening&&experimentalVersion===6&&!rapid.allowInOrbitalOpening)fireRapid(platforms,a,random,shots,{...rapid,enabled:false});
   else fireRound(opening?platforms:d,a,random,shots);
   const impacts=applyDamage([...a,...d]);
   rounds.push({round,attacker:total(a),defender:total(d)});
@@ -199,7 +199,7 @@ export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4
 // Benchmark-only. Not routed from server-world or selectable in production.
 export function resolveBattleHybridV5(attacker,defender,seed){return resolveBattleHybrid(attacker,defender,seed,5);}
 
-// Benchmark-only v6, deliberately not wired into the PvP server or admin controls.
+// Explicit v6 entry point, also used by tests and benchmarks.
 export function resolveBattleHybridV6(attacker,defender,seed,realmOverrides={}){
  return resolveBattleHybrid(attacker,defender,seed,6,realmOverrides);
 }

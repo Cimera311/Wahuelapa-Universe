@@ -24,7 +24,7 @@ test('rapid fire info lists every Test4 matchup for all eight fighting types',()
 });
 test('v5 fallback and orbital opening are clearly explained',()=>{
  assert.match(rapidFireInfoHTML('flak',5),/Aktuell gilt v5 ohne Rapid Fire/);
- assert.match(rapidFireInfoHTML('plasma',6),/Kein Rapid Fire beim orbitalen Erstschlag/);
+ assert.match(rapidFireInfoHTML('plasma',6),/Rapid Fire gilt auch beim orbitalen Erstschlag \(Runde 0\)/);
  assert.doesNotMatch(rapidFireInfoHTML('titan',6),/Kein Rapid Fire beim orbitalen Erstschlag/);
  assert.match(rapidFireInfoHTML('titan',6),/v6 aktiv/);
  assert.deepEqual(rapidFireTargets('transport'),[]);

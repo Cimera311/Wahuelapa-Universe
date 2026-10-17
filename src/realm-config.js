@@ -3,7 +3,7 @@
 // fuelPower ist fuer ein kuenftiges Treibstoffkraftwerk reserviert (noch ohne Effekt).
 export const REALM_CONFIG = Object.freeze({
   galaxyFlightTimeFactor: 3,
-  // Rapid Fire is experimental v6 only; editing this does not enable it live.
+  // Rapid Fire v6 rules; the active combat engine is selected by the administrator.
   combat: Object.freeze({
     rapidFire: Object.freeze({
       enabled: true,
@@ -65,7 +65,7 @@ export const REALM_COMBAT_OVERRIDES=Object.freeze({
  // Test4: Rollenbasierte Rapid-Fire-Matrix, ohne klassische Schadensboni.
  test4: Object.freeze({combat: Object.freeze({
   rapidFire:Object.freeze({
-   enabled:true,maxExtraSalvos:3,allowInOrbitalOpening:false,
+   enabled:true,maxExtraSalvos:3,allowInOrbitalOpening:true,
    replaceChances:true,
    chances:Object.freeze({
     falke:Object.freeze({donner:.20,titan:.40}),
