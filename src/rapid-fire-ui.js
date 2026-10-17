@@ -26,6 +26,6 @@ export function rapidFireInfoHTML(key,engineVersion=null){
   ?'<p class="fine">Keine Rapid-Fire-Funktion für diesen Schiffstyp.</p>'
   :!entries.length
    ?'<p class="fine">Keine Rapid-Fire-Ziele konfiguriert.</p>'
-   :`<div class="ship-rapid-fire-targets">${chips}</div><p class="fine">Chance auf eine weitere vollständige Salve gegen das jeweilige Ziel, nach jeder Zusatzsalve erneut geprüft. Maximal ${combat.maxExtraSalvos} Zusatzsalven pro Kampfrunde.${sh.category==='defense'&&!combat.allowInOrbitalOpening?' Kein Rapid Fire beim orbitalen Erstschlag.':''}</p>`;
+   :`<div class="ship-rapid-fire-targets">${chips}</div><p class="fine">Chance auf eine weitere vollständige Salve gegen das jeweilige Ziel, nach jeder Zusatzsalve erneut geprüft. Maximal ${combat.maxExtraSalvos} Zusatzsalven pro Kampfrunde.${sh.category==='defense'?(combat.allowInOrbitalOpening?' Rapid Fire gilt auch beim orbitalen Erstschlag (Runde 0).':' Kein Rapid Fire beim orbitalen Erstschlag.') :''}</p>`;
  return `<section class="ship-rapid-fire" aria-label="Rapid Fire"><div class="ship-rapid-fire-heading"><strong>⚡ Rapid Fire</strong><small>${subtitle}</small></div>${description}${legacy?'<p class="fine ship-rapid-fire-inactive">Aktuell gilt v5 ohne Rapid Fire. Die Werte gelten bei Aktivierung von v6.</p>':''}</section>`;
 }
