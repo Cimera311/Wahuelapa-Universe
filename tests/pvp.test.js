@@ -173,7 +173,7 @@ test('Attacks can send all 110 selected ships and still enforce availability',()
  request.action.fleet.falke=101;assert.throws(()=>processWorld(w,A,request),/Schiffe/);
  const ui=pvpView(w.saves[0].state,{...projectPvP(prepareWorld(w),A),incoming:[],outgoing:[],reports:[]},{planets:w.planets.map(q=>({...q.meta,owner:q.owner_id===A?'mine':'foreign',ownerName:'Commander'}))},w.now);
  assert.match(ui,/data-action="pvp-select-all"/);assert.match(ui,/data-action="pvp-select-none"/);
- assert.match(ui,/name="falke" data-fleet-ship="falke" type="number" min="0" max="100"/);
+ assert.match(ui,/name="falke" data-fleet-ship="falke" type="number"(?: inputmode="numeric")? min="0" max="100"/);
 });
 
 test('Large shipbuilding and transport fleets preserve save validation and resource rules',()=>{
