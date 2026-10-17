@@ -1,4 +1,4 @@
-import {piratePreviewAllowed,pirateNavigation,pirateStationsView,pirateFlightEstimate,updatePirateFlights,PIRATE_PREVIEW_STATIONS} from './pirates-ui.js';
+import {piratePreviewAllowed,pirateNavigation,pirateStationsView,pirateFlightEstimate,updatePirateFlights,updatePirateHangar,PIRATE_PREVIEW_STATIONS} from './pirates-ui.js';
 import {repairDockView,orbitConditionHTML,repairQuoteHTML} from './repair-ui.js';
 import {rapidFireInfoHTML} from './rapid-fire-ui.js';
 import {repairAvailable,orbitCondition,repairOrders,repairQuote} from './repair.js';
@@ -742,10 +742,11 @@ function warTimesView(items){
 function capturePirateDraft(form){const d=new FormData(form);pirateDraft={from:d.get('from'),op:d.get('op'),fleet:Object.fromEntries([...form.querySelectorAll('[data-fleet-ship]')].filter(i=>Number(i.value)>0).map(i=>[i.dataset.fleetShip,Number(i.value)]))};}
 function updatePirateEstimate(){
  const form=document.getElementById('pirate-fleet-form'),output=document.getElementById('pirate-estimate');if(!form||!output||!cloud?.pvp?.pirates)return;
+ updatePirateHangar(form,state);
  const d=new FormData(form),p=state.planets.find(p=>p.id===d.get('from')),q=cloud.pvp.pirates.stations.find(s=>s.id===form.dataset.station),fleet=Object.fromEntries([...form.querySelectorAll('[data-fleet-ship]')].filter(i=>Number(i.value)>0).map(i=>[i.dataset.fleetShip,Number(i.value)]));
  try{const estimate=pirateFlightEstimate(state,p,q,fleet,cloud.pvp.pirates.config);output.textContent=estimate.text+(p.resources.fuel<estimate.fuel?' · Treibstoff fehlt!':'');}catch(e){output.textContent=e.message;}
 }
-document.addEventListener('input',e=>{const form=e.target.closest('#pirate-fleet-form');if(form){capturePirateDraft(form);updatePirateEstimate();}if(e.target.closest('#pirate-config-form'))pirateConfigDraft=e.target.value;});
+document.addEventListener('input',e=>{const form=e.target.closest('#pirate-fleet-form');if(form){if(e.target.matches('[data-pirate-range]')){const card=e.target.closest('[data-hangar-ship]');card.querySelector('[data-fleet-ship]').value=e.target.value;}updatePirateHangar(form,state);capturePirateDraft(form);updatePirateEstimate();}if(e.target.closest('#pirate-config-form'))pirateConfigDraft=e.target.value;});
 document.addEventListener('change',e=>{const form=e.target.closest('#pirate-fleet-form');if(!form)return;capturePirateDraft(form);if(e.target.name==='from'||e.target.name==='op'){pirateDraft.fleet={};render();}else updatePirateEstimate();});
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-action]');if(!b||b.disabled||!piratePreviewAllowed(cloud)||readOnly||cloudBlocked)return;
@@ -766,3 +767,9 @@ document.addEventListener('submit',async e=>{
 });
 
 document.addEventListener('toggle',e=>{const id=e.target.dataset?.pirateFlightDetails;if(!id)return;if(e.target.open)pirateFlightOpened.add(id);else pirateFlightOpened.delete(id);},true);
+
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-pirate-count]');if(!b||b.disabled||readOnly||cloudBlocked)return;
+ const input=b.closest('[data-hangar-ship]').querySelector('[data-fleet-ship]');input.value=b.dataset.pirateCount==='all'?input.max:0;
+ input.dispatchEvent(new Event('input',{bubbles:true}));
+});

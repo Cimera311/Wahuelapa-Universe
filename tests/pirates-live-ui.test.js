@@ -39,3 +39,27 @@ test('Ordinary player can launch a real attack while realm settings stay admin-o
 test('Admin still has the realm configuration form',t=>{
  const {doc}=mounted(t);assert.ok(doc.getElementById('pirate-config-form'));
 });
+
+test('PvE hangar range, exact input and shortcuts share one bounded launch manifest and survive refresh',async t=>{
+ const {doc,w,api,calls}=mounted(t,false);
+ const origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
+ const range=doc.querySelector('[data-pirate-range="falke"]');input(w,range,43);
+ assert.equal(doc.querySelector('[data-fleet-ship="falke"]').value,'43');assert.match(doc.querySelector('[data-hangar-total]').textContent,/43 Schiffe/);assert.ok(range.closest('article').classList.contains('is-selected'));
+ assert.equal(range.getAttribute('aria-valuetext'),'43 von 100');assert.match(doc.getElementById('pirate-estimate').textContent,/Aurelia → Schmugglernest/);
+ input(w,doc.querySelector('[data-fleet-ship="falke"]'),500);assert.equal(range.value,'100');
+ input(w,doc.querySelector('[data-fleet-ship="falke"]'),-2);assert.equal(range.value,'0');assert.equal(range.closest('article').classList.contains('is-selected'),false);
+ const cargo=doc.querySelector('[data-hangar-ship="karawane"]');cargo.querySelector('[data-pirate-count="all"]').click();
+ assert.equal(cargo.querySelector('[data-pirate-range]').value,'2');assert.ok(Number(doc.querySelector('[data-hangar-capacity]').textContent.replaceAll('.',''))>0);
+ cargo.querySelector('[data-pirate-count="none"]').click();assert.equal(cargo.querySelector('[data-fleet-ship]').value,'0');
+ input(w,range,43);api.render();assert.equal(doc.querySelector('[data-pirate-range="falke"]').value,'43');
+ doc.getElementById('pirate-fleet-form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();
+ assert.deepEqual(JSON.parse(JSON.stringify(calls[0].action.fleet)),{falke:43});
+});
+test('Changing origin or mission resets selection and limits the hangar to ships usable for that task',t=>{
+ const {doc,w}=mounted(t,false);let origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
+ input(w,doc.querySelector('[data-pirate-range="falke"]'),80);
+ const op=doc.querySelector('#pirate-fleet-form [name="op"]');op.value='salvage';op.dispatchEvent(new w.Event('change',{bubbles:true}));
+ assert.equal(doc.querySelector('[data-hangar-ship="falke"]'),null);assert.match(doc.querySelector('[data-hangar-total]').textContent,/0 Schiffe/);assert.ok(doc.querySelector('[data-hangar-ship="karawane"]'));
+ origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='g-helion-p1';origin.dispatchEvent(new w.Event('change',{bubbles:true}));
+ assert.equal(doc.querySelector('[data-fleet-ship="karawane"]').max,'4');assert.equal(doc.querySelector('[data-fleet-ship="karawane"]').value,'0');
+});
