@@ -21,9 +21,9 @@ test('Admin PvE planner uses available ships, keeps draft through refresh and su
  api.render();assert.equal(doc.querySelector('[data-fleet-ship="falke"]').value,'100');
  const current=doc.getElementById('pirate-fleet-form');current.querySelector('[name="ack"]').checked=true;current.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();
  assert.deepEqual(JSON.parse(JSON.stringify(calls[0])),{type:'pirate',action:{op:'attack',station:'smugglers',from:'home',fleet:{karawane:1,falke:100}}});
- assert.match(doc.querySelector('.pirate-missions').textContent,/Hinflug/);
+ assert.match(doc.querySelector('.pirate-flight-card').textContent,/Hinflug/);
 });
 test('Spionage is dispatched separately from the selected origin',async t=>{
  const {doc,w,calls}=mounted(t);const origin=doc.querySelector('#pirate-fleet-form [name="from"]');origin.value='home';origin.dispatchEvent(new w.Event('change',{bubbles:true}));doc.querySelector('[data-action="pirate-scan"]').click();await tick();assert.equal(calls[0].action.op,'scan');
- assert.match(doc.querySelector('.pirate-missions').textContent,/Spionage/);
+ assert.match(doc.querySelector('.pirate-flight-card').textContent,/Spionage/);
 });
