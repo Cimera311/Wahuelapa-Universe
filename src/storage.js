@@ -73,6 +73,11 @@ export function validateSave(input){
    check(m.phase==='outbound'&&text(m.name,40)&&typeof m.repeat==='boolean'&&typeof m.stopping==='boolean'&&integer(m.rounds,1e12)&&Array.isArray(m.stops)&&m.stops.length>=2&&m.stops.length<=12&&ids.includes(m.home)&&m.stops[0].planet===m.home&&integer(m.index,m.stops.length-1));
    check(m.stops.every((stop,i)=>ids.includes(stop.planet)&&stop.planet!==m.stops[(i+1)%m.stops.length].planet&&order(stop.load)&&order(stop.unload))&&m.to===m.stops[m.index].planet&&m.from===m.stops[(m.index+m.stops.length-1)%m.stops.length].planet);
   }
+  if(m.stats!==undefined){
+   const z=m.stats,amounts=v=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===RES.length&&RES.every(k=>isNum(v[k],Number.MAX_SAFE_INTEGER));
+   check(m.type==='route'&&z&&typeof z==='object'&&!Array.isArray(z)&&Object.keys(z).length===7&&isNum(z.since,s.time)&&integer(z.roundsAtStart,m.rounds)&&integer(z.stops,Number.MAX_SAFE_INTEGER)&&amounts(z.loaded)&&amounts(z.delivered)&&integer(z.fuelPaid,Number.MAX_SAFE_INTEGER));
+   if(z.last!==null){const a=z.last;check(a&&typeof a==='object'&&!Array.isArray(a)&&Object.keys(a).length===5&&isNum(a.at,s.time)&&a.at>=z.since&&ids.includes(a.planet)&&['started','stop','round','unload','resumed'].includes(a.kind)&&amounts(a.loaded)&&amounts(a.delivered));}
+  }
   eventIds.push(m.id);
  }
  check(new Set(eventIds).size===eventIds.length);
