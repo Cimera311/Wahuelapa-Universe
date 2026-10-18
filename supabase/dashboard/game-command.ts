@@ -961,11 +961,9 @@ function applyRouteEdit(s, m) {
   m.name = next.name;
   m.stops = structuredClone(next.stops);
   m.repeat = next.repeat;
-  if (m.paused) {
-    m.index = 0;
-    m.to = m.home;
-    m.from = m.stops.at(-1).planet;
-  }
+  m.index = 0;
+  m.to = m.home;
+  m.from = m.stops.at(-1).planet;
   delete m.pending;
   report(s, "Routen\xE4nderung aktiviert", `${m.name}: Flotte und Stopps am Startplaneten aktualisiert.`);
   return true;

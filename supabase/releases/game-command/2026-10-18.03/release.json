@@ -1,0 +1,7 @@
+{
+  "version": "2026-10-18.03",
+  "createdAt": "2026-10-18T18:51:15.802Z",
+  "sourceCommit": "4f0aba1fc5ba05fc2aba0dde5d382eb404180b0f",
+  "description": "Fix processed/SV057: Position nach Routenänderung bei Rückkehr vor Pause oder Restentladung aktualisieren",
+  "sha256": "4aec4d2d6178ad8a0d9da2fa990a755fc9b4666cb48abb8c6d9a13fc8eda34bc"
+}

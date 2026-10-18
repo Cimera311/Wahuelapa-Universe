@@ -1277,7 +1277,10 @@ function applyRouteEdit(s,m){
  if(Object.entries(next.fleet).some(([k,n])=>p.ships[k]+(old[k]||0)<n))return false;
  for(const [k,n] of Object.entries(old))p.ships[k]+=n;putHulls(p,m.hulls);
  for(const [k,n] of Object.entries(next.fleet))p.ships[k]-=n;
- setFleet(m,next.fleet);m.hulls=takeHulls(p,next.fleet);m.name=next.name;m.stops=structuredClone(next.stops);m.repeat=next.repeat;if(m.paused){m.index=0;m.to=m.home;m.from=m.stops.at(-1).planet;}delete m.pending;
+ setFleet(m,next.fleet);m.hulls=takeHulls(p,next.fleet);m.name=next.name;m.stops=structuredClone(next.stops);m.repeat=next.repeat;
+ // Edits activate at home, including on arrival before a fuel/manual pause or
+ // waiting for cargo space. Keep the parked position consistent with new stops.
+ m.index=0;m.to=m.home;m.from=m.stops.at(-1).planet;delete m.pending;
  report(s,'Routenänderung aktiviert',`${m.name}: Flotte und Stopps am Startplaneten aktualisiert.`);return true;
 }
 function pauseRoute(s,m,reason='Manuell pausiert'){
