@@ -15,6 +15,8 @@ test('route cards show last actual transfer, expandable totals and retain the op
  const card=doc.querySelector('.trade-route');assert.ok(card);assert.match(card.querySelector('.route-activity').textContent,/Handelsstopp auf Ferrum/);assert.match(card.querySelector('.route-activity-cargo').textContent,/200 Metall/);
  assert.equal(card.querySelector('h3 img'),null);const details=card.querySelector('[data-route-stat]');assert.ok(details);assert.equal(details.open,false);details.open=true;api.render();assert.equal(doc.querySelector('[data-route-stat]').open,true);
  assert.match(doc.querySelector('.route-stat-grid').textContent,/Tatsächlich geliefert/);assert.match(doc.querySelector('.route-statistics').textContent,/getrennte Zähler/);
+ const panels=doc.querySelectorAll('[data-route-stat]');assert.equal(panels.length,2);panels[0].open=false;panels[1].open=true;api.render();
+ const restored=doc.querySelectorAll('[data-route-stat]');assert.equal(restored[0].open,false);assert.equal(restored[1].open,true);
 });
 test('old server versions do not present locally predicted counters as available server statistics',t=>{
  const s=route(),{doc,api}=ui(t,{state:s});api.attach({authoritative:true,now:s.time,pvp:{features:{}}});api.show('routes');
