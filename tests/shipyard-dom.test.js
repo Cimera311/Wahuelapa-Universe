@@ -17,7 +17,7 @@ test('shipyard recalculates totals and affordability for the whole selected orde
  p.resources.metal=500;api.tick();assert.equal(card.querySelector('[data-action="ship"]').disabled,true);assert.match(card.querySelector('[data-ship-reason]').textContent,/Ressourcen/);
  input(w,count,'1');assert.equal(card.querySelector('[data-action="ship"]').disabled,false);
  for(const invalid of ['0','1.5','-1','',String(Number.MAX_SAFE_INTEGER+1)]){input(w,count,invalid);assert.equal(card.querySelector('[data-action="ship"]').disabled,true);api.tick();assert.equal(card.querySelector('[data-action="ship"]').disabled,true);}
- input(w,count,'1');card.querySelector('[data-ship-adjust="-1"]').click();assert.equal(count.value,'1');card.querySelector('[data-ship-adjust="1"]').click();assert.equal(count.value,'2');
+ input(w,card.querySelector('[data-production-range]'),'2');assert.equal(count.value,'2');card.querySelector('[data-production-set="0"]').click();assert.equal(count.value,'0');assert.equal(card.querySelector('[data-action="ship"]').disabled,true);
 });
 test('ship counts and detail state survive rerender but remain separate per planet',t=>{
  const {doc,w,api}=ready(t);let card=doc.querySelector('[data-ship-card="falke"]');input(w,card.querySelector('[data-ship-count]'),'12');card.querySelector('[data-ship-toggle]').click();api.render();card=doc.querySelector('[data-ship-card="falke"]');assert.equal(card.querySelector('[data-ship-count]').value,'12');assert.equal(card.querySelector('.ship-extra').hidden,false);
