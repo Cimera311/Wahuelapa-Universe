@@ -1,5 +1,5 @@
 // @ts-nocheck — Generated dashboard bundle; edit source modules instead.
-// Game-command 2026-10-17.02 — Oeffentliches PvE, private Stationsdaten und Admin-Realm-Einstellungen.
+
 // supabase/functions/game-command/index.ts
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
 
@@ -662,10 +662,11 @@ function nextCargoSpaceEvent(s, p) {
 }
 function waitingCargo(s) {
   for (const m of [...s.missions]) if (m.paused && m.type === "route") {
-    unloadCargo(getPlanet(s, m.home), m.cargo);
+    const out = unloadCargo(getPlanet(s, m.home), m.cargo);
+    if (cargoPresent(out)) routeActivity(s, m, m.home, out, vector([0, 0, 0]), "unload");
   } else if (m.awaitingUnload) {
-    const p = getPlanet(s, m.awaitingUnload);
-    unloadCargo(p, m.cargo);
+    const p = getPlanet(s, m.awaitingUnload), out = unloadCargo(p, m.cargo);
+    if (m.type === "route" && cargoPresent(out)) routeActivity(s, m, p.id, out, vector([0, 0, 0]), "unload");
     m.due = s.time;
     if (!cargoPresent(m.cargo)) parkFleet(s, m, p.id, m.finishTitle || "Flotte entladen");
   }
@@ -901,10 +902,25 @@ function loadCargo(s, p, cargo, order, count, ship = "transport", fleet = null) 
   }
   settle(p);
 }
-function stopCargo(s, m, stop) {
-  const p = getPlanet(s, stop.planet);
-  unloadCargo(p, m.cargo, stop.unload);
+function routeStats(s, m) {
+  return m.stats ??= { since: s.time, roundsAtStart: m.rounds, stops: 0, loaded: vector([0, 0, 0]), delivered: vector([0, 0, 0]), fuelPaid: 0, last: null };
+}
+var routeSum = (a, b) => Math.min(Number.MAX_SAFE_INTEGER, a + b);
+function routeActivity(s, m, planet2, delivered, loaded, kind = "stop", visit = false) {
+  const z = routeStats(s, m), previous = z.last;
+  for (const k of RES) {
+    z.delivered[k] = routeSum(z.delivered[k], delivered[k]);
+    z.loaded[k] = routeSum(z.loaded[k], loaded[k]);
+  }
+  if (visit) z.stops = routeSum(z.stops, 1);
+  const same = previous?.at === s.time && previous.planet === planet2;
+  z.last = { at: s.time, planet: planet2, kind: kind === "stop" && same && previous.kind === "round" ? "round" : kind, delivered: vector(RES.map((k) => delivered[k] + (same ? previous.delivered[k] : 0))), loaded: vector(RES.map((k) => loaded[k] + (same ? previous.loaded[k] : 0))) };
+  s.seq++;
+}
+function stopCargo(s, m, stop, kind = "stop", visit = true) {
+  const p = getPlanet(s, stop.planet), out = unloadCargo(p, m.cargo, stop.unload), before = { ...m.cargo };
   loadCargo(s, p, m.cargo, stop.load, m.count, m.ship, fleetManifest(m));
+  routeActivity(s, m, p.id, out, vector(RES.map((k) => m.cargo[k] - before[k])), kind, visit);
 }
 function leaveRoute(s, m, index) {
   const from = m.stops[m.index].planet, to = m.stops[index].planet, f = mixedRouteLeg(s, getPlanet(s, from), getPlanet(s, to), fleetManifest(m));
@@ -916,8 +932,8 @@ function leaveRoute(s, m, index) {
   m.due = s.time + f.ms;
 }
 function parkFleet(s, m, id, title) {
-  const p = getPlanet(s, id);
-  unloadCargo(p, m.cargo);
+  const p = getPlanet(s, id), out = unloadCargo(p, m.cargo);
+  if (m.type === "route" && cargoPresent(out)) routeActivity(s, m, id, out, vector([0, 0, 0]), "unload");
   if (cargoPresent(m.cargo)) {
     if (!m.awaitingUnload) report(s, "Flotte wartet auf Lagerplatz", `${p.name}: Restladung bleibt im Frachter. Schiffe bleiben gebunden.`);
     m.awaitingUnload = id;
@@ -929,7 +945,8 @@ function parkFleet(s, m, id, title) {
   putHulls(p, m.hulls);
   p.shieldUntil = Math.max(p.shieldUntil || 0, m.shieldUntil || 0);
   s.missions = s.missions.filter((x) => x.id !== m.id);
-  report(s, title, `${Object.entries(fleetManifest(m)).map(([k, n]) => n + " \xD7 " + SHIPS[k].name).join(", ")} im Orbit von ${p.name}. Ladung wurde eingelagert.`);
+  const summary = m.type === "route" && m.stats ? ` ${m.rounds} Runden insgesamt. Seit Statistikbeginn (${new Date(m.stats.since).toISOString()}) geliefert M/K/T: ${RES.map((k) => Math.floor(m.stats.delivered[k])).join("/")}; geladen M/K/T: ${RES.map((k) => Math.floor(m.stats.loaded[k])).join("/")}; ${m.stats.stops} Stopps; Treibstoff bezahlt: ${m.stats.fuelPaid}.` : "";
+  report(s, title, `${Object.entries(fleetManifest(m)).map(([k, n]) => n + " \xD7 " + SHIPS[k].name).join(", ")} im Orbit von ${p.name}. Ladung wurde eingelagert.${summary}`);
 }
 function applyRouteEdit(s, m) {
   if (!m.pending) return;
@@ -959,21 +976,23 @@ function pauseRoute(s, m, reason = "Manuell pausiert") {
   m.pauseReason = reason;
   report(s, "Handelsroute pausiert", `${m.name}: ${reason}. Schiffe bleiben an die Route gebunden.`);
 }
-function resumeRoute(s, m) {
+function resumeRoute(s, m, continuing = false) {
   const p = getPlanet(s, m.home), f = routeInfo(s, m.stops, fleetManifest(m));
   if (p.resources.fuel - (p.reserves?.fuel || 0) < f.fuel) throw Error("Treibstoff reicht nicht f\xFCr die Runde einschlie\xDFlich Reserve.");
   pay(p, vector([0, 0, f.fuel]));
+  const z = routeStats(s, m);
+  z.fuelPaid = routeSum(z.fuelPaid, f.fuel);
   m.paused = false;
   m.pauseRequested = false;
   delete m.pauseReason;
-  stopCargo(s, m, m.stops[0]);
+  stopCargo(s, m, m.stops[0], continuing ? "round" : "resumed", false);
   leaveRoute(s, m, 1);
 }
 function routeArrival(s, m) {
   if (m.index === 0) {
-    unloadCargo(getPlanet(s, m.home), m.cargo);
+    const out = unloadCargo(getPlanet(s, m.home), m.cargo);
+    routeActivity(s, m, m.home, out, vector([0, 0, 0]), "round", true);
     m.rounds++;
-    report(s, "Handelsrunde abgeschlossen", `${m.name}: Runde ${m.rounds} beendet.`);
     if (m.pending && !m.stopping && applyRouteEdit(s, m) === false) report(s, "Routen\xE4nderung wartet", `${m.name}: Am Startplaneten fehlen Schiffe; bisherige Route bleibt aktiv.`);
     if (m.stopping) {
       parkFleet(s, m, m.home, "Handelsroute beendet");
@@ -992,10 +1011,9 @@ function routeArrival(s, m) {
       pauseRoute(s, m, "Treibstoff fehlt");
       return;
     }
-    resumeRoute(s, m);
+    resumeRoute(s, m, true);
   } else {
     stopCargo(s, m, m.stops[m.index]);
-    report(s, "Handelsstopp", `${m.name}: ${getPlanet(s, m.to).name} \xB7 Runde ${m.rounds + 1}.`);
     leaveRoute(s, m, (m.index + 1) % m.stops.length);
   }
 }
@@ -1003,6 +1021,7 @@ function advance(s, now, collectDebris) {
   if (!Number.isFinite(now)) throw Error("Ung\xFCltige Zeit.");
   if (!collectDebris) now = Math.min(now, ...s.missions.filter((m) => m.type === "salvage" && m.phase === "outbound").map((m) => m.due - 1));
   now = Math.max(now, s.time);
+  for (const m of s.missions) if (m.type === "route") routeStats(s, m);
   waitingCargo(s);
   let guard = 0;
   while (true) {
@@ -1295,7 +1314,8 @@ function act(s, action, now = Date.now()) {
       if (p.resources.fuel - (p.reserves?.fuel || 0) < f.fuel) throw Error("Treibstoff reicht nicht f\xFCr die Runde einschlie\xDFlich Reserve.");
       pay(p, vector([0, 0, f.fuel]));
       Object.assign(m, { name: String(action.name || "Handelsroute").trim().slice(0, 40) || "Handelsroute", stops: structuredClone(stops), home: p.id, index: 0, repeat: !!action.repeat, stopping: false, rounds: 0 });
-      stopCargo(n, m, stops[0]);
+      routeStats(n, m).fuelPaid = f.fuel;
+      stopCargo(n, m, stops[0], "started", false);
       leaveRoute(n, m, 1);
     } else {
       if (manifest) {
@@ -2106,6 +2126,14 @@ function validateSave(input) {
       check(m.phase === "outbound" && text(m.name, 40) && typeof m.repeat === "boolean" && typeof m.stopping === "boolean" && integer(m.rounds, 1e12) && Array.isArray(m.stops) && m.stops.length >= 2 && m.stops.length <= 12 && ids.includes(m.home) && m.stops[0].planet === m.home && integer(m.index, m.stops.length - 1));
       check(m.stops.every((stop, i) => ids.includes(stop.planet) && stop.planet !== m.stops[(i + 1) % m.stops.length].planet && order(stop.load) && order(stop.unload)) && m.to === m.stops[m.index].planet && m.from === m.stops[(m.index + m.stops.length - 1) % m.stops.length].planet);
     }
+    if (m.stats !== void 0) {
+      const z = m.stats, amounts = (v) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === RES.length && RES.every((k) => isNum(v[k], Number.MAX_SAFE_INTEGER));
+      check(m.type === "route" && z && typeof z === "object" && !Array.isArray(z) && Object.keys(z).length === 7 && isNum(z.since, s.time) && integer(z.roundsAtStart, m.rounds) && integer(z.stops, Number.MAX_SAFE_INTEGER) && amounts(z.loaded) && amounts(z.delivered) && integer(z.fuelPaid, Number.MAX_SAFE_INTEGER));
+      if (z.last !== null) {
+        const a = z.last;
+        check(a && typeof a === "object" && !Array.isArray(a) && Object.keys(a).length === 5 && isNum(a.at, s.time) && a.at >= z.since && ids.includes(a.planet) && ["started", "stop", "round", "unload", "resumed"].includes(a.kind) && amounts(a.loaded) && amounts(a.delivered));
+      }
+    }
     eventIds.push(m.id);
   }
   check(new Set(eventIds).size === eventIds.length);
@@ -2467,7 +2495,7 @@ function projectPvP(w, uid) {
     serverNow: w.now,
     social: socialProjection(w, uid),
     pirates: projectPirates(w, uid),
-    features: { pirates: w.pirateVersion === 1, piratesPublic: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
+    features: { routeStatistics: true, pirates: w.pirateVersion === 1, piratesPublic: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,
