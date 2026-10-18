@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-18.02",
+  "latest": "2026-10-18.03",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -204,6 +204,13 @@
       "sourceCommit": "e9a20288fc3669bd2990762c6312831914e7954a",
       "description": "Cloud-Ladediagnose: feste Validierungsregeln, Eingabe-/Ausgabephase und datensparsame Serverlogs",
       "sha256": "1317ed6bf00366467e7123a69db903d6e60a1b1301992432724dea55b89134c7"
+    },
+    {
+      "version": "2026-10-18.03",
+      "createdAt": "2026-10-18T18:51:15.802Z",
+      "sourceCommit": "4f0aba1fc5ba05fc2aba0dde5d382eb404180b0f",
+      "description": "Fix processed/SV057: Position nach Routenänderung bei Rückkehr vor Pause oder Restentladung aktualisieren",
+      "sha256": "4aec4d2d6178ad8a0d9da2fa990a755fc9b4666cb48abb8c6d9a13fc8eda34bc"
     }
   ]
 }
