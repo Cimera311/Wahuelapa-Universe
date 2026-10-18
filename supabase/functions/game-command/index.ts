@@ -13,5 +13,12 @@ Deno.serve(async req=>{
   const raw=await req.text();if(raw.length>32000)return new Response(JSON.stringify({error:'Anfrage zu groß.'}),{status:413,headers});
   const result=await runServerCommand(db,data.user.id,JSON.parse(raw));
   return new Response(JSON.stringify(result),{headers});
- }catch(error){const status=error instanceof Error&&'status' in error?Number(error.status):400;return new Response(JSON.stringify({error:error instanceof Error?error.message:'Serverfehler.'}),{status,headers});}
+ }catch(error){
+  if(error?.code==='WORLD_SAVE_INVALID'){
+   // Static diagnostic fields only: no player IDs, state, token or request body.
+   const diagnostic={code:error.code,phase:error.phase,rule:error.rule};
+   console.error('world_save_validation_failed',JSON.stringify(diagnostic));
+   return new Response(JSON.stringify({error:error.message,...diagnostic}),{status:503,headers});
+  }
+  const status=error instanceof Error&&'status' in error?Number(error.status):400;return new Response(JSON.stringify({error:error instanceof Error?error.message:'Serverfehler.'}),{status,headers});}
 });

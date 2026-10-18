@@ -3,7 +3,7 @@ import {repairDefense,reconcileRepairBattle,recordDisabledDefenses} from './repa
 import {socialAction,settleSocialCargo,socialEvents,arriveSocial,socialDefense,socialProjection} from './social-world.js';
 import {RES,attackSlots,BUILDINGS,SHIPS,vector} from './config.js';
 import {newGame,getPlanet,advance,act,capacity,settle,fleetCapacity,unloadCargo,cargoPresent,nextCargoSpaceEvent} from './engine.js';
-import {validateSave} from './storage.js';
+import {validateSave,SaveValidationError} from './storage.js';
 import {galaxyFlight} from './galaxy.js';
 import {GALAXY_FLIGHT_RULE_VERSION} from './flight.js';
 import {attackFleet,attackFlight,warningFraction,resolveBattle,COMBAT_RULE_VERSION,loadPlunder,takeHulls,putHulls} from './combat.js';
@@ -17,10 +17,21 @@ function log(s,time,title,body){s.reports.unshift({id:++s.seq,time:Math.max(time
 function subtract(p,cost){settle(p);for(const k of RES)if(p.resources[k]<cost[k])throw Error('Lokale Ressourcen reichen nicht.');for(const k of RES)p.resources[k]-=cost[k];settle(p);}
 function withdraw(p,cargo){for(const k of RES){const n=Math.min(p.resources[k],cargo[k]);p.resources[k]-=n;p.depot[k]-=cargo[k]-n;}settle(p);}
 function fleetText(fleet){return Object.entries(fleet).map(([k,n])=>n+' × '+SHIPS[k].name).join(', ')||'keine';}
+// A failed shared-world validation must abort before commit. Expose only a
+// phase and static rule ID, never the affected player's identity or save data.
+function validateWorldSave(state,phase){
+ try{return validateSave(state);}catch(error){
+  if(error instanceof SaveValidationError){
+   error.code='WORLD_SAVE_INVALID';error.phase=phase;error.status=503;
+   error.message+=' Diagnose: '+phase+'/'+error.rule+'.';
+  }
+  throw error;
+ }
+}
 export function prepareWorld(snapshot){
  const w=structuredClone(snapshot);
  w.now=ms(w.now);
- w.saves=w.saves.map(row=>({...row,state:validateSave(row.state)}));
+ w.saves=w.saves.map(row=>({...row,state:validateWorldSave(row.state,'stored')}));
  w.partners=(w.partners||[]).filter(p=>p.status!=='ended');w.socialMissions=(w.socialMissions||[]).filter(m=>!['returned','lost'].includes(m.status));w.trades=(w.trades||[]).filter(t=>t.status==='offered'&&t.expires>w.now);w.attacks??=[];w.missions??=[];w.surveys??=[];w.planets??=[];w.starts??=[];w.admins??=[];
  for(const p of w.planets)if(p.colonized_at)p.colonized_at=ms(p.colonized_at);
  for(const m of w.missions)for(const key of ['started_at','arrival_at','finish_at'])m[key]=ms(m[key]);
@@ -196,7 +207,7 @@ export function processWorld(snapshot,uid,request){
  else if(!['new','sync'].includes(type))throw Error('Unbekannte Anfrage.');
  settleSocialCargo(w,w.now);settleRaidCargo(w,w.now);settlePirates(w,w.now);refreshPirates(w,w.now);
  pirateFleetShadows(w);
- for(const row of w.saves)row.state=validateSave(row.state);
+ for(const row of w.saves)row.state=validateWorldSave(row.state,'processed');
  return w;
 }
 export function projectPvP(w,uid){
