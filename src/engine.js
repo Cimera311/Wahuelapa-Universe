@@ -34,7 +34,7 @@ export function unloadCargo(p,cargo,order=null){settle(p);const cap=capacity(p),
 export function cargoPresent(cargo){return RES.some(k=>cargo[k]>0);}
 // Shared cargo can become unloadable when a warehouse completes or a local route loads.
 export function nextCargoSpaceEvent(s,p){return Math.min(p.build?.key==='warehouse'?p.build.end:Infinity,...s.missions.filter(m=>!m.paused&&!m.awaitingUnload).map(m=>m.due));}
-function waitingCargo(s){for(const m of [...s.missions])if(m.paused&&m.type==='route'){unloadCargo(getPlanet(s,m.home),m.cargo);}else if(m.awaitingUnload){const p=getPlanet(s,m.awaitingUnload);unloadCargo(p,m.cargo);m.due=s.time;if(!cargoPresent(m.cargo))parkFleet(s,m,p.id,m.finishTitle||'Flotte entladen');}}
+function waitingCargo(s){for(const m of [...s.missions])if(m.paused&&m.type==='route'){const out=unloadCargo(getPlanet(s,m.home),m.cargo);if(cargoPresent(out))routeActivity(s,m,m.home,out,vector([0,0,0]),'unload');}else if(m.awaitingUnload){const p=getPlanet(s,m.awaitingUnload),out=unloadCargo(p,m.cargo);if(m.type==='route'&&cargoPresent(out))routeActivity(s,m,p.id,out,vector([0,0,0]),'unload');m.due=s.time;if(!cargoPresent(m.cargo))parkFleet(s,m,p.id,m.finishTitle||'Flotte entladen');}}
 // Work is measured in milliseconds at full power; forecasts never replace earned progress.
 function forecastShipJobs(s){for(const p of s.planets)for(const kind of ['ship','orbital']){const j=p[kind+'job'];if(!j)continue;
  if(j.workRemaining===undefined){j.orderEnd=j.end;j.workTotal=j.end-j.start;j.workRemaining=Math.max(0,j.end-s.time);}
@@ -118,9 +118,22 @@ function checkedStops(s,stops,home){if(!Array.isArray(stops)||stops.length<2||st
 function setFleet(m,fleet){m.fleet={...fleet};[m.ship,m.count]=Object.entries(fleet)[0];}
 function validOrder(order){return order&&RES.every(k=>order[k]==='max'||Number.isSafeInteger(order[k])&&order[k]>=0&&order[k]<=1e12);}
 function loadCargo(s,p,cargo,order,count,ship='transport',fleet=null){settle(p);let room=(fleet?fleetCapacity(s,fleet):cargoCapacity(s,count,ship))-RES.reduce((a,k)=>a+cargo[k],0);for(const k of RES){const want=order[k]==='max'?Infinity:order[k];const amount=Math.min(room,want,Math.floor(Math.max(0,p.resources[k]+p.depot[k]-(p.reserves?.[k]||0))));cargo[k]+=amount;const local=Math.min(amount,p.resources[k]);p.resources[k]-=local;p.depot[k]-=amount-local;room-=amount;}settle(p);}
-function stopCargo(s,m,stop){const p=getPlanet(s,stop.planet);unloadCargo(p,m.cargo,stop.unload);loadCargo(s,p,m.cargo,stop.load,m.count,m.ship,fleetManifest(m));}
+// Fixed-size counters replace one permanent report per successful route event.
+// Legacy routes start at their last canonical simulation time; no history is inferred.
+function routeStats(s,m){return m.stats??={since:s.time,roundsAtStart:m.rounds,stops:0,loaded:vector([0,0,0]),delivered:vector([0,0,0]),fuelPaid:0,last:null};}
+const routeSum=(a,b)=>Math.min(Number.MAX_SAFE_INTEGER,a+b);
+function routeActivity(s,m,planet,delivered,loaded,kind='stop',visit=false){
+ const z=routeStats(s,m),previous=z.last;
+ for(const k of RES){z.delivered[k]=routeSum(z.delivered[k],delivered[k]);z.loaded[k]=routeSum(z.loaded[k],loaded[k]);}
+ if(visit)z.stops=routeSum(z.stops,1);
+ const same=previous?.at===s.time&&previous.planet===planet;
+ z.last={at:s.time,planet,kind:kind==='stop'&&same&&previous.kind==='round'?'round':kind,delivered:vector(RES.map(k=>delivered[k]+(same?previous.delivered[k]:0))),loaded:vector(RES.map(k=>loaded[k]+(same?previous.loaded[k]:0)))};
+ // seq also invalidates route cards when no report is appended.
+ s.seq++;
+}
+function stopCargo(s,m,stop,kind='stop',visit=true){const p=getPlanet(s,stop.planet),out=unloadCargo(p,m.cargo,stop.unload),before={...m.cargo};loadCargo(s,p,m.cargo,stop.load,m.count,m.ship,fleetManifest(m));routeActivity(s,m,p.id,out,vector(RES.map(k=>m.cargo[k]-before[k])),kind,visit);}
 function leaveRoute(s,m,index){const from=m.stops[m.index].planet,to=m.stops[index].planet,f=mixedRouteLeg(s,getPlanet(s,from),getPlanet(s,to),fleetManifest(m));m.from=from;m.to=to;m.index=index;m.start=s.time;m.duration=f.ms;m.due=s.time+f.ms;}
-function parkFleet(s,m,id,title){const p=getPlanet(s,id);unloadCargo(p,m.cargo);if(cargoPresent(m.cargo)){if(!m.awaitingUnload)report(s,'Flotte wartet auf Lagerplatz',`${p.name}: Restladung bleibt im Frachter. Schiffe bleiben gebunden.`);m.awaitingUnload=id;m.finishTitle=title;m.due=s.time;return;}for(const [k,n] of Object.entries(fleetManifest(m)))p.ships[k]+=n;putHulls(p,m.hulls);p.shieldUntil=Math.max(p.shieldUntil||0,m.shieldUntil||0);s.missions=s.missions.filter(x=>x.id!==m.id);report(s,title,`${Object.entries(fleetManifest(m)).map(([k,n])=>n+' × '+SHIPS[k].name).join(', ')} im Orbit von ${p.name}. Ladung wurde eingelagert.`);}
+function parkFleet(s,m,id,title){const p=getPlanet(s,id),out=unloadCargo(p,m.cargo);if(m.type==='route'&&cargoPresent(out))routeActivity(s,m,id,out,vector([0,0,0]),'unload');if(cargoPresent(m.cargo)){if(!m.awaitingUnload)report(s,'Flotte wartet auf Lagerplatz',`${p.name}: Restladung bleibt im Frachter. Schiffe bleiben gebunden.`);m.awaitingUnload=id;m.finishTitle=title;m.due=s.time;return;}for(const [k,n] of Object.entries(fleetManifest(m)))p.ships[k]+=n;putHulls(p,m.hulls);p.shieldUntil=Math.max(p.shieldUntil||0,m.shieldUntil||0);s.missions=s.missions.filter(x=>x.id!==m.id);const summary=m.type==='route'&&m.stats?` ${m.rounds} Runden insgesamt. Seit Statistikbeginn (${new Date(m.stats.since).toISOString()}) geliefert M/K/T: ${RES.map(k=>Math.floor(m.stats.delivered[k])).join('/')}; geladen M/K/T: ${RES.map(k=>Math.floor(m.stats.loaded[k])).join('/')}; ${m.stats.stops} Stopps; Treibstoff bezahlt: ${m.stats.fuelPaid}.`:'';report(s,title,`${Object.entries(fleetManifest(m)).map(([k,n])=>n+' × '+SHIPS[k].name).join(', ')} im Orbit von ${p.name}. Ladung wurde eingelagert.${summary}`);}
 function applyRouteEdit(s,m){
  if(!m.pending)return;
  const next=m.pending,p=getPlanet(s,m.home),old=fleetManifest(m);
@@ -135,27 +148,28 @@ function pauseRoute(s,m,reason='Manuell pausiert'){
  m.paused=true;m.pauseRequested=false;m.pauseReason=reason;
  report(s,'Handelsroute pausiert',`${m.name}: ${reason}. Schiffe bleiben an die Route gebunden.`);
 }
-function resumeRoute(s,m){
+function resumeRoute(s,m,continuing=false){
  const p=getPlanet(s,m.home),f=routeInfo(s,m.stops,fleetManifest(m));
  if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel)throw Error('Treibstoff reicht nicht für die Runde einschließlich Reserve.');
- pay(p,vector([0,0,f.fuel]));m.paused=false;m.pauseRequested=false;delete m.pauseReason;stopCargo(s,m,m.stops[0]);leaveRoute(s,m,1);
+ pay(p,vector([0,0,f.fuel]));const z=routeStats(s,m);z.fuelPaid=routeSum(z.fuelPaid,f.fuel);m.paused=false;m.pauseRequested=false;delete m.pauseReason;stopCargo(s,m,m.stops[0],continuing?'round':'resumed',false);leaveRoute(s,m,1);
 }
 function routeArrival(s,m){
- if(m.index===0){unloadCargo(getPlanet(s,m.home),m.cargo);m.rounds++;report(s,'Handelsrunde abgeschlossen',`${m.name}: Runde ${m.rounds} beendet.`);
+ if(m.index===0){const out=unloadCargo(getPlanet(s,m.home),m.cargo);routeActivity(s,m,m.home,out,vector([0,0,0]),'round',true);m.rounds++;
   if(m.pending&&!m.stopping&&applyRouteEdit(s,m)===false)report(s,'Routenänderung wartet',`${m.name}: Am Startplaneten fehlen Schiffe; bisherige Route bleibt aktiv.`);
   if(m.stopping){parkFleet(s,m,m.home,'Handelsroute beendet');return;}
   if(m.pauseRequested){pauseRoute(s,m);return;}
   if(!m.repeat){parkFleet(s,m,m.home,'Handelsroute beendet');return;}
   const p=getPlanet(s,m.home),f=routeInfo(s,m.stops,fleetManifest(m));
   if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel){pauseRoute(s,m,'Treibstoff fehlt');return;}
-  resumeRoute(s,m);
- }else{stopCargo(s,m,m.stops[m.index]);report(s,'Handelsstopp',`${m.name}: ${getPlanet(s,m.to).name} · Runde ${m.rounds+1}.`);leaveRoute(s,m,(m.index+1)%m.stops.length);}
+  resumeRoute(s,m,true);
+ }else{stopCargo(s,m,m.stops[m.index]);leaveRoute(s,m,(m.index+1)%m.stops.length);}
 }
 export function advance(s,now,collectDebris){
  if(!Number.isFinite(now))throw Error('Ungültige Zeit.');
  // Browser prediction waits for the authoritative shared-field arrival.
  if(!collectDebris)now=Math.min(now,...s.missions.filter(m=>m.type==='salvage'&&m.phase==='outbound').map(m=>m.due-1));
  now=Math.max(now,s.time);
+ for(const m of s.missions)if(m.type==='route')routeStats(s,m);
  waitingCargo(s);let guard=0;
  while(true){
   forecastShipJobs(s);
@@ -248,7 +262,7 @@ export function act(s,action,now=Date.now()){
    const stops=checkedStops(n,action.stops,p.id);if(!Array.isArray(stops)||stops.length<2||stops.length>12||stops[0].planet!==p.id)throw Error('Eine Route benötigt 2–12 Stopps und beginnt hier.');
    for(let i=0;i<stops.length;i++){getPlanet(n,stops[i].planet);if(stops[i].planet===stops[(i+1)%stops.length].planet||!validOrder(stops[i].load)||!validOrder(stops[i].unload))throw Error('Ungültiger Stopp oder Laderegel.');}
    if(Object.entries(manifest).some(([k,v])=>p.ships[k]<v))throw Error('Nicht genügend verfügbare Schiffe.');setFleet(m,manifest);const f=routeInfo(n,stops,manifest);if(p.resources.fuel-(p.reserves?.fuel||0)<f.fuel)throw Error('Treibstoff reicht nicht für die Runde einschließlich Reserve.');pay(p,vector([0,0,f.fuel]));
-   Object.assign(m,{name:String(action.name||'Handelsroute').trim().slice(0,40)||'Handelsroute',stops:structuredClone(stops),home:p.id,index:0,repeat:!!action.repeat,stopping:false,rounds:0});stopCargo(n,m,stops[0]);leaveRoute(n,m,1);
+   Object.assign(m,{name:String(action.name||'Handelsroute').trim().slice(0,40)||'Handelsroute',stops:structuredClone(stops),home:p.id,index:0,repeat:!!action.repeat,stopping:false,rounds:0});routeStats(n,m).fuelPaid=f.fuel;stopCargo(n,m,stops[0],'started',false);leaveRoute(n,m,1);
   }else{
    if(manifest){if(Object.entries(manifest).some(([k,v])=>p.ships[k]<v))throw Error('Nicht genügend verfügbare Schiffe.');setFleet(m,manifest);}
    const dest=getPlanet(n,action.to);if(dest.id===p.id)throw Error('Wähle einen anderen Zielplaneten.');if((p.system||'tutorial')!==(dest.system||'tutorial')&&!canFlyInterstellar(n,ship))throw Error(ship==='falke'?'Interstellare Falkenflüge benötigen Falke-Galaxieantrieb 1 und Staustrahltriebwerke 1.':'Interstellare Flüge benötigen Staustrahl-, Impuls- oder Hyperraumtriebwerke.');const f=manifest?fleetLegInfo(n,p,dest,manifest):legInfo(n,p,dest,count,ship);

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-17.02",
+  "latest": "2026-10-18.01",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -190,6 +190,13 @@
       "sourceCommit": "fe463ab75772fd016937b3d4aebdb5a4a867d209",
       "description": "Piraten-PvE für alle Spieler, private Gegnerdaten und Admin-Realm-Einstellungen",
       "sha256": "0272b2934577c0cd9355348df909137b5469531ecaf21a62e160d7fccf0c5656"
+    },
+    {
+      "version": "2026-10-18.01",
+      "createdAt": "2026-10-18T17:23:46.529Z",
+      "sourceCommit": "821b2971fb654e8c2b3d82bb6ee013e08b69c52f",
+      "description": "Handelsrouten: kompakte letzte Aktivitaet, echte Lade- und Lieferzaehler, bezahlter Rundentreibstoff; keine erfolgreichen Routine-Einzelberichte",
+      "sha256": "f892dac78a6525d4e5acfc57614147f6512dc74df4a1237cee9e7ab21097cb36"
     }
   ]
 }
