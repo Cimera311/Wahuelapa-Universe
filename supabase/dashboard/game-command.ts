@@ -1,5 +1,5 @@
 // @ts-nocheck — Generated dashboard bundle; edit source modules instead.
-// Game-command 2026-10-17.02 — Oeffentliches PvE, private Stationsdaten und Admin-Realm-Einstellungen.
+
 // supabase/functions/game-command/index.ts
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
 
@@ -198,11 +198,11 @@ var PIRATE_REALM_DEFAULTS = Object.freeze({
   debrisLifetimeHours: 24,
   maxMissions: 20,
   stations: {
-    smugglers: { enabled: true, sensor: 1, fleet: { falke: 3 }, resources: { metal: 2400, crystal: 1600, fuel: 400 }, tech: { weapons: 0, armor: 0, shields: 0 } },
-    outpost: { enabled: true, sensor: 3, fleet: { falke: 12, waechter: 2, flak: 2 }, resources: { metal: 9e3, crystal: 6e3, fuel: 1800 }, tech: { weapons: 1, armor: 1, shields: 1 } },
-    harbor: { enabled: true, sensor: 5, fleet: { falke: 30, waechter: 10, donner: 2, laser: 4 }, resources: { metal: 28e3, crystal: 22e3, fuel: 6e3 }, tech: { weapons: 2, armor: 2, shields: 2 } },
-    fortress: { enabled: true, sensor: 7, fleet: { falke: 60, waechter: 25, donner: 10, titan: 2, rail: 6 }, resources: { metal: 85e3, crystal: 65e3, fuel: 16e3 }, tech: { weapons: 3, armor: 3, shields: 3 } },
-    headquarters: { enabled: true, sensor: 10, fleet: { falke: 120, waechter: 60, donner: 30, titan: 12, plasma: 10 }, resources: { metal: 24e4, crystal: 18e4, fuel: 45e3 }, tech: { weapons: 5, armor: 5, shields: 5 } }
+    smugglers: { enabled: true, cooldownMinutes: 60, sensor: 1, fleet: { falke: 3 }, resources: { metal: 2400, crystal: 1600, fuel: 400 }, tech: { weapons: 0, armor: 0, shields: 0 } },
+    outpost: { enabled: true, cooldownMinutes: 60, sensor: 3, fleet: { falke: 12, waechter: 2, flak: 2 }, resources: { metal: 9e3, crystal: 6e3, fuel: 1800 }, tech: { weapons: 1, armor: 1, shields: 1 } },
+    harbor: { enabled: true, cooldownMinutes: 60, sensor: 5, fleet: { falke: 30, waechter: 10, donner: 2, laser: 4 }, resources: { metal: 28e3, crystal: 22e3, fuel: 6e3 }, tech: { weapons: 2, armor: 2, shields: 2 } },
+    fortress: { enabled: true, cooldownMinutes: 360, sensor: 7, fleet: { falke: 60, waechter: 25, donner: 10, titan: 2, rail: 6 }, resources: { metal: 85e3, crystal: 65e3, fuel: 16e3 }, tech: { weapons: 3, armor: 3, shields: 3 } },
+    headquarters: { enabled: true, cooldownMinutes: 360, sensor: 10, fleet: { falke: 120, waechter: 60, donner: 30, titan: 12, plasma: 10 }, resources: { metal: 24e4, crystal: 18e4, fuel: 45e3 }, tech: { weapons: 5, armor: 5, shields: 5 } }
   }
 });
 function pirateConfig(input = {}) {
@@ -216,8 +216,9 @@ function pirateConfig(input = {}) {
   if (input.stations !== void 0 && (!input.stations || typeof input.stations !== "object" || Array.isArray(input.stations) || Object.keys(input.stations).some((id) => !Object.hasOwn(c.stations, id)))) throw Error("Unbekannte Piratenstation.");
   for (const meta of PIRATE_STATION_META) {
     const patch = input.stations?.[meta.id] || {}, b = c.stations[meta.id];
-    if (Object.keys(patch).some((k) => !["enabled", "sensor", "fleet", "resources", "tech"].includes(k))) throw Error("Unbekannter Stationswert.");
+    if (Object.keys(patch).some((k) => !["enabled", "cooldownMinutes", "sensor", "fleet", "resources", "tech"].includes(k))) throw Error("Unbekannter Stationswert.");
     Object.assign(b, structuredClone(patch));
+    if (b.cooldownMinutes !== null && (!Number.isSafeInteger(b.cooldownMinutes) || b.cooldownMinutes < 1 || b.cooldownMinutes > 1440)) throw Error("Ung\xFCltige Stations-Abklingzeit.");
     if (typeof b.enabled !== "boolean" || !Number.isSafeInteger(b.sensor) || b.sensor < 0 || b.sensor > 100) throw Error("Ung\xFCltige Sensoranforderung.");
     if (!b.fleet || Array.isArray(b.fleet) || !Object.keys(b.fleet).length || Object.entries(b.fleet).some(([k, n]) => !["military", "defense"].includes(SHIPS[k]?.category) || !Number.isSafeInteger(n) || n < 1 || n > 1e4) || Object.values(b.fleet).reduce((a, n) => a + n, 0) * c.strengthFactor > 1e5) throw Error("Ung\xFCltige Piratenbesatzung.");
     if (!b.resources || Object.keys(b.resources).some((k) => !RES.includes(k)) || RES.some((k) => !Number.isSafeInteger(b.resources[k]) || b.resources[k] < 0 || b.resources[k] > 1e8)) throw Error("Ung\xFCltiges Piratendepot.");
@@ -239,6 +240,9 @@ function pirateFlight(s, from, station, fleet, c) {
     fuel += 2 * f.fuel;
   }
   return { ms: Math.max(1e3, Math.ceil(ms2 * c.flightTimeFactor)), fuel: Math.ceil(fuel * c.fuelFactor), slowest };
+}
+function pirateCooldownMinutes(config, station) {
+  return config.stations[station].cooldownMinutes ?? config.cooldownMinutes;
 }
 
 // src/repair.js
@@ -1574,17 +1578,32 @@ function pirateLog(s, time, title, body) {
   s.reports = s.reports.slice(0, 60);
 }
 function spawnPirate(meta, c, time, old) {
-  const b = c.stations[meta.id];
-  return { id: meta.id, generation: (old?.generation || 0) + 1, sensor: b.sensor, enabled: b.enabled, tech: { ...b.tech }, fleet: Object.fromEntries(Object.entries(b.fleet).map(([k, n]) => [k, Math.max(1, Math.round(n * c.strengthFactor))])), hulls: {}, resources: vector(RES.map((k) => Math.floor(b.resources[k] * c.resourceFactor))), debris: { ...old?.debris || pirateZero() }, debrisExpiresAt: old?.debrisExpiresAt || 0, refreshAt: time + c.cooldownMinutes * 6e4, nextAttackAt: 0, scan: null, defeated: false, cooldownMs: c.cooldownMinutes * 6e4, debrisRate: c.debrisRate, debrisLifetimeMs: c.debrisLifetimeHours * 36e5 };
+  const b = c.stations[meta.id], cooldownMs = pirateCooldownMinutes(c, meta.id) * 6e4;
+  return { id: meta.id, generation: (old?.generation || 0) + 1, sensor: b.sensor, enabled: b.enabled, tech: { ...b.tech }, fleet: Object.fromEntries(Object.entries(b.fleet).map(([k, n]) => [k, Math.max(1, Math.round(n * c.strengthFactor))])), hulls: {}, resources: vector(RES.map((k) => Math.floor(b.resources[k] * c.resourceFactor))), debris: { ...old?.debris || pirateZero() }, debrisExpiresAt: old?.debrisExpiresAt || 0, refreshAt: time + cooldownMs, nextAttackAt: 0, lastAttackAt: old?.lastAttackAt || 0, scan: null, defeated: false, cooldownMs, debrisRate: c.debrisRate, debrisLifetimeMs: c.debrisLifetimeHours * 36e5 };
 }
 function preparePirates(w) {
   if (w.pirateVersion !== 1) return;
   w.pirateConfig = pirateConfig(w.pirateConfig || {});
   w.piratePlayers ??= [];
+  for (const row of w.piratePlayers) for (const meta of PIRATE_STATION_META) syncPirateCooldown(w, row, meta);
+}
+function syncPirateCooldown(w, row, meta) {
+  const q = row.stations[meta.id];
+  if (!q) return;
+  const next = pirateCooldownMinutes(w.pirateConfig, meta.id) * 6e4, old = q.cooldownMs || 36e5;
+  q.lastAttackAt ??= q.nextAttackAt ? q.nextAttackAt - old : row.reports.find((r) => r.station === meta.id)?.at || 0;
+  if (old === next) return;
+  const deadline = q.lastAttackAt + next;
+  if (q.nextAttackAt || q.lastAttackAt && deadline > w.now) {
+    q.nextAttackAt = deadline;
+    q.refreshAt = deadline;
+  } else q.refreshAt = q.refreshAt - old + next;
+  q.cooldownMs = next;
 }
 function refreshPirates(w, time) {
   if (w.pirateVersion !== 1) return;
   for (const row of w.piratePlayers) for (const meta of PIRATE_STATION_META) {
+    syncPirateCooldown(w, row, meta);
     let q = row.stations[meta.id];
     if (!q || time >= q.refreshAt && !row.missions.some((m) => m.station === meta.id && m.kind === "attack" && m.status === "outbound")) q = row.stations[meta.id] = spawnPirate(meta, w.pirateConfig, time, q);
     if (q.debrisExpiresAt && time >= q.debrisExpiresAt) {
@@ -1698,6 +1717,7 @@ function arrivePirate(w, uid, m, time) {
     station.fleet = result2.defender.fleet;
     station.hulls = result2.defender.hulls;
     station.defeated = !Object.values(station.fleet).some((n) => n > 0);
+    station.lastAttackAt = time;
     station.nextAttackAt = time + station.cooldownMs;
     station.refreshAt = station.nextAttackAt;
     m.fleet = result2.attacker.fleet;
@@ -1743,7 +1763,7 @@ function projectPirates(w, uid) {
   const row = pirateOwner(w, uid);
   return { config: w.admins.includes(uid) ? structuredClone(w.pirateConfig) : { flightTimeFactor: w.pirateConfig.flightTimeFactor, fuelFactor: w.pirateConfig.fuelFactor }, stations: PIRATE_STATION_META.map((meta) => {
     const q = row?.stations[meta.id];
-    return { ...meta, sensor: q?.sensor ?? w.pirateConfig.stations[meta.id].sensor, enabled: w.pirateConfig.enabled && w.pirateConfig.stations[meta.id].enabled, initialized: !!q, generation: q?.generation, refreshAt: q?.refreshAt || 0, nextAttackAt: q?.nextAttackAt || 0, defeated: !!q?.defeated, debris: { ...q?.debris || pirateZero() }, debrisExpiresAt: q?.debrisExpiresAt || 0, scan: q?.scan ? structuredClone(q.scan) : null };
+    return { ...meta, cooldownMinutes: pirateCooldownMinutes(w.pirateConfig, meta.id), sensor: q?.sensor ?? w.pirateConfig.stations[meta.id].sensor, enabled: w.pirateConfig.enabled && w.pirateConfig.stations[meta.id].enabled, initialized: !!q, generation: q?.generation, refreshAt: q?.refreshAt || 0, nextAttackAt: q?.nextAttackAt || 0, defeated: !!q?.defeated, debris: { ...q?.debris || pirateZero() }, debrisExpiresAt: q?.debrisExpiresAt || 0, scan: q?.scan ? structuredClone(q.scan) : null };
   }), missions: structuredClone(row?.missions || []).map(({ seed, combatConfig, initialFleet, ...m }) => m), reports: structuredClone(row?.reports || []) };
 }
 function pirateDefense(w, uid, planet2) {
