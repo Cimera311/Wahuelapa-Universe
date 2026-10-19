@@ -1,0 +1,7 @@
+{
+  "version": "2026-10-19.01",
+  "createdAt": "2026-10-19T12:07:41.081Z",
+  "sourceCommit": "fb062c2e1653a42b8803d952064d6575f435f66d",
+  "description": "Kampfengine v7: Zielbindung bis zur Zerstoerung, zieltreue Rapid-Fire-Zusatzsalven, keine RF-Zielprioritaet; v3-v6 und laufende Angriffe bleiben erhalten",
+  "sha256": "d6dbda411aa3df9f4961b2859c10de9670728937596ffa5c49b3ccc9503bd6cc"
+}

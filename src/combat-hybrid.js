@@ -112,6 +112,60 @@ function fireRapid(shooters,enemies,random,summary,rapid){
   }
  }
 }
+// v7 keeps a per-ship lock across normal shots and rounds. Target availability
+// follows damage already scheduled by this side, but count/hp remain untouched
+// until BOTH sides have fired, preserving simultaneous return fire.
+function fireBound(shooters,enemies,random,summary,rapid,locks){
+ const pools=enemies.map(group=>{
+  const indices=group.indices.slice(0,group.count),positions=new Uint32Array(group.hp.length);
+  for(let j=0;j<indices.length;j++)positions[indices[j]]=j;
+  return {group,count:group.count,indices,positions};
+ });
+ const byGroup=new Map(pools.map(p=>[p.group,p]));
+ const alive=([g,i])=>g.hp[i]>1e-8&&g.hp[i]+g.shield[i]-(g.damage.get(i)||0)>1e-8;
+ const pick=()=>{
+  const active=pools.filter(p=>p.count);
+  const combatants=active.filter(p=>['military','defense'].includes(SHIPS[p.group.key].category));
+  const picked=sampled(combatants.length?combatants:active,random);
+  return picked?[picked[0].group,picked[1]]:null;
+ };
+ const hit=(s,picked,damage,extra)=>{
+  const [target,index]=picked;
+  const wasAlive=alive(picked);
+  target.damage.set(index,(target.damage.get(index)||0)+damage);
+  // Remove a lethal target in O(1). RF may still hit it, but later normal shots
+  // acquire only living targets. No damage spills into another unit.
+  if(wasAlive&&!alive(picked)){
+   const pool=byGroup.get(target),position=pool.positions[index];
+   const last=pool.indices[--pool.count];
+   pool.indices[position]=last;pool.positions[last]=position;
+  }
+  const k=s.key+':'+target.key;
+  const item=summary[k]??={shooter:s.key,target:target.key,shots:0,damage:0,rapidFireShots:0,rapidFireDamage:0,extraSalvos:0};
+  item.shots+=extra?s.stat.shots:1;item.damage+=damage;
+  if(extra){item.rapidFireShots+=s.stat.shots;item.rapidFireDamage+=damage;item.extraSalvos++;}
+ };
+ for(const s of shooters){
+  if(!s.count||!s.stat.attack)continue;
+  let unitLocks=locks.get(s);if(!unitLocks)locks.set(s,unitLocks=new Map());
+  for(let unit=0;unit<s.count;unit++){
+   const index=s.indices[unit];
+   let picked=unitLocks.get(index),extra=0;
+   for(let shot=0;shot<s.stat.shots;shot++){
+    if(!picked||!alive(picked))picked=pick();
+    if(!picked)break;
+    hit(s,picked,s.stat.attack/s.stat.shots,false);
+    // Each normal shot may proc. Extra FULL salvos remain on this same target,
+    // including overkill, with a single shared per-unit/per-round cap.
+    const chance=rapid.chances[s.key]?.[picked[0].key]??0;
+    while(rapid.enabled&&extra<rapid.maxExtraSalvos&&chance>0&&random()<chance){
+     extra++;hit(s,picked,s.stat.attack,true);
+    }
+   }
+   if(picked&&alive(picked))unitLocks.set(index,picked);else unitLocks.delete(index);
+  }
+ }
+}
 function applyDamage(groups){
  const impacts=[];
  for(const g of groups){
@@ -145,10 +199,12 @@ function result(groups){
 function total(groups){return groups.reduce((n,g)=>n+g.count,0);}
 function groupSummary(groups,side){return groups.map(g=>({side,key:g.key,groupId:g.id,...(g.owner?{owner:g.owner}:{}),count:g.count}));}
 export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4,realmOverrides={}){
- if(![4,5,6].includes(experimentalVersion))throw Error('Unknown hybrid rules version');
- const combatSettings=experimentalVersion===6?combatConfigForRealm(realmOverrides):null;
+ if(![4,5,6,7].includes(experimentalVersion))throw Error('Unknown hybrid rules version');
+ const combatSettings=experimentalVersion>=6?combatConfigForRealm(realmOverrides):null;
  const rapid=combatSettings?.rapidFire;
- const fireRound=experimentalVersion===5?fireLocked:experimentalVersion===6?
+ const locks=new Map();
+ const fireRound=experimentalVersion===7?
+  (shooters,enemies,random,summary,settings=rapid)=>fireBound(shooters,enemies,random,summary,settings,locks):experimentalVersion===5?fireLocked:experimentalVersion===6?
   (shooters,enemies,random,summary)=>fireRapid(shooters,enemies,random,summary,rapid):fire;
  const a=cohorts(attacker,'attacker'),d=cohorts(defender,'host'),random=seeded(seed),rounds=[],aggregates=[];
  const initialGroups=[...groupSummary(a,'attacker'),...groupSummary(d,'defender')];
@@ -159,7 +215,10 @@ export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4
   if(opening&&!platforms.length)continue;
   const shots={};
   if(!opening)fireRound(a,d,random,shots);
-  if(opening&&experimentalVersion===6&&!rapid.allowInOrbitalOpening)fireRapid(platforms,a,random,shots,{...rapid,enabled:false});
+  if(opening&&experimentalVersion>=6&&!rapid.allowInOrbitalOpening){
+   if(experimentalVersion===7)fireRound(platforms,a,random,shots,{...rapid,enabled:false});
+   else fireRapid(platforms,a,random,shots,{...rapid,enabled:false});
+  }
   else fireRound(opening?platforms:d,a,random,shots);
   const impacts=applyDamage([...a,...d]);
   rounds.push({round,attacker:total(a),defender:total(d)});
@@ -193,7 +252,8 @@ export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4
    finalGroups:[...groupSummary(a,'attacker'),...groupSummary(d,'defender')],
    tech:{attacker:{...attacker.tech},defender:{...defender.tech}},
    shieldFactors:{attacker:attacker.shieldFactor??1,defender:defender.shieldFactor??1},
-   ...(experimentalVersion===6?{rapidFireRules:rapid}:{}),rounds:aggregates}};
+   ...(experimentalVersion>=6?{rapidFireRules:rapid}:{}),
+   ...(experimentalVersion===7?{targetingRules:{lock:'until-destroyed',rapidFireTarget:'same',proc:'per-normal-shot',extraSalvo:'full',cap:'per-unit-per-round',simultaneous:true}}:{}),rounds:aggregates}};
 }
 
 // Benchmark-only. Not routed from server-world or selectable in production.
@@ -202,4 +262,8 @@ export function resolveBattleHybridV5(attacker,defender,seed){return resolveBatt
 // Explicit v6 entry point, also used by tests and benchmarks.
 export function resolveBattleHybridV6(attacker,defender,seed,realmOverrides={}){
  return resolveBattleHybrid(attacker,defender,seed,6,realmOverrides);
+}
+
+export function resolveBattleHybridV7(attacker,defender,seed,realmOverrides={}){
+ return resolveBattleHybrid(attacker,defender,seed,7,realmOverrides);
 }

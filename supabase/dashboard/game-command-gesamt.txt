@@ -1475,6 +1475,62 @@ function fireRapid(shooters, enemies, random, summary, rapid) {
     }
   }
 }
+function fireBound(shooters, enemies, random, summary, rapid, locks) {
+  const pools = enemies.map((group) => {
+    const indices = group.indices.slice(0, group.count), positions = new Uint32Array(group.hp.length);
+    for (let j = 0; j < indices.length; j++) positions[indices[j]] = j;
+    return { group, count: group.count, indices, positions };
+  });
+  const byGroup = new Map(pools.map((p) => [p.group, p]));
+  const alive = ([g, i]) => g.hp[i] > 1e-8 && g.hp[i] + g.shield[i] - (g.damage.get(i) || 0) > 1e-8;
+  const pick = () => {
+    const active = pools.filter((p) => p.count);
+    const combatants = active.filter((p) => ["military", "defense"].includes(SHIPS[p.group.key].category));
+    const picked = sampled(combatants.length ? combatants : active, random);
+    return picked ? [picked[0].group, picked[1]] : null;
+  };
+  const hit = (s, picked, damage, extra) => {
+    const [target, index] = picked;
+    const wasAlive = alive(picked);
+    target.damage.set(index, (target.damage.get(index) || 0) + damage);
+    if (wasAlive && !alive(picked)) {
+      const pool = byGroup.get(target), position = pool.positions[index];
+      const last = pool.indices[--pool.count];
+      pool.indices[position] = last;
+      pool.positions[last] = position;
+    }
+    const k = s.key + ":" + target.key;
+    const item = summary[k] ??= { shooter: s.key, target: target.key, shots: 0, damage: 0, rapidFireShots: 0, rapidFireDamage: 0, extraSalvos: 0 };
+    item.shots += extra ? s.stat.shots : 1;
+    item.damage += damage;
+    if (extra) {
+      item.rapidFireShots += s.stat.shots;
+      item.rapidFireDamage += damage;
+      item.extraSalvos++;
+    }
+  };
+  for (const s of shooters) {
+    if (!s.count || !s.stat.attack) continue;
+    let unitLocks = locks.get(s);
+    if (!unitLocks) locks.set(s, unitLocks = /* @__PURE__ */ new Map());
+    for (let unit = 0; unit < s.count; unit++) {
+      const index = s.indices[unit];
+      let picked = unitLocks.get(index), extra = 0;
+      for (let shot = 0; shot < s.stat.shots; shot++) {
+        if (!picked || !alive(picked)) picked = pick();
+        if (!picked) break;
+        hit(s, picked, s.stat.attack / s.stat.shots, false);
+        const chance = rapid.chances[s.key]?.[picked[0].key] ?? 0;
+        while (rapid.enabled && extra < rapid.maxExtraSalvos && chance > 0 && random() < chance) {
+          extra++;
+          hit(s, picked, s.stat.attack, true);
+        }
+      }
+      if (picked && alive(picked)) unitLocks.set(index, picked);
+      else unitLocks.delete(index);
+    }
+  }
+}
 function applyDamage(groups) {
   const impacts = [];
   for (const g of groups) {
@@ -1517,10 +1573,11 @@ function groupSummary(groups, side) {
   return groups.map((g) => ({ side, key: g.key, groupId: g.id, ...g.owner ? { owner: g.owner } : {}, count: g.count }));
 }
 function resolveBattleHybrid(attacker, defender, seed, experimentalVersion = 4, realmOverrides = {}) {
-  if (![4, 5, 6].includes(experimentalVersion)) throw Error("Unknown hybrid rules version");
-  const combatSettings = experimentalVersion === 6 ? combatConfigForRealm(realmOverrides) : null;
+  if (![4, 5, 6, 7].includes(experimentalVersion)) throw Error("Unknown hybrid rules version");
+  const combatSettings = experimentalVersion >= 6 ? combatConfigForRealm(realmOverrides) : null;
   const rapid = combatSettings?.rapidFire;
-  const fireRound = experimentalVersion === 5 ? fireLocked : experimentalVersion === 6 ? (shooters, enemies, random2, summary) => fireRapid(shooters, enemies, random2, summary, rapid) : fire;
+  const locks = /* @__PURE__ */ new Map();
+  const fireRound = experimentalVersion === 7 ? (shooters, enemies, random2, summary, settings = rapid) => fireBound(shooters, enemies, random2, summary, settings, locks) : experimentalVersion === 5 ? fireLocked : experimentalVersion === 6 ? (shooters, enemies, random2, summary) => fireRapid(shooters, enemies, random2, summary, rapid) : fire;
   const a = cohorts(attacker, "attacker"), d = cohorts(defender, "host"), random = seeded(seed), rounds = [], aggregates = [];
   const initialGroups = [...groupSummary(a, "attacker"), ...groupSummary(d, "defender")];
   for (let round = 0; round <= 6; round++) {
@@ -1530,8 +1587,10 @@ function resolveBattleHybrid(attacker, defender, seed, experimentalVersion = 4, 
     if (opening && !platforms.length) continue;
     const shots = {};
     if (!opening) fireRound(a, d, random, shots);
-    if (opening && experimentalVersion === 6 && !rapid.allowInOrbitalOpening) fireRapid(platforms, a, random, shots, { ...rapid, enabled: false });
-    else fireRound(opening ? platforms : d, a, random, shots);
+    if (opening && experimentalVersion >= 6 && !rapid.allowInOrbitalOpening) {
+      if (experimentalVersion === 7) fireRound(platforms, a, random, shots, { ...rapid, enabled: false });
+      else fireRapid(platforms, a, random, shots, { ...rapid, enabled: false });
+    } else fireRound(opening ? platforms : d, a, random, shots);
     const impacts = applyDamage([...a, ...d]);
     rounds.push({ round, attacker: total(a), defender: total(d) });
     aggregates.push({ round, shots: Object.values(shots), impacts, after: { attacker: { count: total(a) }, defender: { count: total(d) } } });
@@ -1577,7 +1636,8 @@ function resolveBattleHybrid(attacker, defender, seed, experimentalVersion = 4, 
       finalGroups: [...groupSummary(a, "attacker"), ...groupSummary(d, "defender")],
       tech: { attacker: { ...attacker.tech }, defender: { ...defender.tech } },
       shieldFactors: { attacker: attacker.shieldFactor ?? 1, defender: defender.shieldFactor ?? 1 },
-      ...experimentalVersion === 6 ? { rapidFireRules: rapid } : {},
+      ...experimentalVersion >= 6 ? { rapidFireRules: rapid } : {},
+      ...experimentalVersion === 7 ? { targetingRules: { lock: "until-destroyed", rapidFireTarget: "same", proc: "per-normal-shot", extraSalvo: "full", cap: "per-unit-per-round", simultaneous: true } } : {},
       rounds: aggregates
     }
   };
@@ -1663,8 +1723,8 @@ function pirateAction(w, uid, action, id, seed) {
   const hulls = takeHulls(from, fleet);
   from.resources.fuel -= f.fuel;
   for (const [k, n] of Object.entries(fleet)) from.ships[k] -= n;
-  const version = [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION;
-  row.missions.push({ id, kind, station: meta.id, generation: q.generation, from: from.id, fleet: { ...fleet }, initialFleet: { ...fleet }, hulls, tech: { ...s.tech }, shieldUntil: from.shieldUntil || 0, startedAt: w.now, arrivalAt: w.now + f.ms, due: w.now + f.ms, duration: f.ms, status: "outbound", cargo: pirateZero(), fuel: f.fuel, ruleVersion: version, combatConfig: version === 6 ? structuredClone(REALM_COMBAT_OVERRIDES.test4) : {}, seed });
+  const version = [3, 4, 5, 6, 7].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION;
+  row.missions.push({ id, kind, station: meta.id, generation: q.generation, from: from.id, fleet: { ...fleet }, initialFleet: { ...fleet }, hulls, tech: { ...s.tech }, shieldUntil: from.shieldUntil || 0, startedAt: w.now, arrivalAt: w.now + f.ms, due: w.now + f.ms, duration: f.ms, status: "outbound", cargo: pirateZero(), fuel: f.fuel, ruleVersion: version, combatConfig: version >= 6 ? structuredClone(REALM_COMBAT_OVERRIDES.test4) : {}, seed });
   pirateLog(s, w.now, "Piratenauftrag gestartet", meta.name + " \xB7 " + { scan: "Spionagesonde", attack: "Angriff", collect: "Depot abholen", salvage: "Tr\xFCmmer bergen" }[kind] + " \xB7 Start: " + from.name);
 }
 function pirateEvents(w) {
@@ -1699,7 +1759,7 @@ function arrivePirate(w, uid, m, time) {
       pirateLog(s, time, "Spionagebericht", meta.name + " aufgekl\xE4rt. Flotte und Depot im Piratenbereich einsehbar.");
     } else pirateLog(s, time, "Spionage gescheitert", "Die Station ben\xF6tigt inzwischen h\xF6here Sensortechnik.");
   } else if (m.kind === "attack") {
-    const resolver = [4, 5, 6].includes(m.ruleVersion) ? resolveBattleHybrid : resolveBattle;
+    const resolver = [4, 5, 6, 7].includes(m.ruleVersion) ? resolveBattleHybrid : resolveBattle;
     const before = { ...station.fleet };
     const result2 = resolver({ fleet: m.fleet, tech: m.tech, hulls: m.hulls, shieldFactor: m.shieldUntil ? Math.max(0, Math.min(1, 1 - (m.shieldUntil - time) / 3e5)) : 1 }, { fleet: station.fleet, tech: station.tech, hulls: station.hulls }, m.seed || m.id, m.ruleVersion, m.combatConfig);
     const debris = pirateZero();
@@ -2265,8 +2325,8 @@ function resolveAttack(w, m, time) {
   const supporting = socialDefense(w, m.defender_id, m.to, time);
   if (supporting.length || parked.length || repairs.length) defense.groups = [{ id: "host", owner: m.defender_id, commander: d.name, ...defense }, ...parked, ...repairs, ...supporting];
   const version = m.ruleVersion || 1;
-  const resolver = [4, 5, 6].includes(version) ? resolveBattleHybrid : resolveBattle;
-  const result2 = [4, 5, 6].includes(version) ? resolver({ ...m.combat, shieldFactor: shieldFactor(m.shieldUntil, time) }, defense, m.seed || m.id, version, version === 6 ? m.combatConfig || REALM_COMBAT_OVERRIDES.test4 : {}) : resolver({ ...m.combat, shieldFactor: shieldFactor(m.shieldUntil, time) }, defense, m.seed || m.id, version);
+  const resolver = [4, 5, 6, 7].includes(version) ? resolveBattleHybrid : resolveBattle;
+  const result2 = [4, 5, 6, 7].includes(version) ? resolver({ ...m.combat, shieldFactor: shieldFactor(m.shieldUntil, time) }, defense, m.seed || m.id, version, version >= 6 ? m.combatConfig || REALM_COMBAT_OVERRIDES.test4 : {}) : resolver({ ...m.combat, shieldFactor: shieldFactor(m.shieldUntil, time) }, defense, m.seed || m.id, version);
   if (pveParked.length) reconcilePirateDefense(w, m.defender_id, pveParked, result2, time);
   const repairBefore = Object.fromEntries(Object.keys(SHIPS).map((k) => [k, repairs.reduce((n, g) => n + (g.fleet[k] || 0), 0)]));
   if (repairs.length) reconcileRepairBattle(p, result2);
@@ -2462,7 +2522,7 @@ function launchAttack(w, uid, action, id) {
   for (const [k, n] of Object.entries(fleet)) from.ships[k] -= n;
   if (origin) origin.protection_ended = true;
   else for (const p of colonies) p.protection_ended = true;
-  w.attacks.push({ id, attacker_id: uid, defender_id: target.owner_id, from: from.id, to: target.id, fleet, hulls, ruleVersion: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combat: { fleet, tech: { ...s.tech }, hulls }, ...w.settings.combat_engine === 6 ? { combatConfig: structuredClone(REALM_COMBAT_OVERRIDES.test4) } : {}, shieldUntil: from.shieldUntil || 0, started_at: w.now, warning_at: w.now + Math.ceil(f.ms * fraction), arrival_at: w.now + f.ms, return_at: w.now + 2 * f.ms, status: "outbound", fuel: f.fuel, slowest: f.slowest });
+  w.attacks.push({ id, attacker_id: uid, defender_id: target.owner_id, from: from.id, to: target.id, fleet, hulls, ruleVersion: [3, 4, 5, 6, 7].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combat: { fleet, tech: { ...s.tech }, hulls }, ...w.settings.combat_engine >= 6 ? { combatConfig: structuredClone(REALM_COMBAT_OVERRIDES.test4) } : {}, shieldUntil: from.shieldUntil || 0, started_at: w.now, warning_at: w.now + Math.ceil(f.ms * fraction), arrival_at: w.now + f.ms, return_at: w.now + 2 * f.ms, status: "outbound", fuel: f.fuel, slowest: f.slowest });
 }
 function processWorld(snapshot, uid, request) {
   const w = advanceWorld(prepareWorld(snapshot)), type = request.type, action = request.action || {};
@@ -2508,12 +2568,12 @@ function processWorld(snapshot, uid, request) {
 function projectPvP(w, uid) {
   return {
     enabled: w.settings.enabled,
-    combatEngine: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION,
+    combatEngine: [3, 4, 5, 6, 7].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION,
     isAdmin: w.admins.includes(uid),
     serverNow: w.now,
     social: socialProjection(w, uid),
     pirates: projectPirates(w, uid),
-    features: { routeStatistics: true, pirates: w.pirateVersion === 1, piratesPublic: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
+    features: { routeStatistics: true, pirates: w.pirateVersion === 1, piratesPublic: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6, 7].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,
@@ -2550,7 +2610,7 @@ async function runServerCommand(db, uid, input) {
   const mutating = input.type !== "sync";
   if (mutating && !uuid.test(input.requestId)) throw Error("Eine eindeutige Auftrags-ID fehlt.");
   if (input.type === "set-combat") {
-    if (![3, 4, 5, 6].includes(input.engine)) throw Error("Unbekannte Kampfengine.");
+    if (![3, 4, 5, 6, 7].includes(input.engine)) throw Error("Unbekannte Kampfengine.");
     value(await db.rpc("imperium_set_combat_engine", { p_uid: uid, p_engine: input.engine }));
     return runServerCommand(db, uid, { type: "sync" });
   }

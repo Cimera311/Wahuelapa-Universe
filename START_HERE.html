@@ -878,7 +878,7 @@ function combatConfigForRealmId(realmId='main'){
 
 
 
-// Read the same Test4 values that the v6 battle engine uses. Never duplicate
+// Read the same Test4 values that the v6/v7 battle engines use. Never duplicate
 // Rapid Fire percentages in the UI, so balance changes are reflected here.
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const percent=value=>Number((value*100).toFixed(1)).toLocaleString('de-DE');
@@ -895,16 +895,16 @@ function rapidFireInfoHTML(key,engineVersion=null){
  if(!sh)return '';
  const combat=combatConfigForRealmId('test4').rapidFire;
  const entries=rapidFireTargets(key,combat);
- const active=engineVersion===6;
- const legacy=engineVersion!=null&&engineVersion!==6;
- const subtitle=active?'v6 aktiv':legacy?'Nur bei v6':'Kampfengine v6';
+ const active=[6,7].includes(engineVersion);
+ const legacy=engineVersion!=null&&!active;
+ const subtitle=active?'v'+engineVersion+' aktiv':legacy?'Nur bei v6 / v7':'Kampfengine v6 / v7';
  const chips=entries.map(({name,chance})=>`<span class="ship-rapid-fire-target"><span>${escapeHTML(name)}</span><strong>${percent(chance)} %</strong></span>`).join('');
  const description=!['military','defense'].includes(sh.category)
   ?'<p class="fine">Keine Rapid-Fire-Funktion für diesen Schiffstyp.</p>'
   :!entries.length
    ?'<p class="fine">Keine Rapid-Fire-Ziele konfiguriert.</p>'
-   :`<div class="ship-rapid-fire-targets">${chips}</div><p class="fine">Chance auf eine weitere vollständige Salve gegen das jeweilige Ziel, nach jeder Zusatzsalve erneut geprüft. Maximal ${combat.maxExtraSalvos} Zusatzsalven pro Kampfrunde.${sh.category==='defense'?(combat.allowInOrbitalOpening?' Rapid Fire gilt auch beim orbitalen Erstschlag (Runde 0).':' Kein Rapid Fire beim orbitalen Erstschlag.') :''}</p>`;
- return `<section class="ship-rapid-fire" aria-label="Rapid Fire"><div class="ship-rapid-fire-heading"><strong>⚡ Rapid Fire</strong><small>${subtitle}</small></div>${description}${legacy?'<p class="fine ship-rapid-fire-inactive">Aktuell gilt v5 ohne Rapid Fire. Die Werte gelten bei Aktivierung von v6.</p>':''}</section>`;
+   :`<div class="ship-rapid-fire-targets">${chips}</div><p class="fine">Chance auf eine weitere vollständige Salve gegen das jeweilige Ziel, nach jeder Zusatzsalve erneut geprüft. Maximal ${combat.maxExtraSalvos} Zusatzsalven pro Einheit und Kampfrunde.${sh.category==='defense'?(combat.allowInOrbitalOpening?' Rapid Fire gilt auch beim orbitalen Erstschlag (Runde 0).':' Kein Rapid Fire beim orbitalen Erstschlag.') :''}</p>`;
+ return `<section class="ship-rapid-fire" aria-label="Rapid Fire"><div class="ship-rapid-fire-heading"><strong>⚡ Rapid Fire</strong><small>${subtitle}</small></div>${description}${engineVersion===7&&entries.length?'<p class="fine">v7: Normale Schüsse bleiben bis zur Zerstörung am Ziel. Jeder normale Schuss kann Rapid Fire auslösen; Zusatzsalven bleiben auf demselben Ziel, auch bei Überschaden. Erst der nächste normale Schuss wählt nach einer Zerstörung neu. Keine Bevorzugung von Rapid-Fire-Zielen.</p>':''}${legacy?`<p class="fine ship-rapid-fire-inactive">Aktuell gilt v${engineVersion} ohne Rapid Fire. Die Werte gelten bei Aktivierung von v6 oder v7.</p>`:''}</section>`;
 }
 
 
@@ -1768,7 +1768,7 @@ function hybridBattleLogView(header,page,{round=-2,offset=0}={}){
  const details=body?'<details class="battle-raw-details"><summary>Gruppendetails anzeigen</summary>'+body+'</details>':'';
  const pages=total>200?'<div class="battle-pages">'+control('← Zurück',round,Math.max(0,offset-200),offset===0)+'<span>'+Math.min(total,offset+1)+'–'+Math.min(total,offset+200)+' / '+total+'</span>'+control('Weiter →',round,offset+200,offset+200>=total)+'</div>':'';
  const summaries=(header.rounds||[]).map(q=>'<tr><td>'+q.round+'</td><td>'+battleNumber(q.after?.attacker?.count)+'</td><td>'+battleNumber(q.after?.defender?.count)+'</td></tr>').join('');
- return '<h2>Kampfprotokoll · Hybrid v'+header.ruleVersion+'</h2><p>'+reportEscape(header.from||'')+' → '+reportEscape(header.to||'')+'</p><p class="fine">Kompakter Kampfbericht. Treffer werden nach Typ und Gruppe zusammengefasst; individuell beschädigte Schiffe bleiben im Reparatursystem erhalten.</p><div class="battle-round-nav">'+nav+'</div>'+board+pages+(page?.summaryHTML||'')+details+pages+
+ return '<h2>Kampfprotokoll · Hybrid v'+header.ruleVersion+'</h2><p>'+reportEscape(header.from||'')+' → '+reportEscape(header.to||'')+'</p><p class="fine">Kompakter Kampfbericht. Treffer werden nach Typ und Gruppe zusammengefasst; individuell beschädigte Schiffe bleiben im Reparatursystem erhalten.</p>'+ (header.ruleVersion===7?'<p class="fine">v7: Zufällige Ziele ohne Rapid-Fire-Priorität. Zielbindung bis zur Zerstörung; Zusatzsalven bleiben auf demselben Ziel. Der nächste normale Schuss wechselt nach einem Abschuss. Alle zu Rundenbeginn lebenden Einheiten feuern gleichzeitig; in Runde 0 nur die Orbitalverteidigung.</p>':'')+'<div class="battle-round-nav">'+nav+'</div>'+board+pages+(page?.summaryHTML||'')+details+pages+
  '<details><summary>Überlebende je Runde</summary><table><thead><tr><th>Runde</th><th>Angreifer</th><th>Verteidiger</th></tr></thead><tbody>'+summaries+'</tbody></table></details><details><summary>Reproduzierbarkeit</summary><p>Seed: <code>'+reportEscape(header.seed||'')+'</code></p></details>';
 }
 function battleLogView(header,page=null,{round=-2,offset=0}={}){
@@ -2086,7 +2086,7 @@ function pvpSettings(pvp,busy=false,pending=false){
  if(!pvp)return '';
  return '<section class="panel pvp-setting">'+actionIcon('pvpPause')+'<h3>PvP '+(pvp.enabled?'aktiv':'pausiert')+'</h3><p>Eine Pause verhindert neue Angriffe. Laufende Kämpfe und Rückflüge werden weiter verarbeitet.</p>'+
  (pvp.isAdmin?'<button type="button" role="switch" aria-checked="'+pvp.enabled+'" data-action="pvp-toggle" '+(busy?'disabled':'')+'>'+(pvp.enabled?'PvP ausschalten':'PvP einschalten')+'</button>':'<p class="fine">Der PvP-Schalter ist nur für Administratoren verfügbar.</p>')+
- (pvp.isAdmin?'<div class="pvp-engine-control"><h4>⚙️ Kampfengine für neue Angriffe</h4><p class="fine">v3: detaillierte Einzelberechnung · v4: schnelle Hybridgruppen. Laufende Angriffe bleiben unverändert.</p><button type="button" data-action="combat-engine-3" aria-pressed="'+(pvp.combatEngine===3)+'" '+(busy||pvp.combatEngine!==4?'disabled':'')+'>v3 · Debug</button> <button type="button" data-action="combat-engine-4" aria-pressed="'+(pvp.combatEngine===4)+'" '+(busy||pvp.combatEngine===4?'disabled':'')+'>v4 · Hybrid</button> <button type="button" data-action="combat-engine-5" aria-pressed="'+(pvp.combatEngine===5)+'" '+(busy||pvp.combatEngine===5?'disabled':'')+'>v5 · Zielbindung</button> <button type="button" data-action="combat-engine-6" aria-pressed="'+(pvp.combatEngine===6)+'" '+(busy||pvp.combatEngine===6?'disabled':'')+'>v6 · Rapid Fire</button><p>Aktiv: <strong>'+(pvp.combatEngine===6?'v6 · Rapid Fire':pvp.combatEngine===5?'v5 · Zielbindung':pvp.combatEngine===4?'v4 · Hybrid':'v3 · Einzelberechnung')+'</strong></p></div>':'')+
+ (pvp.isAdmin?'<div class="pvp-engine-control"><h4>⚙️ Kampfengine für neue Angriffe</h4><p class="fine">v7: Zielbindung bis zur Zerstörung; Rapid Fire bleibt auf demselben Ziel. Laufende Angriffe bleiben unverändert.</p><button type="button" data-action="combat-engine-3" aria-pressed="'+(pvp.combatEngine===3)+'" '+(busy||pvp.combatEngine!==4?'disabled':'')+'>v3 · Debug</button> <button type="button" data-action="combat-engine-4" aria-pressed="'+(pvp.combatEngine===4)+'" '+(busy||pvp.combatEngine===4?'disabled':'')+'>v4 · Hybrid</button> <button type="button" data-action="combat-engine-5" aria-pressed="'+(pvp.combatEngine===5)+'" '+(busy||pvp.combatEngine===5?'disabled':'')+'>v5 · Zielbindung</button> <button type="button" data-action="combat-engine-6" aria-pressed="'+(pvp.combatEngine===6)+'" '+(busy||pvp.combatEngine===6?'disabled':'')+'>v6 · Rapid Fire</button> <button type="button" data-action="combat-engine-7" aria-pressed="'+(pvp.combatEngine===7)+'" '+(busy||pvp.combatEngine===7?'disabled':'')+'>v7 · Zieltreues Rapid Fire</button><p>Aktiv: <strong>'+(pvp.combatEngine===7?'v7 · Zieltreues Rapid Fire':pvp.combatEngine===6?'v6 · Rapid Fire':pvp.combatEngine===5?'v5 · Zielbindung':pvp.combatEngine===4?'v4 · Hybrid':'v3 · Einzelberechnung')+'</strong></p></div>':'')+
  (pending?'<button type="button" data-action="pvp-retry">Offenen Auftrag erneut prüfen</button>':'')+'</section>';
 }
 function pvpView(state,pvp,galaxy,busy=false,draft={},view={}){
@@ -3000,7 +3000,7 @@ document.addEventListener('click',async e=>{
  if(b.dataset.action==='partner-invites'){tab='fleet';fleetSection='partners';render();window.scrollTo({top:0,behavior:'smooth'});}
   if(['pvp-open','pvp-target','pvp-defense'].includes(b.dataset.action)){if(b.dataset.to)pvpDraft.to=b.dataset.to;tab='fleet';fleetSection=b.dataset.action==='pvp-defense'?'defense':'pvp';render();void refreshGalaxy(true);void refreshReports();}
  if(b.dataset.action==='pvp-toggle'){await serverAction({type:'set-pvp',enabled:!cloud.pvp.enabled});settings();}
- if(['combat-engine-3','combat-engine-4','combat-engine-5','combat-engine-6'].includes(b.dataset.action)){await serverAction({type:'set-combat',engine:Number(b.dataset.action.at(-1))});settings();}
+ if(['combat-engine-3','combat-engine-4','combat-engine-5','combat-engine-6','combat-engine-7'].includes(b.dataset.action)){await serverAction({type:'set-combat',engine:Number(b.dataset.action.at(-1))});settings();}
  if(b.dataset.action==='pvp-repair'){selectFleetSection('repair');window.scrollTo({top:0,behavior:'smooth'});}
  if(b.dataset.action==='pvp-retry'&&cloud?.pending)await serverAction(cloud.pending);
 });
