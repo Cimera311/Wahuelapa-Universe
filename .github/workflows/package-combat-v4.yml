@@ -1,4 +1,4 @@
-name: Package Combat v6 Game Command
+name: Package Combat v7 Game Command
 on:
   pull_request:
     paths:
@@ -17,6 +17,8 @@ on:
       - 'supabase/combat-engine-control-v6.sql'
       - 'tests/combat-hybrid*.test.js'
       - 'tests/combat-v6.test.js'
+      - 'tests/combat-v7*.test.js'
+      - 'supabase/combat-v7.sql'
       - '.github/workflows/package-combat-v4.yml'
   workflow_dispatch:
 permissions:
@@ -38,22 +40,21 @@ jobs:
         run: npm run build
       - name: Bundle deployable Supabase Game Command
         run: |
-          npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --format=esm --platform=neutral --target=es2022 --external:npm:* --outfile=game-command-v6.ts
+          npx --yes esbuild@0.25.12 supabase/functions/game-command/index.ts --bundle --format=esm --platform=neutral --target=es2022 --external:npm:* --outfile=game-command-v7.ts
           node --input-type=module <<'NODE'
           import {readFileSync,writeFileSync} from 'node:fs';
-          const path='game-command-v6.ts';
+          const path='game-command-v7.ts';
           let source=readFileSync(path,'utf8');
           for(const fragment of ['fireLocked','imperium_set_combat_engine','initialGroups','finalGroups']){
             if(!source.includes(fragment))throw Error('Game Command bundle missing: '+fragment);
           }
-          writeFileSync(path,'// @ts-nocheck — Combat v6, generated from source. Deploy after SQL migrations.\n'+source);
+          writeFileSync(path,'// @ts-nocheck — Combat v7, generated from source. Deploy after SQL migrations.\n'+source);
           NODE
       - name: Upload new game command and SQL migrations
         uses: actions/upload-artifact@v4
         with:
-          name: combat-v6-deployment-${{ github.run_id }}
+          name: combat-v7-deployment-${{ github.run_id }}
           path: |
-            game-command-v6.ts
-            supabase/combat-engine-control-v6.sql
-            supabase/combat-hybrid-v6.sql
+            game-command-v7.ts
+            supabase/combat-v7.sql
           if-no-files-found: error

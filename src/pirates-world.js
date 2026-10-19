@@ -52,8 +52,8 @@ export function pirateAction(w,uid,action,id,seed){
  const f=pirateFlight(s,from,meta,fleet,w.pirateConfig);settle(from);
  if(from.resources.fuel<f.fuel)throw Error('Nicht genug Treibstoff für Hin- und Rückflug.');
  const hulls=takeHulls(from,fleet);from.resources.fuel-=f.fuel;for(const [k,n] of Object.entries(fleet))from.ships[k]-=n;
- const version=[3,4,5,6].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION;
- row.missions.push({id,kind,station:meta.id,generation:q.generation,from:from.id,fleet:{...fleet},initialFleet:{...fleet},hulls,tech:{...s.tech},shieldUntil:from.shieldUntil||0,startedAt:w.now,arrivalAt:w.now+f.ms,due:w.now+f.ms,duration:f.ms,status:'outbound',cargo:pirateZero(),fuel:f.fuel,ruleVersion:version,combatConfig:version===6?structuredClone(REALM_COMBAT_OVERRIDES.test4):{},seed});
+ const version=[3,4,5,6,7].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION;
+ row.missions.push({id,kind,station:meta.id,generation:q.generation,from:from.id,fleet:{...fleet},initialFleet:{...fleet},hulls,tech:{...s.tech},shieldUntil:from.shieldUntil||0,startedAt:w.now,arrivalAt:w.now+f.ms,due:w.now+f.ms,duration:f.ms,status:'outbound',cargo:pirateZero(),fuel:f.fuel,ruleVersion:version,combatConfig:version>=6?structuredClone(REALM_COMBAT_OVERRIDES.test4):{},seed});
  pirateLog(s,w.now,'Piratenauftrag gestartet',meta.name+' · '+({scan:'Spionagesonde',attack:'Angriff',collect:'Depot abholen',salvage:'Trümmer bergen'})[kind]+' · Start: '+from.name);
 }
 export function pirateEvents(w){
@@ -71,7 +71,7 @@ export function arrivePirate(w,uid,m,time){
   if((s.tech.scout||0)>=station.sensor){station.scan={at:time,generation:station.generation,fleet:{...station.fleet},resources:{...station.resources},tech:{...station.tech}};pirateLog(s,time,'Spionagebericht',meta.name+' aufgeklärt. Flotte und Depot im Piratenbereich einsehbar.');}
   else pirateLog(s,time,'Spionage gescheitert','Die Station benötigt inzwischen höhere Sensortechnik.');
  }else if(m.kind==='attack'){
-  const resolver=[4,5,6].includes(m.ruleVersion)?resolveBattleHybrid:resolveBattle;
+  const resolver=[4,5,6,7].includes(m.ruleVersion)?resolveBattleHybrid:resolveBattle;
   const before={...station.fleet};
   const result=resolver({fleet:m.fleet,tech:m.tech,hulls:m.hulls,shieldFactor:m.shieldUntil?Math.max(0,Math.min(1,1-(m.shieldUntil-time)/300000)):1},{fleet:station.fleet,tech:station.tech,hulls:station.hulls},m.seed||m.id,m.ruleVersion,m.combatConfig);
   const debris=pirateZero();

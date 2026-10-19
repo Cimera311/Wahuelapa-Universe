@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-18.03",
+  "latest": "2026-10-19.01",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -211,6 +211,13 @@
       "sourceCommit": "4f0aba1fc5ba05fc2aba0dde5d382eb404180b0f",
       "description": "Fix processed/SV057: Position nach Routenänderung bei Rückkehr vor Pause oder Restentladung aktualisieren",
       "sha256": "4aec4d2d6178ad8a0d9da2fa990a755fc9b4666cb48abb8c6d9a13fc8eda34bc"
+    },
+    {
+      "version": "2026-10-19.01",
+      "createdAt": "2026-10-19T12:07:41.081Z",
+      "sourceCommit": "fb062c2e1653a42b8803d952064d6575f435f66d",
+      "description": "Kampfengine v7: Zielbindung bis zur Zerstoerung, zieltreue Rapid-Fire-Zusatzsalven, keine RF-Zielprioritaet; v3-v6 und laufende Angriffe bleiben erhalten",
+      "sha256": "d6dbda411aa3df9f4961b2859c10de9670728937596ffa5c49b3ccc9503bd6cc"
     }
   ]
 }
