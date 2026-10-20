@@ -539,7 +539,7 @@ function tick(){if(!state||readOnly||cloudBlocked||galaxyBusy)return;try{const b
   if(tab==='fleet'){document.querySelectorAll('[data-ship-card]').forEach(refreshShipyardCard);updateShipQueue(p);refreshScrapCards();}
  }catch(e){toast(e.message);}}
 try{const loaded=loadGame();state=loaded.state;if(state&&!maintenanceBlocked(maintenance))advance(state,Date.now());if(loaded.recovered)toast('Letzte intakte Sicherung wiederhergestellt.');}catch(e){storageOK=false;toast(e.message);}
-if(navigator.locks){navigator.locks.request('imperium-active-tab',{ifAvailable:true},async lock=>{if(!lock){readOnly=true;render();refreshAuthLock();return;}void initCloud();await new Promise(()=>{});});}else{window.addEventListener('storage',e=>{if(e.key===saveKey()){readOnly=true;render();refreshAuthLock();toast('Ein anderer Tab hat gespeichert. Dieser Tab bleibt schreibgeschützt.');}});}
+if(navigator.locks){navigator.locks.request('imperium-active-tab',{ifAvailable:true},async lock=>{if(!lock){readOnly=true;render();refreshAuthLock();void initCloud();return;}void initCloud();await new Promise(()=>{});});}else{window.addEventListener('storage',e=>{if(e.key===saveKey()){readOnly=true;render();refreshAuthLock();toast('Ein anderer Tab hat gespeichert. Dieser Tab bleibt schreibgeschützt.');}});}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(cloud)void checkMaintenance();tick();if(state)render();if(cloudSyncDue())void flushCloud();}else persist(true);});
 render();setInterval(tick,1000);if(!navigator.locks)void initCloud();
 setInterval(()=>{if(cloudSyncDue())void flushCloud();},5000);
@@ -596,7 +596,6 @@ document.addEventListener('submit',async e=>{if(!['cloud-auth-form','cloud-new-f
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-action]');if(!b||b.disabled||readOnly)return;try{switch(b.dataset.action){case 'cloud-save':await flushCloud();break;case 'cloud-load':if(cloud?.user&&confirm('Cloud-Stand laden? Nicht synchronisierte Änderungen werden ersetzt. Bei Bedarf zuerst exportieren.'))await loadAccount(true);break;case 'cloud-logout':await logoutAccount();break;case 'cloud-adopt':if(state)await finishAccount(structuredClone(state));break;}}catch(err){toast(err.message);}});
 async function initCloud(){
  if(!CLOUD_CONFIG.enabled){maintenance.checking=false;maintenance.unavailable=false;cloudBlocked=false;render();return;}
- if(readOnly)return;
  cloudBlocked=true;
  try{cloud=await connectCloud(CLOUD_CONFIG);await cloud.session();await checkMaintenance();}
  catch(e){maintenance.checking=false;maintenance.unavailable=true;maintenance.error='Bitte Verbindung prüfen und erneut versuchen.';cloudBlocked=true;render();}
@@ -617,8 +616,8 @@ async function checkMaintenance(){
    if(!wasBlocked)document.querySelectorAll('dialog').forEach(d=>d.remove());
    cloudBlocked=true;render();
   }else if(wasBlocked){
-   if(cloud.user&&!cloud.loaded)await loadAccount();
-   else{cloudBlocked=false;render();}
+   if(!readOnly&&cloud.user&&!cloud.loaded)await loadAccount();
+   else{cloudBlocked=readOnly;render();}
   }
  }catch(error){
   Object.assign(maintenance,{checking:false,unavailable:true,error:'Der Serverstatus konnte nicht geprüft werden. Bitte später erneut versuchen.'});
