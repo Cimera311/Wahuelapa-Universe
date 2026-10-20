@@ -31,7 +31,7 @@ Build und git diff --check erfolgreich. Browseransichten bei 320, 390 und 1365 P
 
 **Keine SQL erforderlich.** Es werden die bestehenden Spielstände, Lieferdepots und Auftragsbelege verwendet. Kampfengine v7 und andere bestehende Funktionen sind im vollständigen Bundle enthalten.
 
-## News-Entwurf – noch nicht veröffentlicht
+## News – veröffentlicht am 20.10.2026
 
 ♻️🚀 **Alte Schiffe bekommen einen neuen Zweck!**
 
