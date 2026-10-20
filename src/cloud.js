@@ -8,6 +8,16 @@ export function createCloud(client,redirectUrl,commandFunction='game-command'){
  const checked=result=>{if(result.error)throw result.error;return result.data;};
  return {
   get authoritative(){return authoritative;},get pvp(){return pvp;},get pending(){return pending;},get now(){return pvp?Math.max(pvp.serverNow,pvp.serverNow+Date.now()-receivedAt):Date.now();},get user(){return user;},get revision(){return revision;},get loaded(){return loaded;},
+  async maintenanceStatus(){
+    const status=checked(await client.rpc('imperium_maintenance_status'));
+    if(status?.version!==1||typeof status.enabled!=='boolean'||typeof status.isAdmin!=='boolean'||typeof status.message!=='string'||status.message.length>240)throw Error('Ungültige Wartungsstatus-Antwort.');
+    return status;
+   },
+  async setMaintenance(enabled,message){
+    if(!user)throw Error('Bitte als Administrator anmelden.');
+    if(typeof enabled!=='boolean'||typeof message!=='string'||message.length>240)throw Error('Ungültige Wartungseinstellungen.');
+    return checked(await client.rpc('imperium_maintenance_set',{p_enabled:enabled,p_message:message}));
+   },
   async session(){const data=checked(await client.auth.getSession());user=data.session?.user||null;loaded=false;return user;},
   async signIn(email,password){if(busy)throw Error('Speicherung läuft noch.');const data=checked(await client.auth.signInWithPassword({email,password}));user=data.user;loaded=false;return user;},
   async signUp(email,password){return checked(await client.auth.signUp({email,password,options:{emailRedirectTo:redirectUrl}}));},
