@@ -1,0 +1,7 @@
+{
+  "version": "2026-10-20.02",
+  "createdAt": "2026-10-20T18:00:00.000Z",
+  "sourceCommit": "42858de37416779368072a4d48ee41547eb46849",
+  "description": "Piratenstufen 1-3 eine Stunde, 4-5 sechs Stunden; bestehende Timer und moderne Game Command integriert",
+  "sha256": "624ca069981153d2ae43b0aee95f32186a012688fdf62302ae0513be9031edcf"
+}
