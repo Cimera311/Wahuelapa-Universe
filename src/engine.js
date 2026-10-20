@@ -98,6 +98,13 @@ export function shipRefund(job){
  const legacyDefense=SHIPS[job.key].category==='defense',legacyCosts={flak:[160,80,20],laser:[450,300,70],rail:[1400,1000,280],plasma:[4000,2800,900]},cost=legacyDefense?legacyCosts[job.key]:SHIPS[job.key].cost,gross=vector(cost.map(v=>v*job.count));
  return {resources:legacyDefense?vector([0,0,gross.fuel]):gross,salvage:legacyDefense?vector([gross.metal,gross.crystal,0]):vector([0,0,0]),legacyDefense};
 }
+export const SHIP_SCRAP_PERCENT=30;
+export function scrapShipInfo(p,key,count=1){
+ const sh=SHIPS[key],available=p.ships?.[key]||0,valid=Number.isSafeInteger(count)&&count>=1,refund=vector([0,0,0]);
+ let reason=!sh||!['freighter','military','civil'].includes(sh.category)?'Nur Schiffe können in der Schiffswerft verschrottet werden.':!p.buildings.shipyard?'Benötigt Schiffswerft Stufe 1.':!valid?'Wähle eine positive ganze Anzahl Schiffe.':'';
+ if(!reason){for(let i=0;i<RES.length;i++){const gross=sh.cost[i]*count;if(!Number.isSafeInteger(gross*SHIP_SCRAP_PERCENT)||gross*SHIP_SCRAP_PERCENT>Number.MAX_SAFE_INTEGER){reason='Diese Verschrottungsmenge ist zu groß.';break;}refund[RES[i]]=Math.floor(gross*SHIP_SCRAP_PERCENT/100);}if(!reason&&RES.some(k=>refund[k]>1e12||(p.depot?.[k]||0)+refund[k]>1e12))reason='Die Erstattung überschreitet die maximale Depotmenge.';if(!reason&&count>available)reason='Nicht genügend verfügbare Schiffe auf diesem Planeten.';}
+ return {key,count,available,refund,reason};
+}
 export function shipInfo(s,p,key,count=1){const sh=SHIPS[key];if(!sh)throw Error('Unbekanntes Schiff.');const defense=sh.category==='defense',yard=defense?(p.buildings.orbital||0):p.buildings.shipyard,gross=vector(sh.cost.map(v=>v*count));return {cost:gross,salvage:vector([0,0,0]),ms:Math.ceil(sh.time*count*1000*shipyardTimeFactor(yard)*(defense?Math.pow(.92,p.buildings.robotics||0):1)),ratio:stats(s,p).ratio,reason:yard<(sh.shipyard||1)?`Benötigt ${defense?'Orbitalwerft':'Schiffswerft'} Stufe ${sh.shipyard||1}.`:s.tech[sh.tech]<(sh.techLevel||1)?`Benötigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel||1}.`:(s.tech[sh.engine||'drive']||0)<(sh.engineLevel||0)?`Benötigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.`:''};}
 
 export function cargoCapacity(s,n=1,ship='transport'){return Math.floor((SHIPS[ship]?.cargo||0)*(1+s.tech.logistics*.15))*n;}
@@ -221,6 +228,14 @@ export function act(s,action,now=Date.now()){
  }
  else if(action.type==='research'){const info=researchInfo(n,p,action.key);if(info.reason)throw Error(info.reason);if(n.research)throw Error('Es läuft bereits eine imperiumsweite Forschung.');pay(p,info.cost);n.research={key:action.key,level:n.tech[action.key]+1,start:n.time,end:n.time+info.ms,planet:p.id};}
  else if(action.type==='ship'){const count=action.count;if(!Number.isSafeInteger(count)||count<1)throw Error('Wähle eine positive ganze Anzahl Schiffe.');const info=shipInfo(n,p,action.key,count);if(info.reason)throw Error(info.reason);const defense=SHIPS[action.key]?.category==='defense',full=defense?orbitalQueueFullReason(p):shipQueueFullReason(p);if(full)throw Error(full);if(!Number.isSafeInteger(info.ms)||n.time+info.ms>8.64e15||RES.some(k=>!Number.isSafeInteger(info.cost[k])||info.cost[k]>1e12))throw Error('Dieser Bauauftrag ist zu groß.');if(p.defenseSalvage)for(const k of RES)p.defenseSalvage[k]-=info.salvage[k];pay(p,info.cost);const job={id:++n.seq,key:action.key,count,start:n.time,end:n.time+info.ms,workTotal:info.ms,workRemaining:info.ms,payment:{resources:{...info.cost},salvage:{...info.salvage}}};if(defense){if(p.orbitaljob){p.orbitalqueue??=[];p.orbitalqueue.push(job);}else p.orbitaljob=job;}else if(p.shipjob){p.shipqueue??=[];p.shipqueue.push(job);}else p.shipjob=job;}
+ else if(action.type==='scrap-ship'){
+  const q=scrapShipInfo(p,action.key,action.count);if(q.reason)throw Error(q.reason);
+  // Consume free damaged hulls first; docked and travelling units are not in p.ships.
+  if(p.hulls?.[action.key])p.hulls[action.key].sort((a,b)=>a-b);
+  takeHulls(p,{[action.key]:action.count});p.ships[action.key]-=action.count;
+  for(const k of RES)p.depot[k]+=q.refund[k];settle(p);
+  report(n,'Schiffe verschrottet',p.name+': '+action.count+' × '+SHIPS[action.key].name+' endgültig verschrottet. 30 % der Bauressourcen erstattet; Überschüsse bleiben im Lieferdepot.');
+ }
  else if(action.type==='cancel-ship'){
   const o=action.order,j=o?.id!==undefined?[...shipOrders(p),...orbitalOrders(p)].find(j=>j.id===o.id):p.shipjob;
   if(!j)throw Error('Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen. Der Bauauftrag hat sich geändert. Bitte die Ansicht aktualisieren.');

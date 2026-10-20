@@ -103,4 +103,12 @@ test('PvP database and trusted command boundary',async t=>{
   await assert.rejects(runServerCommand(rpc,A,{...request,requestId:'10000000-0000-0000-0000-000000000013'}),/geändert/);assert.deepEqual((await snapshot()).saves.find(r=>r.user_id===A).state.planets[0].shipjob,replacement.state.planets[0].shipjob);
  });
 
+ await t.test('Ship scrapping credits 30% exactly once across retries and rejects replay payload changes',async()=>{
+  const s=newGame('Scrapping',Date.now()),p=s.planets[0];p.buildings.shipyard=1;p.buildings.warehouse=10;p.buildings.metal=p.buildings.crystal=p.buildings.fuel=0;p.resources=vector([1000,1000,1000]);p.ships.titan=5;
+  await db.query('update public.game_saves set state=$1,revision=revision+1 where user_id=$2',[JSON.stringify(s),A]);fakeNow=s.time;
+  const request={type:'command',requestId:'10000000-0000-0000-0000-000000000020',action:{type:'scrap-ship',planet:'home',key:'titan',count:2}};
+  const first=await runServerCommand(rpc,A,request),again=await runServerCommand(rpc,A,request);assert.equal(first.state.planets[0].ships.titan,3);assert.equal(again.state.planets[0].ships.titan,3);assert.deepEqual(first.state.planets[0].resources,vector([6700,4900,2500]));assert.deepEqual(again.state.planets[0].resources,first.state.planets[0].resources);
+  await assert.rejects(runServerCommand(rpc,A,{...request,action:{...request.action,count:1}}),/anders verwendet/);
+ });
+
 });

@@ -1,0 +1,7 @@
+{
+  "version": "2026-10-20.01",
+  "createdAt": "2026-10-20T09:26:00.820Z",
+  "sourceCommit": "fcd3c36f6a3ebd34a25585b2368f71eac403c211",
+  "description": "Schiffe verschrotten: feste 30 Prozent Rueckgabe, nur verfuegbarer Bestand, atomare Buchung und Server-Featureflag",
+  "sha256": "42e84dcbd4968143e12a62ab0cc5dde712362459a0dd799cccab37bf52ed1727"
+}

@@ -791,6 +791,24 @@ function shipRefund(job) {
   const legacyDefense = SHIPS[job.key].category === "defense", legacyCosts = { flak: [160, 80, 20], laser: [450, 300, 70], rail: [1400, 1e3, 280], plasma: [4e3, 2800, 900] }, cost = legacyDefense ? legacyCosts[job.key] : SHIPS[job.key].cost, gross = vector(cost.map((v) => v * job.count));
   return { resources: legacyDefense ? vector([0, 0, gross.fuel]) : gross, salvage: legacyDefense ? vector([gross.metal, gross.crystal, 0]) : vector([0, 0, 0]), legacyDefense };
 }
+var SHIP_SCRAP_PERCENT = 30;
+function scrapShipInfo(p, key, count = 1) {
+  const sh = SHIPS[key], available = p.ships?.[key] || 0, valid = Number.isSafeInteger(count) && count >= 1, refund = vector([0, 0, 0]);
+  let reason = !sh || !["freighter", "military", "civil"].includes(sh.category) ? "Nur Schiffe k\xF6nnen in der Schiffswerft verschrottet werden." : !p.buildings.shipyard ? "Ben\xF6tigt Schiffswerft Stufe 1." : !valid ? "W\xE4hle eine positive ganze Anzahl Schiffe." : "";
+  if (!reason) {
+    for (let i = 0; i < RES.length; i++) {
+      const gross = sh.cost[i] * count;
+      if (!Number.isSafeInteger(gross * SHIP_SCRAP_PERCENT) || gross * SHIP_SCRAP_PERCENT > Number.MAX_SAFE_INTEGER) {
+        reason = "Diese Verschrottungsmenge ist zu gro\xDF.";
+        break;
+      }
+      refund[RES[i]] = Math.floor(gross * SHIP_SCRAP_PERCENT / 100);
+    }
+    if (!reason && RES.some((k) => refund[k] > 1e12 || (p.depot?.[k] || 0) + refund[k] > 1e12)) reason = "Die Erstattung \xFCberschreitet die maximale Depotmenge.";
+    if (!reason && count > available) reason = "Nicht gen\xFCgend verf\xFCgbare Schiffe auf diesem Planeten.";
+  }
+  return { key, count, available, refund, reason };
+}
 function shipInfo(s, p, key, count = 1) {
   const sh = SHIPS[key];
   if (!sh) throw Error("Unbekanntes Schiff.");
@@ -1179,6 +1197,15 @@ function act(s, action, now = Date.now()) {
       p.shipqueue ??= [];
       p.shipqueue.push(job);
     } else p.shipjob = job;
+  } else if (action.type === "scrap-ship") {
+    const q = scrapShipInfo(p, action.key, action.count);
+    if (q.reason) throw Error(q.reason);
+    if (p.hulls?.[action.key]) p.hulls[action.key].sort((a, b) => a - b);
+    takeHulls(p, { [action.key]: action.count });
+    p.ships[action.key] -= action.count;
+    for (const k of RES) p.depot[k] += q.refund[k];
+    settle(p);
+    report(n, "Schiffe verschrottet", p.name + ": " + action.count + " \xD7 " + SHIPS[action.key].name + " endg\xFCltig verschrottet. 30 % der Bauressourcen erstattet; \xDCbersch\xFCsse bleiben im Lieferdepot.");
   } else if (action.type === "cancel-ship") {
     const o = action.order, j = o?.id !== void 0 ? [...shipOrders(p), ...orbitalOrders(p)].find((j2) => j2.id === o.id) : p.shipjob;
     if (!j) throw Error("Dieser Schiffsbauauftrag ist bereits abgeschlossen oder abgebrochen. Der Bauauftrag hat sich ge\xE4ndert. Bitte die Ansicht aktualisieren.");
@@ -2534,7 +2561,7 @@ function processWorld(snapshot, uid, request) {
   const s = stateOf(w, uid), start = w.starts.find((x) => x.user_id === uid);
   if (start) s.galaxy = { x: start.x, y: start.y };
   if (type === "command") {
-    if (!["build", "demolish", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "salvage", "route", "deliver", "repair", "cancel-repair", "resume-repair", "cancel-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
+    if (!["build", "demolish", "research", "ship", "probe", "colony", "transport", "reserve", "edit-route", "cancel-route-edit", "stop-route", "pause-route", "resume-route", "cancel-route-pause", "station", "collect", "salvage", "route", "deliver", "repair", "cancel-repair", "resume-repair", "cancel-ship", "scrap-ship"].includes(action.type)) throw Error("Unbekannte Spielaktion.");
     if (action.type === "salvage") {
       const target = w.planets.find((p) => p.id === action.to);
       if (!target || target.owner_id !== uid || target.reserved) throw Error("W\xE4hle eine eigene besiedelte Galaxiekolonie mit Tr\xFCmmern.");
@@ -2573,7 +2600,7 @@ function projectPvP(w, uid) {
     serverNow: w.now,
     social: socialProjection(w, uid),
     pirates: projectPirates(w, uid),
-    features: { routeStatistics: true, pirates: w.pirateVersion === 1, piratesPublic: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6, 7].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
+    features: { shipScrapping: true, routeStatistics: true, pirates: w.pirateVersion === 1, piratesPublic: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6, 7].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
     protectionMs: COLONY_PROTECTION,

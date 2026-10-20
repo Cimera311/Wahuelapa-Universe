@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {ui,input,tick} from './helpers/game-ui.js';
+function ready(t){const u=ui(t),p=u.api.state().planets[0];p.buildings.shipyard=6;p.buildings.warehouse=20;p.buildings.metal=p.buildings.crystal=p.buildings.fuel=0;p.ships.titan=5;p.ships.flak=10;u.api.show('hangar');u.doc.querySelector('[data-action="shipyard-mode"][data-mode="scrap"]').click();return {...u,p,form:()=>u.doc.getElementById('ship-scrap-form-titan')};}
+function submit(w,f){f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));}
+test('Yard menu opens ship-only cards with exact refund, range controls and free numeric planning',t=>{
+ const {doc,w,form}=ready(t);assert.equal(doc.querySelector('#ship-scrap-form-flak'),null);const f=form();input(w,f.querySelector('[data-scrap-range]'),2);assert.equal(f.elements.namedItem('count').value,'2');assert.match(f.querySelector('[data-scrap-refund]').textContent,/5.700/);input(w,f.elements.namedItem('count'),1000);assert.equal(f.elements.namedItem('count').value,'1000');assert.equal(f.elements.namedItem('count').hasAttribute('max'),false);assert.equal(f.querySelector('[type=submit]').disabled,true);assert.equal(f.querySelector('[data-scrap-range]').value,'5');
+});
+test('Only explicit confirmation scraps ships; cancellation and opening the dialog are read-only',async t=>{
+ const {doc,w,api,form}=ready(t);input(w,form().elements.namedItem('count'),2);submit(w,form());assert.equal(api.state().planets[0].ships.titan,5);doc.querySelector('[data-scrap-cancel]').click();assert.equal(api.state().planets[0].ships.titan,5);submit(w,form());doc.querySelector('[data-scrap-confirm]').click();await tick();assert.equal(api.state().planets[0].ships.titan,3);assert.match(doc.getElementById('toast').textContent,/30 %/);
+});
+test('Confirmation rechecks changing stock and cannot act on another account',async t=>{
+ const {doc,w,api,form,p}=ready(t);input(w,form().elements.namedItem('count'),5);submit(w,form());p.ships.titan=1;doc.querySelector('[data-scrap-confirm]').click();await tick();assert.equal(api.state().planets[0].ships.titan,1);assert.equal(doc.querySelector('[data-scrap-confirm]').disabled,true);doc.querySelector('[data-scrap-cancel]').click();input(w,form().elements.namedItem('count'),1);submit(w,form());api.attach({user:{id:'other'},authoritative:true,pvp:{features:{shipScrapping:true}}});doc.querySelector('[data-scrap-confirm]').click();assert.match(doc.querySelector('[data-scrap-dialog-error]').textContent,/Spielstand/);
+});
+test('Older server gates scrapping; drafts survive navigation and busy cloud renders',async t=>{
+ const {doc,w,api,form}=ready(t);api.attach({user:{id:'a'},authoritative:true,pvp:{incoming:[],features:{shipScrapping:true}},async gameRequest(){return {state:structuredClone(api.state())};}});api.render();input(w,form().elements.namedItem('count'),1000);doc.querySelector('[data-mode="build"]').click();doc.querySelector('[data-mode="scrap"]').click();assert.equal(form().elements.namedItem('count').value,'1000');const syncing=api.sync();api.render();await syncing;assert.equal(form().elements.namedItem('count').value,'1000');assert.equal(form().elements.namedItem('count').disabled,false);api.attach({user:{id:'a'},authoritative:true,pvp:{incoming:[],features:{}}});api.render();assert.equal(form().querySelector('[type=submit]').disabled,true);assert.match(doc.querySelector('main').textContent,/neue Game-command/);
+});
