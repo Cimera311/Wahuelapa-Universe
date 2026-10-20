@@ -1,4 +1,4 @@
-import {PIRATE_STATION_META,pirateConfig,pirateFlight} from './pirates-config.js';
+import {PIRATE_STATION_META,pirateConfig,pirateFlight,pirateCooldownMinutes} from './pirates-config.js';
 import {RES,SHIPS,attackSlots,vector,isFreighter} from './config.js';
 import {getPlanet,fleetCapacity,unloadCargo,cargoPresent,nextCargoSpaceEvent,settle} from './engine.js';
 import {attackFleet,takeHulls,putHulls,resolveBattle,COMBAT_RULE_VERSION} from './combat.js';
@@ -8,11 +8,21 @@ const pirateZero=()=>vector([0,0,0]);
 const pirateState=(w,uid)=>w.saves.find(r=>r.user_id===uid)?.state;
 const pirateOwner=(w,uid)=>w.piratePlayers?.find(r=>r.user_id===uid);
 function pirateLog(s,time,title,body){s.reports.unshift({id:++s.seq,time,title,body:body.slice(0,1000)});s.reports=s.reports.slice(0,60);}
-function spawnPirate(meta,c,time,old){const b=c.stations[meta.id];return {id:meta.id,generation:(old?.generation||0)+1,sensor:b.sensor,enabled:b.enabled,tech:{...b.tech},fleet:Object.fromEntries(Object.entries(b.fleet).map(([k,n])=>[k,Math.max(1,Math.round(n*c.strengthFactor))])),hulls:{},resources:vector(RES.map(k=>Math.floor(b.resources[k]*c.resourceFactor))),debris:{...old?.debris||pirateZero()},debrisExpiresAt:old?.debrisExpiresAt||0,refreshAt:time+c.cooldownMinutes*60000,nextAttackAt:0,scan:null,defeated:false,cooldownMs:c.cooldownMinutes*60000,debrisRate:c.debrisRate,debrisLifetimeMs:c.debrisLifetimeHours*3600000};}
-export function preparePirates(w){if(w.pirateVersion!==1)return;w.pirateConfig=pirateConfig(w.pirateConfig||{});w.piratePlayers??=[];}
+function spawnPirate(meta,c,time,old){const b=c.stations[meta.id],cooldownMs=pirateCooldownMinutes(c,meta.id)*60000;return {id:meta.id,generation:(old?.generation||0)+1,sensor:b.sensor,enabled:b.enabled,tech:{...b.tech},fleet:Object.fromEntries(Object.entries(b.fleet).map(([k,n])=>[k,Math.max(1,Math.round(n*c.strengthFactor))])),hulls:{},resources:vector(RES.map(k=>Math.floor(b.resources[k]*c.resourceFactor))),debris:{...old?.debris||pirateZero()},debrisExpiresAt:old?.debrisExpiresAt||0,refreshAt:time+cooldownMs,nextAttackAt:0,lastAttackAt:old?.lastAttackAt||0,scan:null,defeated:false,cooldownMs,debrisRate:c.debrisRate,debrisLifetimeMs:c.debrisLifetimeHours*3600000};}
+export function preparePirates(w){if(w.pirateVersion!==1)return;w.pirateConfig=pirateConfig(w.pirateConfig||{});w.piratePlayers??=[];for(const row of w.piratePlayers)for(const meta of PIRATE_STATION_META)syncPirateCooldown(w,row,meta);}
+// Rebase an existing wait on the original battle, never on the current request.
+function syncPirateCooldown(w,row,meta){
+ const q=row.stations[meta.id];if(!q)return;const next=pirateCooldownMinutes(w.pirateConfig,meta.id)*60000,old=q.cooldownMs||3600000;
+ q.lastAttackAt??=q.nextAttackAt?q.nextAttackAt-old:row.reports.find(r=>r.station===meta.id)?.at||0;
+ if(old===next)return;
+ const deadline=q.lastAttackAt+next;
+ if(q.nextAttackAt||q.lastAttackAt&&deadline>w.now){q.nextAttackAt=deadline;q.refreshAt=deadline;}else q.refreshAt=q.refreshAt-old+next;
+ q.cooldownMs=next;
+}
 export function refreshPirates(w,time){
  if(w.pirateVersion!==1)return;
  for(const row of w.piratePlayers)for(const meta of PIRATE_STATION_META){
+  syncPirateCooldown(w,row,meta);
   let q=row.stations[meta.id];
   if(!q||time>=q.refreshAt&&!row.missions.some(m=>m.station===meta.id&&m.kind==='attack'&&m.status==='outbound'))q=row.stations[meta.id]=spawnPirate(meta,w.pirateConfig,time,q);
   if(q.debrisExpiresAt&&time>=q.debrisExpiresAt){q.debris=pirateZero();q.debrisExpiresAt=0;}
@@ -79,7 +89,7 @@ export function arrivePirate(w,uid,m,time){
   for(const k of RES){debris[k]=Math.floor(debris[k]);station.debris[k]+=debris[k];}
   if(RES.some(k=>debris[k]>0))station.debrisExpiresAt=time+station.debrisLifetimeMs;
   station.fleet=result.defender.fleet;station.hulls=result.defender.hulls;station.defeated=!Object.values(station.fleet).some(n=>n>0);
-  station.nextAttackAt=time+station.cooldownMs;station.refreshAt=station.nextAttackAt;
+  station.lastAttackAt=time;station.nextAttackAt=time+station.cooldownMs;station.refreshAt=station.nextAttackAt;
   m.fleet=result.attacker.fleet;m.hulls=result.attacker.hulls;m.shieldUntil=time+300000;
   if(result.outcome==='attacker')m.cargo=takePirateCargo(station.resources,fleetCapacity({tech:m.tech},m.fleet));
   pirateReport(row,{id:m.id,station:m.station,at:time,outcome:result.outcome,ruleVersion:m.ruleVersion,rounds:result.rounds,attackerBefore:{...m.initialFleet},attackerAfter:{...m.fleet},defenderBefore:before,defenderAfter:{...station.fleet},cargo:{...m.cargo},debris});
@@ -104,7 +114,7 @@ export function pirateFleetShadows(w){if(w.pirateVersion!==1)return;for(const ro
 export function projectPirates(w,uid){
  if(w.pirateVersion!==1||!pirateState(w,uid))return null;
  const row=pirateOwner(w,uid);
- return {config:w.admins.includes(uid)?structuredClone(w.pirateConfig):{flightTimeFactor:w.pirateConfig.flightTimeFactor,fuelFactor:w.pirateConfig.fuelFactor},stations:PIRATE_STATION_META.map(meta=>{const q=row?.stations[meta.id];return {...meta,sensor:q?.sensor??w.pirateConfig.stations[meta.id].sensor,enabled:w.pirateConfig.enabled&&w.pirateConfig.stations[meta.id].enabled,initialized:!!q,generation:q?.generation,refreshAt:q?.refreshAt||0,nextAttackAt:q?.nextAttackAt||0,defeated:!!q?.defeated,debris:{...q?.debris||pirateZero()},debrisExpiresAt:q?.debrisExpiresAt||0,scan:q?.scan?structuredClone(q.scan):null};}),missions:structuredClone(row?.missions||[]).map(({seed,combatConfig,initialFleet,...m})=>m),reports:structuredClone(row?.reports||[])};
+ return {config:w.admins.includes(uid)?structuredClone(w.pirateConfig):{flightTimeFactor:w.pirateConfig.flightTimeFactor,fuelFactor:w.pirateConfig.fuelFactor},stations:PIRATE_STATION_META.map(meta=>{const q=row?.stations[meta.id];return {...meta,cooldownMinutes:pirateCooldownMinutes(w.pirateConfig,meta.id),sensor:q?.sensor??w.pirateConfig.stations[meta.id].sensor,enabled:w.pirateConfig.enabled&&w.pirateConfig.stations[meta.id].enabled,initialized:!!q,generation:q?.generation,refreshAt:q?.refreshAt||0,nextAttackAt:q?.nextAttackAt||0,defeated:!!q?.defeated,debris:{...q?.debris||pirateZero()},debrisExpiresAt:q?.debrisExpiresAt||0,scan:q?.scan?structuredClone(q.scan):null};}),missions:structuredClone(row?.missions||[]).map(({seed,combatConfig,initialFleet,...m})=>m),reports:structuredClone(row?.reports||[])};
 }
 // Returning PvE fleets waiting for warehouse space remain vulnerable in the origin orbit.
 export function pirateDefense(w,uid,planet){return (pirateOwner(w,uid)?.missions||[]).filter(m=>m.awaitingUnload&&m.from===planet).map(m=>({id:'pirate:'+m.id,owner:uid,commander:'PvE-Rückkehrer',fleet:{...m.fleet},hulls:m.hulls,tech:m.tech}));}
