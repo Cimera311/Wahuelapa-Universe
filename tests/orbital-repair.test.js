@@ -30,7 +30,7 @@ test('Partially damaged orbital units destroyed in dock become disabled too',()=
  let w=fixture(),s=ready(),p=s.planets[1];p.disabledDefenses={};p.ships.flak=1;p.hulls={flak:[.1]};w.saves[1].state=act(s,{type:'repair',key:'flak',count:1},T);w=attack(w);p=w.saves[1].state.planets[1];assert.equal(p.disabledDefenses.flak,1);assert.equal(p.repairQueue.length,0);assert.equal(p.ships.flak,0);validateSave(w.saves[1].state);
 });
 test('Dock UI shows disabled-only units and submits a restoration order',async t=>{
- const s=ready(),{doc,w,api}=ui(t,{state:s});api.show('overview');doc.querySelector('nav [data-tab="fleet"]').click();assert.match(doc.querySelector('.fleet-stock-grid').textContent,/2 defekt/);doc.querySelector('[data-action="repair-open"]').click();assert.match(doc.getElementById('repair-quote').textContent,/336/);doc.getElementById('repair-form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();assert.equal(api.state().planets[1].repairQueue[0].restore,true);
+ const s=ready(),{doc,w,api}=ui(t,{state:s});api.show('overview');doc.querySelector('nav [data-tab="fleet"]').click();assert.match(doc.querySelector('.fleet-stock-grid').textContent,/2 defekt/);doc.querySelector('[data-action="repair-open"]').click();assert.match(doc.querySelector('[data-repair-quote]').textContent,/336/);doc.querySelector('[data-repair-form]').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();assert.equal(api.state().planets[1].repairQueue[0].restore,true);
 });
 test('Invalid disabled counts and restore flags cannot enter persisted state',()=>{
  for(const disabled of [{titan:1},{flak:-1},{flak:1.5}]){const s=ready();s.planets[1].disabledDefenses=disabled;assert.throws(()=>validateSave(s));}
