@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-20.01",
+  "latest": "2026-10-20.02",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -225,6 +225,13 @@
       "sourceCommit": "fcd3c36f6a3ebd34a25585b2368f71eac403c211",
       "description": "Schiffe verschrotten: feste 30 Prozent Rueckgabe, nur verfuegbarer Bestand, atomare Buchung und Server-Featureflag",
       "sha256": "42e84dcbd4968143e12a62ab0cc5dde712362459a0dd799cccab37bf52ed1727"
+    },
+    {
+      "version": "2026-10-20.02",
+      "createdAt": "2026-10-20T18:00:00.000Z",
+      "sourceCommit": "42858de37416779368072a4d48ee41547eb46849",
+      "description": "Piratenstufen 1-3 eine Stunde, 4-5 sechs Stunden; bestehende Timer und moderne Game Command integriert",
+      "sha256": "624ca069981153d2ae43b0aee95f32186a012688fdf62302ae0513be9031edcf"
     }
   ]
 }
