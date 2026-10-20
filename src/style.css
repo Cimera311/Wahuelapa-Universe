@@ -748,3 +748,22 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 @media(max-width:1050px){.overview-world-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.overview-world-grid{grid-template-columns:1fr}.overview-world.world-card{min-height:220px}.overview-world .world-production .world-resource-rate strong{font-size:14px}}
 @media(max-width:370px){.overview-world.world-card{padding:10px}.overview-world .world-production .world-resource-rate strong{font-size:12px}.overview-world .world-resource-stock,.overview-world .world-resource-stock strong{font-size:9px}.overview-world .world-factors{font-size:9px;gap:3px}.overview-world .world-levels>span{font-size:9px;padding:3px}}
+
+/* Mobile-first full page maintenance screen. */
+.maintenance-page{min-height:100svh;display:grid;place-items:center;padding:28px 18px;background:radial-gradient(ellipse at 50% 25%,#143851 0,transparent 54%),linear-gradient(180deg,#05111f,#091c2a);color:var(--text)}
+.maintenance-card{width:min(100%,560px);padding:clamp(28px,6vw,58px);text-align:center;border:1px solid #2a5268;border-radius:20px;background:linear-gradient(155deg,#10293be9,#081a29f2);box-shadow:0 20px 100px #020a15a8, inset 0 1px 0 #74c8e526}
+.maintenance-card .brand{margin:12px auto 36px}.maintenance-card .eyebrow{letter-spacing:.22em;color:#89cce3}
+.maintenance-card h1{font-size:clamp(30px,6vw,46px);line-height:1.08;margin:14px 0 20px}
+.maintenance-description{font-size:clamp(16px,2.6vw,19px);line-height:1.65;color:#d9ecf7}
+.maintenance-note{color:#97afc2;font-size:13px;line-height:1.6;margin-top:26px}
+.maintenance-orbit{width:104px;height:104px;display:grid;place-items:center;margin:0 auto 20px;border:1px solid #409abb7d;border-radius:50%;background:radial-gradient(circle,#24749c77 0,#082538 65%,transparent 68%);box-shadow:0 0 55px #1c9cc33b;animation:maintenance-pulse 3s ease-in-out infinite}
+.maintenance-orbit span{font-size:40px;color:#9fe8ff;text-shadow:0 0 30px #75cfff}
+@keyframes maintenance-pulse{50%{box-shadow:0 0 85px #1c9cc361;transform:scale(1.04)}}
+.maintenance-admin{margin-top:30px;text-align:left;border-top:1px solid #264658;padding-top:20px}
+.maintenance-admin summary{cursor:pointer;color:#a8bed0;font-size:12px;text-align:center}
+.maintenance-admin form{margin:18px auto 0;display:grid;gap:14px;max-width:340px}
+.maintenance-admin label,.maintenance-settings label{display:grid;gap:7px;text-align:left}
+.maintenance-admin input,.maintenance-settings input{max-width:100%;width:100%;min-height:42px}
+.maintenance-error{color:#ffd09b;border:1px solid #9b7445;background:#342719;padding:12px;border-radius:8px}
+.maintenance-settings{margin:18px 0;border-color:#3982a1}
+@media (prefers-reduced-motion:reduce){.maintenance-orbit{animation:none}}
