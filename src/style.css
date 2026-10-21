@@ -765,3 +765,31 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .attack-cargo-list small{color:#9dbccc}
 .attack-cargo-list strong{font-variant-numeric:tabular-nums}
 @media(max-width:600px){.attack-cargo-list{gap:6px}.attack-cargo-list>div{padding:9px 4px}.attack-flight-accordion .attack-journey{margin:16px 0 8px}.attack-flight-accordion .attack-world small{font-size:.72rem}}
+
+
+/* B3.3: compact PvP-only fleet selection. Shared PvE hangar is unchanged. */
+.pvp-compact-hangar{margin-top:16px}
+.pvp-compact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pvp-compact-group{min-width:0}
+.pvp-compact-group>h4{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0;font-size:.82rem;letter-spacing:.06em;color:#b8edfb}
+.pvp-compact-group>h4 span{color:#90aec1;font-size:.74rem;font-weight:400;letter-spacing:0}
+.pvp-compact-ship{border:1px solid #245168;border-radius:16px;background:linear-gradient(145deg,#0b2738,#071b29);padding:10px 12px;margin:7px 0;min-width:0}
+.pvp-compact-top{display:grid;grid-template-columns:56px minmax(0,1fr) 96px;gap:10px;align-items:center}
+.pvp-compact-art{width:56px;height:49px;object-fit:contain;filter:drop-shadow(0 0 8px #32ccec30)}
+.pvp-compact-identity{min-width:0}
+.pvp-compact-title{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.pvp-compact-title strong{font-size:1rem}
+.pvp-compact-title span{font-size:.64rem;border:1px solid #2c7892;border-radius:999px;padding:3px 7px;color:#a1e9fa;letter-spacing:.03em}
+.pvp-compact-identity>small{display:block;color:#65ecb7;font-size:.84rem;font-weight:650;margin-top:3px}
+.pvp-compact-top>input{min-width:0;width:100%;padding:8px 4px;text-align:center;font-size:1.25rem;font-weight:800;border:1px solid #2d627e;border-radius:12px;background:#081927;color:#f1f8ff}
+.pvp-compact-controls{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:9px}
+.pvp-compact-controls button{border:0;padding:3px 0;background:transparent;color:#e7f7ff;font-size:.83rem;font-weight:750;cursor:pointer}
+.pvp-compact-controls input{width:100%;min-width:0;accent-color:#35d2ef}
+.pvp-compact-details{margin-top:1px}
+.pvp-compact-details>summary{list-style:none;text-align:right;cursor:pointer;color:#94e0f0;font-size:.76rem;font-weight:650;padding:2px 0}
+.pvp-compact-details>summary::-webkit-details-marker{display:none}
+.pvp-compact-details[open]>summary{color:#fff}
+.pvp-compact-details p{padding:10px 3px 0;margin:9px 0 0;border-top:1px solid #2b5267;color:#b5d1de;font-size:.82rem;line-height:1.6}
+.pvp-compact-hangar .pirate-hangar-selection{margin-top:12px}
+@media(max-width:850px){.pvp-compact-grid{grid-template-columns:1fr}}
+@media(max-width:420px){.pvp-compact-ship{padding:9px}.pvp-compact-top{grid-template-columns:48px minmax(0,1fr) 84px;gap:7px}.pvp-compact-art{width:48px;height:46px}.pvp-compact-title strong{font-size:.93rem}.pvp-compact-controls{gap:7px}}
