@@ -15,7 +15,7 @@ test('PvP flight starts compact; route, countdown and commander names remain vis
  assert.match(html,/Cimera/);assert.match(html,/Verwalter/);
  assert.match(html,/data-due="200000"/);
  assert.match(html,/Flotte an Bord/);
- assert.match(html,/12\\.500/);assert.match(html,/8\\.200/);assert.match(html,/3\\.400/);
+ assert.match(html,/12\.500/);assert.match(html,/8\.200/);assert.match(html,/3\.400/);
 });
 
 test('Accordion persists opening state independently of nested reports',()=>{
@@ -33,5 +33,5 @@ test('Outbound attack does not invent loot and an empty return declares no cargo
 
 test('Waiting for storage retains cargo indicator and does not hide the flight',()=>{
  const html=attackCard({...mission,awaitingUnload:true},state,pvp,galaxy);
- assert.match(html,/Wartet auf Lagerplatz/);assert.match(html,/Ladung bleibt an Bord/);
+ assert.match(html,/Wartet auf Lagerplatz/);assert.match(html,/Restladung bleibt an Bord/);
 });
