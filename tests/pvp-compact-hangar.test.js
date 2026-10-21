@@ -19,7 +19,7 @@ test('PvP B3.3 uses ship assets, selection controls and accordions',()=>{
  assert.match(html,/Schild/);
  assert.match(html,/Hülle/);
  assert.doesNotMatch(html,/>ausgewählt<\/span>/);
- assert.doesNotMatch(html,/pirate-hangar-card/);
+ assert.match(html,/pirate-hangar-card pvp-hangar-card/);
 });
 test('PvP B3.3 preserves precise quantities and does not mutate fleets',()=>{
  const fleet={falke:6000,atlas:2},copy={...fleet};

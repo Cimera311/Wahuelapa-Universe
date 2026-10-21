@@ -793,3 +793,24 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .pvp-compact-hangar .pirate-hangar-selection{margin-top:12px}
 @media(max-width:850px){.pvp-compact-grid{grid-template-columns:1fr}}
 @media(max-width:420px){.pvp-compact-ship{padding:9px}.pvp-compact-top{grid-template-columns:48px minmax(0,1fr) 84px;gap:7px}.pvp-compact-art{width:48px;height:46px}.pvp-compact-title strong{font-size:.93rem}.pvp-compact-controls{gap:7px}}
+
+
+/* PR follow-up: authentic hangar cards. Important: undo the PvP parent half-width grid. */
+.pvp-attack-planner .pirate-hangar.pvp-compact-hangar{display:block;min-width:0;width:100%}
+.pvp-compact-hangar .pvp-compact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start;width:100%}
+.pvp-compact-hangar .pvp-compact-group{min-width:0}
+.pvp-compact-hangar .pvp-hangar-card{padding:10px 12px 0;min-width:0;margin:9px 0}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-identity{grid-template-columns:68px minmax(0,1fr) 94px;gap:10px}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-art{height:56px}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-art>img{width:76px;height:55px;max-width:115%}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-copy>label{font-size:15px}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-copy>small{color:#69e8b4;font-size:12px;font-weight:600}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-number>input{width:100%;min-width:0}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-controls{margin:3px 0 0;grid-template-columns:48px minmax(0,1fr) 48px;gap:8px}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-controls>button{font-size:12px;font-weight:700}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-info{border-top:0}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-info>summary{justify-content:flex-end;min-height:27px}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-info>summary>span{font-size:11px;color:#8fddeb}
+.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-info[open]{border-top:1px solid #28434f}
+@media(max-width:950px){.pvp-compact-hangar .pvp-compact-grid{grid-template-columns:1fr}}
+@media(max-width:430px){.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-identity{grid-template-columns:54px minmax(0,1fr) 80px;gap:7px}.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-art>img{width:62px;height:50px}.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-number>input{font-size:16px}}
