@@ -49,3 +49,21 @@ export function updateFleetHangar(root,state){
  root.querySelector('[data-hangar-capacity]').textContent=fleetHangarNum(fleetCapacity(state,fleet));
  root.querySelector('[data-hangar-manifest]').innerHTML=fleetHangarManifest(fleet);
 }
+
+
+/** PvP-only B3.3 layout. Reuses the existing hangar data attributes and event handlers. */
+export function pvpCompactHangarPicker(state,planet,{fleet={},disabled=false}={}){
+ const groups=[['military','ANGRIFFSFLOTTE'],['freighter','BEUTEFRACHTER']];
+ const fmt=fleetHangarNum;
+ const rendered=groups.map(([category,label])=>{
+  const entries=Object.entries(SHIPS).filter(([key,sh])=>sh.category===category&&((planet.ships[key]||0)>0||Number(fleet[key])>0));
+  if(!entries.length)return '';
+  const cards=entries.map(([key,sh])=>{
+   const available=planet.ships[key]||0,count=Math.max(0,Math.floor(Number(fleet[key])||0)),bounded=clampFleetCount(count,available),engine=shipFlightEngine(state,key,false);
+   const details=category==='military'?'Kampfschiff · Stufe '+(sh.tier||1):fmt(cargoCapacity(state,1,key))+' Laderaum / Schiff';
+   return `<article class="pvp-compact-ship ${count?'is-selected':''}" data-hangar-ship="${key}" style="--hangar-fill:${available?100*bounded/available:0}%"><div class="pvp-compact-top"><img class="pvp-compact-art" src="./assets/${sh.image||key}.webp" alt="" width="64" height="54" decoding="async"><div class="pvp-compact-identity"><div class="pvp-compact-title"><strong>${fleetEscape(sh.name)}</strong><span>${category==='military'?'KAMPFSCHIFF':'FRACHTER'}</span></div><small>${fmt(available)} verfügbar</small></div><input id="pvp-compact-${key}" name="${key}" data-fleet-ship="${key}" type="number" min="0" step="1" value="${count}" inputmode="numeric" aria-label="Anzahl ${fleetEscape(sh.name)}" ${disabled?'disabled':''}></div><div class="pvp-compact-controls"><button type="button" data-hangar-count="none" aria-label="Keine ${fleetEscape(sh.name)}" ${disabled?'disabled':''}>Keine</button><input type="range" data-hangar-range="${key}" min="0" max="${available}" value="${bounded}" step="1" aria-label="${fleetEscape(sh.name)} auswählen" ${disabled?'disabled':''}><button type="button" data-hangar-count="all" data-hangar-available="${available}" aria-label="Alle ${fleetEscape(sh.name)}" ${disabled?'disabled':''}>Alle</button></div><details class="pvp-compact-details" data-pvp-ship-details="${key}"><summary>Details +</summary><p>${fleetEscape(sh.role||'')}<br>${fleetEscape(details)}<br>${fleetEscape(TECHS[engine].name)} ${state.tech[engine]||0}</p></details></article>`;
+  }).join('');
+  return `<section class="pvp-compact-group"><h4>${label}<span>${entries.length} Schiffstypen</span></h4>${cards}</section>`;
+ }).join('');
+ return `<section class="pirate-hangar pvp-compact-hangar"><div class="pirate-hangar-heading"><div><span class="eyebrow">DEIN HANGAR</span><h3>Flotte zusammenstellen</h3></div><span class="pirate-hangar-origin">${fleetEscape(planet.name)}</span></div><div class="pvp-compact-grid">${rendered}</div><div class="pirate-hangar-selection" role="status"><div class="pirate-hangar-selection-title"><strong data-hangar-total>0 Schiffe</strong><span><b data-hangar-capacity>0</b> Laderaum</span></div><div class="pirate-hangar-manifest" data-hangar-manifest></div></div></section>`;
+}
