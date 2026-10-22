@@ -814,3 +814,39 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 .pvp-compact-hangar .pvp-hangar-card .pirate-hangar-info[open]{border-top:1px solid #28434f}
 @media(max-width:950px){.pvp-compact-hangar .pvp-compact-grid{grid-template-columns:1fr}}
 @media(max-width:430px){.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-identity{grid-template-columns:54px minmax(0,1fr) 80px;gap:7px}.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-art>img{width:62px;height:50px}.pvp-compact-hangar .pvp-hangar-card .pirate-hangar-number>input{font-size:16px}}
+
+
+/* Werft Concept v5: compact accordion with full-bleed artwork; existing server-side build logic preserved. */
+.world-grid.ships{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:12px;align-items:start}
+@media(min-width:700px){.world-grid.ships{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1240px){.world-grid.ships{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.ships .production-hangar.shipyard-v5.panel{position:relative;isolation:isolate;overflow:hidden;min-width:0;padding:12px;border-radius:15px;border:1px solid #598191;border-left:3px solid #55d1e7;background:#091d2b}
+.ships .production-hangar.shipyard-v5.military{border-left-color:#edb46d}
+.ships .production-hangar.shipyard-v5 .ship-v5-photo{position:absolute;inset:0;z-index:-1;pointer-events:none;background-repeat:no-repeat;background-position:center top;background-size:100% 100%,100% auto;opacity:.95}
+.ships .production-hangar.shipyard-v5 .ship-visual{display:none}
+.ships .production-hangar.shipyard-v5 .ship-build-row{display:grid;grid-template-columns:minmax(0,1fr) 44px;grid-template-areas:"identity details" "slider slider" "quantity quantity" "actions actions" "stock stock" "cost cost" "time time" "missing missing";gap:8px;align-items:center}
+.ships .production-hangar.shipyard-v5 .ship-identity{grid-area:identity;display:flex;align-items:baseline;gap:8px;min-width:0;text-shadow:0 2px 9px #000}
+.ships .production-hangar.shipyard-v5 .ship-identity>div:last-child{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;min-width:0}
+.ships .production-hangar.shipyard-v5 h2{font-size:18px;color:#fff;margin:0}
+.ships .production-hangar.shipyard-v5 .ship-v5-count{font-size:16px;color:#92edcb;font-weight:800}
+.ships .production-hangar.shipyard-v5 .ship-details-toggle{grid-area:details;min-height:32px;height:32px;width:32px;justify-self:end;align-self:start}
+.ships .production-hangar.shipyard-v5 .production-slider{grid-area:slider;border-top:1px solid #7195a466;padding-top:8px;margin-top:3px;grid-template-columns:42px minmax(0,1fr) 58px}
+.ships .production-hangar.shipyard-v5 .production-slider>button{min-height:32px}
+.ships .production-hangar.shipyard-v5 .production-quantity{grid-area:quantity;display:flex;justify-content:flex-start;border:0;padding:0;margin:0}
+.ships .production-hangar.shipyard-v5 .production-quantity>label{display:none}
+.ships .production-hangar.shipyard-v5 .pirate-hangar-number{width:100%}
+.ships .production-hangar.shipyard-v5 .pirate-hangar-number>input{width:100%;background:rgba(3,20,30,.20);min-height:38px;padding:6px;color:#ffba75}
+.ships .production-hangar.shipyard-v5 .ship-build-actions{grid-area:actions;border:0;padding:0;margin:0}
+.ships .production-hangar.shipyard-v5 .ship-build-actions>[data-action="ship"]{width:100%;min-height:40px}
+.ships .production-hangar.shipyard-v5 .production-stock{grid-area:stock;font-size:11px}
+.ships .production-hangar.shipyard-v5 .ship-build-cost{grid-area:cost}
+.ships .production-hangar.shipyard-v5 .ship-build-time{grid-area:time}
+.ships .production-hangar.shipyard-v5 .production-missing{grid-area:missing}
+.ships .production-hangar.shipyard-v5 .ship-build-cost,
+.ships .production-hangar.shipyard-v5 .ship-build-time,
+.ships .production-hangar.shipyard-v5 .production-stock{display:none}
+.ships .production-hangar.shipyard-v5:has([data-ship-toggle][aria-expanded="true"]) .ship-build-cost{display:grid}
+.ships .production-hangar.shipyard-v5:has([data-ship-toggle][aria-expanded="true"]) .ship-build-time{display:flex}
+.ships .production-hangar.shipyard-v5:has([data-ship-toggle][aria-expanded="true"]) .production-stock{display:block}
+.ships .production-hangar.shipyard-v5 .ship-extra{margin-top:8px}
+@media(max-width:380px){.ships .production-hangar.shipyard-v5.panel{padding:10px}}
