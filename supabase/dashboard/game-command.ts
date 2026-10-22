@@ -2132,7 +2132,7 @@ function validateSave(input) {
   const s = structuredClone(input);
   if (s.systemName !== void 0) check("SV002", text(s.systemName, 30) && s.systemName.trim().length > 0);
   check("SV003", text(s.name, 30) && s.name.trim().length > 0 && isNum(s.time, 864e13) && isNum(s.created, 864e13) && s.created <= s.time && integer(s.seq, 1e9));
-  check("SV004", Array.isArray(s.planets) && s.planets.length >= 1 && s.planets.length <= 7);
+  check("SV004", Array.isArray(s.planets) && s.planets.length >= 1 && s.planets.length <= 9);
   if (s.galaxy) check("SV005", isNum(s.galaxy.x, 1200) && isNum(s.galaxy.y, 1200));
   if (s.tech) {
     for (const k of Object.keys(TECHS)) if (!Object.hasOwn(s.tech, k)) s.tech[k] = 0;
