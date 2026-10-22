@@ -32,3 +32,24 @@ test('expanded research level remains compatible with saving', () => {
   state.tech.colonization=8;
   assert.equal(validateSave(state).tech.colonization,8);
 });
+
+test('a valid expanded empire accepts nine planets but rejects a tenth', () => {
+  const state=newGame('Nine Planets',1800000000000);
+  state.tech.colonization=8;
+  for(let n=1;n<=8;n++) {
+    const planet=structuredClone(state.planets[0]);
+    planet.id=`g-aster-p${n}`;
+    planet.system='g-aster';
+    planet.x=100+n;
+    planet.y=200+n;
+    planet.slot=n;
+    planet.coord=`Aster ${n}`;
+    state.planets.push(planet);
+  }
+  assert.equal(validateSave(state).planets.length,9);
+  const tenth=structuredClone(state.planets[8]);
+  tenth.id='g-aster-p9';
+  tenth.slot=9;
+  state.planets.push(tenth);
+  assert.throws(()=>validateSave(state),e=>e.rule==='SV004');
+});
