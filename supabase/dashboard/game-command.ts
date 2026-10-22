@@ -22,7 +22,7 @@ var BUILDINGS = {
 var TECHS = {
   scout: { name: "Sensortechnik", description: "Stufe 1: Sonden. Weitere Stufen: k\xFCrzere Sondenfl\xFCge und fr\xFChere PvP-Warnungen. Je Stufe sinkt die Zeit bis zur Erkennung um weitere 10 % (abnehmender absoluter Effekt).", cost: [100, 100, 30], time: 10, lab: 1, max: 100 },
   logistics: { name: "Transporttechnik", description: "Frachter freischalten; je Stufe +15 % Laderaum.", cost: [150, 120, 40], time: 12, lab: 1, max: 5, requires: { tech: "scout", level: 1 } },
-  colonization: { name: "Kolonisierung", description: "Stufen 1\u20133: die drei Tutorial-Kolonien. Stufen 4\u20136: Pl\xE4tze f\xFCr die k\xFCnftige gemeinsame Galaxie.", cost: [350, 250, 100], time: 16, lab: 2, max: 6, requires: { tech: "scout", level: 1 } },
+  colonization: { name: "Kolonisierung", description: "Stufen 1\u20133: die drei Tutorial-Kolonien. Stufen 4-8: weitere Plaetze in der gemeinsamen Galaxie.", cost: [350, 250, 100], time: 16, lab: 2, max: 8, requires: { tech: "scout", level: 1 } },
   drive: { name: "Verbrennungstriebwerke", description: "F\xFCr Sonden, Kolonieschiffe, kleine Transporter, Kurier und Falke: je Stufe +5 % Antriebsleistung; separate Verbrauchsreduktion von 12 % je Stufe. Stufe 3 erm\xF6glicht Staustrahlforschung.", cost: [200, 150, 80], time: 14, lab: 2, max: 10, requires: { tech: "logistics", level: 1 } },
   ramjet: { name: "Staustrahltriebwerke", description: "Stufe 1: W\xE4chter; Stufe 2: Karawane. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur f\xFCr diese Schiffe. Stufe 1 bereitet Fl\xFCge in die k\xFCnftige gemeinsame Galaxie vor; Stufe 3 erm\xF6glicht Impulstriebwerke.", cost: [600, 450, 200], time: 24, lab: 3, max: 10, requires: { tech: "drive", level: 3 } },
   impulse: { name: "Impulstriebwerke", description: "Stufe 1: Donner; Stufe 2: Atlas. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur f\xFCr diese Schiffe. Stufe 3 erm\xF6glicht Hyperraumtriebwerke.", cost: [1800, 1400, 650], time: 40, lab: 4, max: 10, requires: { tech: "ramjet", level: 3 } },
@@ -67,6 +67,7 @@ function vector(values) {
   return Object.fromEntries(RES.map((k, i) => [k, values[i]]));
 }
 function costAt(item, level) {
+  if (item === TECHS.colonization && (level === 6 || level === 7)) return vector([level === 6 ? 1000000 : 1500000, level === 6 ? 1000000 : 1500000, level === 6 ? 1000000 : 1500000]);
   return vector(item.cost.map((v) => Math.ceil(v * Math.pow(1.6, level) * Math.pow(item === TECHS.military ? 1.5 : 1, Math.max(0, level - 4)))));
 }
 var ROUTE_ECONOMY = { time: 1, fuel: 0.75 };
@@ -781,7 +782,7 @@ function researchInfo(s, p, key) {
   const t = TECHS[key];
   if (!t) throw Error("Unbekannte Forschung.");
   const l = s.tech[key];
-  return { cost: costAt(t, l), ms: Math.ceil(t.time * Math.pow(1.5, l) * Math.pow(key === "military" ? 1.5 : 1, Math.max(0, l - 4)) / Math.max(1, 1 + (p.buildings.lab - 1) * 0.15) * 1e3), reason: (key === "colonization" && l >= 3 && l < t.max ? need(s, p, { tech: ["ramjet", "impulse", "hyperspace"][l - 3], level: 1 }) : "") || (p.buildings.lab < t.lab ? `Ben\xF6tigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.` : need(s, p, t.requires) || (l >= t.max ? "Maximale Forschungsstufe erreicht." : "")) };
+  return { cost: costAt(t, l), ms: Math.ceil(t.time * Math.pow(1.5, l) * Math.pow(key === "military" ? 1.5 : 1, Math.max(0, l - 4)) / Math.max(1, 1 + (p.buildings.lab - 1) * 0.15) * 1e3), reason: (key === "colonization" && l >= 3 && l < 6 ? need(s, p, { tech: ["ramjet", "impulse", "hyperspace"][l - 3], level: 1 }) : "") || (p.buildings.lab < t.lab ? `Ben\xF6tigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.` : need(s, p, t.requires) || (l >= t.max ? "Maximale Forschungsstufe erreicht." : "")) };
 }
 function pay(p, c) {
   settle(p);
@@ -2131,7 +2132,7 @@ function validateSave(input) {
   const s = structuredClone(input);
   if (s.systemName !== void 0) check("SV002", text(s.systemName, 30) && s.systemName.trim().length > 0);
   check("SV003", text(s.name, 30) && s.name.trim().length > 0 && isNum(s.time, 864e13) && isNum(s.created, 864e13) && s.created <= s.time && integer(s.seq, 1e9));
-  check("SV004", Array.isArray(s.planets) && s.planets.length >= 1 && s.planets.length <= 7);
+  check("SV004", Array.isArray(s.planets) && s.planets.length >= 1 && s.planets.length <= 9);
   if (s.galaxy) check("SV005", isNum(s.galaxy.x, 1200) && isNum(s.galaxy.y, 1200));
   if (s.tech) {
     for (const k of Object.keys(TECHS)) if (!Object.hasOwn(s.tech, k)) s.tech[k] = 0;

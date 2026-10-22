@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-20.02",
+  "latest": "2026-10-22.01",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -232,6 +232,13 @@
       "sourceCommit": "42858de37416779368072a4d48ee41547eb46849",
       "description": "Piratenstufen 1-3 eine Stunde, 4-5 sechs Stunden; bestehende Timer und moderne Game Command integriert",
       "sha256": "624ca069981153d2ae43b0aee95f32186a012688fdf62302ae0513be9031edcf"
+    },
+    {
+      "version": "2026-10-22.01",
+      "createdAt": "2026-10-22T20:00:00.000Z",
+      "sourceCommit": "3c99df4522ab05229e097a4d2ac97e17c5a8d84c",
+      "description": "Kolonialisierung Stufe 7 und 8 mit je 1 Mio bzw 1,5 Mio aller Ressourcen, erweiterte Spielstandgrenze",
+      "sha256": "116aabda02d2045852480cf47ed2d6a9350d7922b7d292c5cbea52ae65e6d5d6"
     }
   ]
 }

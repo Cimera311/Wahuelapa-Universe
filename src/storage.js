@@ -14,7 +14,7 @@ export function validateSave(input){
  const s=structuredClone(input);
  if(s.systemName!==undefined)check('SV002',text(s.systemName,30)&&s.systemName.trim().length>0);
  check('SV003',text(s.name,30)&&s.name.trim().length>0&&isNum(s.time,8.64e15)&&isNum(s.created,8.64e15)&&s.created<=s.time&&integer(s.seq,1e9));
- check('SV004',Array.isArray(s.planets)&&s.planets.length>=1&&s.planets.length<=7);
+ check('SV004',Array.isArray(s.planets)&&s.planets.length>=1&&s.planets.length<=9);
  if(s.galaxy)check('SV005',isNum(s.galaxy.x,1200)&&isNum(s.galaxy.y,1200));
  if(s.tech)for(const k of Object.keys(TECHS))if(!Object.hasOwn(s.tech,k))s.tech[k]=0;
  check('SV006',s.tech&&Object.entries(TECHS).every(([k,t])=>integer(s.tech[k],t.max)));
