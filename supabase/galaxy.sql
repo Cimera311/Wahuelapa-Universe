@@ -108,7 +108,7 @@ begin
   if p_kind='colony' then
    if not exists(select 1 from public.galaxy_surveys where user_id=uid and planet_id=p_to) then raise exception 'SURVEY_REQUIRED';end if;
    if destination.owner_id is not null then raise exception 'PLANET_TAKEN';end if;
-   if (select count(*) from public.galaxy_planets where owner_id=uid)>=greatest(0,public.imperium_rank_int(s->'tech'->'colonization',6)-3) then raise exception 'COLONY_LIMIT';end if;
+   if (select count(*) from public.galaxy_planets where owner_id=uid)>=greatest(0,public.imperium_rank_int(s->'tech'->'colonization',8)-3) then raise exception 'COLONY_LIMIT';end if;
   end if;
   level:=public.imperium_rank_int(s->'tech'->'ramjet',10);
   dist:=greatest(1,sqrt(power(case when origin->>'id' like 'g-%' then (origin->>'x')::numeric else (start->>'x')::numeric end-(destination.meta->>'x')::numeric,2)+power(case when origin->>'id' like 'g-%' then (origin->>'y')::numeric else (start->>'y')::numeric end-(destination.meta->>'y')::numeric,2))/40+abs(destination.slot-case when origin->>'id' like 'g-%' then coalesce((origin->>'slot')::integer,0) else 0 end)*.15);
@@ -163,7 +163,7 @@ declare
  planets jsonb := case when jsonb_typeof(s->'planets')='array' then s->'planets' else '[]'::jsonb end;
  missions jsonb := case when jsonb_typeof(s->'missions')='array' then s->'missions' else '[]'::jsonb end;
 begin
- for p in select value from jsonb_array_elements(planets) limit 7 loop
+ for p in select value from jsonb_array_elements(planets) limit 9 loop
   for item in select key,value from jsonb_each(costs->'buildings') loop
    lvl := public.imperium_rank_int(p->'buildings'->item.key,30);
    for i in 0..lvl-1 loop
@@ -183,10 +183,10 @@ begin
   end loop;
  end loop;
  for item in select key,value from jsonb_each(costs->'tech') loop
-  lvl := public.imperium_rank_int(s->'tech'->item.key,case when item.key='scout' then 100 when item.key in ('drive','ramjet','impulse','hyperspace','military') then 10 when item.key='colonization' then 6 when item.key='assaultDrive' then 1 else 5 end);
+  lvl := public.imperium_rank_int(s->'tech'->item.key,case when item.key='scout' then 100 when item.key in ('drive','ramjet','impulse','hyperspace','military') then 10 when item.key='colonization' then 8 when item.key='assaultDrive' then 1 else 5 end);
   for i in 0..lvl-1 loop
    for base in select value from jsonb_array_elements(item.value) loop
-    research_total := research_total + least(1000000000000::numeric,ceil((base #>> '{}')::numeric * power(1.6::numeric,i) * power(1.5::numeric,case when item.key='military' then greatest(0,i-4) else 0 end)));
+    research_total := research_total + case when item.key='colonization' and i in (6,7) then case when i=6 then 1000000 else 1500000 end else least(1000000000000::numeric,ceil((base #>> '{}')::numeric * power(1.6::numeric,i) * power(1.5::numeric,case when item.key='military' then greatest(0,i-4) else 0 end))) end;
    end loop;
   end loop;
  end loop;
@@ -205,7 +205,7 @@ begin
   end loop;
  end loop;
  return query select floor(buildings_total/100)::bigint,floor(research_total/100)::bigint,
- floor(fleet_total/100)::bigint,greatest(0,least(7,jsonb_array_length(planets))-1);
+ floor(fleet_total/100)::bigint,greatest(0,least(9,jsonb_array_length(planets))-1);
 end $$;
 revoke all on function public.imperium_rank_points(jsonb) from public,anon,authenticated;
 
