@@ -18,7 +18,7 @@ export const BUILDINGS = {
 export const TECHS = {
  scout:{name:'Sensortechnik',description:'Stufe 1: Sonden. Weitere Stufen: kürzere Sondenflüge und frühere PvP-Warnungen. Je Stufe sinkt die Zeit bis zur Erkennung um weitere 10 % (abnehmender absoluter Effekt).',cost:[100,100,30],time:10,lab:1,max:100},
  logistics:{name:'Transporttechnik',description:'Frachter freischalten; je Stufe +15 % Laderaum.',cost:[150,120,40],time:12,lab:1,max:5,requires:{tech:'scout',level:1}},
- colonization:{name:'Kolonisierung',description:'Stufen 1–3: die drei Tutorial-Kolonien. Stufen 4–6: Plätze für die künftige gemeinsame Galaxie.',cost:[350,250,100],time:16,lab:2,max:6,requires:{tech:'scout',level:1}},
+ colonization:{name:'Kolonisierung',description:'Stufen 1–3: die drei Tutorial-Kolonien. Stufen 4–8: zusätzliche Plätze in der gemeinsamen Galaxie.',cost:[350,250,100],time:16,lab:2,max:8,requires:{tech:'scout',level:1}},
  drive:{name:'Verbrennungstriebwerke',description:'Für Sonden, Kolonieschiffe, kleine Transporter, Kurier und Falke: je Stufe +5 % Antriebsleistung; separate Verbrauchsreduktion von 12 % je Stufe. Stufe 3 ermöglicht Staustrahlforschung.',cost:[200,150,80],time:14,lab:2,max:10,requires:{tech:'logistics',level:1}},
  ramjet:{name:'Staustrahltriebwerke',description:'Stufe 1: Wächter; Stufe 2: Karawane. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur für diese Schiffe. Stufe 1 bereitet Flüge in die künftige gemeinsame Galaxie vor; Stufe 3 ermöglicht Impulstriebwerke.',cost:[600,450,200],time:24,lab:3,max:10,requires:{tech:'drive',level:3}},
  impulse:{name:'Impulstriebwerke',description:'Stufe 1: Donner; Stufe 2: Atlas. Je Stufe +5 % Antriebsleistung und separate Verbrauchsreduktion von 12 % je Stufe nur für diese Schiffe. Stufe 3 ermöglicht Hyperraumtriebwerke.',cost:[1800,1400,650],time:40,lab:4,max:10,requires:{tech:'ramjet',level:3}},
@@ -58,7 +58,7 @@ export const TARGETS = [
  {id:'thalassa',name:'Thalassa',coord:'1:4:5',kind:'Ozeanplanet',specialty:'Kristall',distance:4,mult:[0.85,1.6,1.1],color:'#3c92c9',ocean:true,energy:1}
 ];
 export function vector(values){return Object.fromEntries(RES.map((k,i)=>[k,values[i]]));}
-export function costAt(item,level){return vector(item.cost.map(v=>Math.ceil(v*Math.pow(1.6,level)*Math.pow(item===TECHS.military?1.5:1,Math.max(0,level-4)))));}
+export function costAt(item,level){if(item===TECHS.colonization&&level>=6&&level<8)return vector([level===6?1000000:1500000,level===6?1000000:1500000,level===6?1000000:1500000]);return vector(item.cost.map(v=>Math.ceil(v*Math.pow(1.6,level)*Math.pow(item===TECHS.military?1.5:1,Math.max(0,level-4)))));}
 export const ROUTE_ECONOMY={time:1,fuel:.75};
 
 // Cosmetic selection only: preserve tutorial art and keep shared planet variants stable across accounts.
