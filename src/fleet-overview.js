@@ -1,11 +1,12 @@
 import {orbitCondition} from './repair.js';
 import {orbitConditionHTML} from './repair-ui.js';
 import {SHIPS,planetImagePath} from './config.js';
+import {unitArtPath} from './ui-assets.js';
 
 const stockEscape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fleetNumber=n=>Number(n||0).toLocaleString('de-DE');
 export const fleetFilters=[['all','Alle'],['freighter','Transport'],['military','Kampf'],['civil','Sonden & Kolonie'],['defense','Verteidigung']];
-const fleetArt=key=>SHIPS[key].asset||`./assets/${SHIPS[key].image||key}.webp`;
+const fleetArt=key=>unitArtPath(key);
 
 // Only available orbiting units belong here. Missions are displayed separately.
 export function fleetInventory(planets,category='all'){
