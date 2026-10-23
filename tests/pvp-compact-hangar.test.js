@@ -8,7 +8,7 @@ const planet={name:'Aster 1',ships:Object.fromEntries(Object.keys(SHIPS).map(k=>
 planet.ships.falke=5466;planet.ships.waechter=15;planet.ships.titan=1254;planet.ships.atlas=25;
 test('PvP B3.3 uses ship assets, selection controls and accordions',()=>{
  const html=pvpCompactHangarPicker(state,planet,{fleet:{falke:3413}});
- assert.match(html,/assets\/falke\.webp/);
+ assert.match(html,/assets\/ship-icons-v3\/falke\.webp/);
  assert.match(html,/3413/);
  assert.match(html,/5\.466 verfügbar/);
  assert.match(html,/data-hangar-count="none"/);
