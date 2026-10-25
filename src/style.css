@@ -884,3 +884,33 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
  .trade-editor .trade-save>.route-back{background:#102b3a;border:1px solid #294858;color:#9dc9d8}
  .trade-editor .trade-save>button:only-child{grid-column:1/-1}
 }
+
+/* Mobile fleet navigation: only subsection tabs stay visible during scrolling.
+   display:contents releases the subsection from the short navigation wrapper,
+   otherwise CSS sticky would stop at the wrapper's bottom. */
+@media(max-width:760px){
+ .fleet-navigation{display:contents}
+ .fleet-navigation>.fleet-nav-groups{
+  margin:0 0 8px;padding:8px;border:1px solid #294858;border-radius:10px;
+  background:#071a28f5;
+ }
+ .fleet-navigation>.fleet-nav-sections{
+  position:sticky;top:0;z-index:15;
+  margin:0 0 18px;padding:8px;
+  border:1px solid #294858;border-radius:10px;
+  background:#071a28f5;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+ }
+}
+
+/* Compact four-column fleet sub-navigation on narrow screens. */
+.fleet-section-icon,.fleet-section-short{display:none}
+@media(max-width:760px){
+ .fleet-navigation[data-active-group="hangar"]>.fleet-nav-sections{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:5px}
+ .fleet-navigation[data-active-group="hangar"] .fleet-nav-sections button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:52px;padding:4px 1px;font-size:10px;line-height:1.15;white-space:nowrap}
+ .fleet-navigation[data-active-group="hangar"] .fleet-section-full{display:none}
+ .fleet-navigation[data-active-group="hangar"] .fleet-section-icon{display:block;font-size:19px;line-height:20px}
+ .fleet-navigation[data-active-group="hangar"] .fleet-section-short{display:block}
+}
+
