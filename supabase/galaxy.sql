@@ -13,6 +13,7 @@ alter table public.galaxy_starts enable row level security;
 alter table public.galaxy_surveys enable row level security;
 alter table public.galaxy_missions enable row level security;
 revoke all on public.galaxy_systems,public.galaxy_planets,public.galaxy_starts,public.galaxy_surveys,public.galaxy_missions from public,anon,authenticated;
+-- REALM-CANDIDATE[galaxyGeneration]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 insert into public.galaxy_systems(id,name,x,y,planet_count)
 select id,name,x,y,3+floor(random()*8)::integer from (values
  ('helion','Helion',520,400),('orion','Orion',380,250),('cetus','Cetus',220,450),('aster','Aster',600,180),('lysara','Lysara',750,300),('vela','Vela',850,180),('umbra','Umbra',760,650),('nyx','Nyx',520,720),('solace','Solace',870,730),('nova','Nova',330,700)
@@ -31,6 +32,7 @@ begin
   end loop;
  end loop;
 end $$;
+-- REALM-CANDIDATE[galaxyStartPositions]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 create or replace function public.imperium_galaxy_start(uid uuid)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare angle double precision:=random()*2*pi(); result jsonb;

@@ -9,6 +9,7 @@ export class SaveValidationError extends Error{
 }
 function check(rule,ok){if(!ok)throw new SaveValidationError(rule);}
 // Rule IDs are stable diagnostics: retain existing IDs when adding or moving checks.
+// REALM-CANDIDATE[saveCompatibility]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function validateSave(input){
  check('SV001',input&&typeof input==='object'&&input.version===1);
  const s=structuredClone(input);

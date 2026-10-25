@@ -1,10 +1,12 @@
 import {SHIPS,RES,vector} from './config.js';
 
+// REALM-CANDIDATE[repairRates]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const REPAIR_RATE=.3;
 export const ORBITAL_RESTORE_RATE=.7;
 export function repairAvailable(p,key){return (p.disabledDefenses?.[key]||0)+(p.hulls?.[key]||[]).length;}
 export function recordDisabledDefenses(p,before,after){p.disabledDefenses??={};for(const [key,sh] of Object.entries(SHIPS))if(sh.category==='defense'){const lost=Math.max(0,(before[key]||0)-(after[key]||0));if(lost)p.disabledDefenses[key]=(p.disabledDefenses[key]||0)+lost;}}
 
+// REALM-CANDIDATE[repairQueue]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const REPAIR_QUEUE_LIMIT=20;
 export function repairOrders(p){return p.repairQueue||[];}
 export function repairCount(p,key){return repairOrders(p).filter(j=>j.key===key).reduce((n,j)=>n+j.entries.length,0);}
@@ -14,6 +16,7 @@ export function orbitCondition(p,key){
  const total=free+docked.length+disabled,damaged=hulls.length+docked.length+disabled,missing=[...hulls,...docked].reduce((n,h)=>n+1-h,disabled);
  return {total,disabled,free,docked:docked.length,damaged,intact:total-damaged,hull:total?1-missing/total:1,damagedHull:damaged?1-missing/damaged:1};
 }
+// REALM-CANDIDATE[repairTime]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function repairQuote(p,key,count=1,ratio=1){
  if(!SHIPS[key])throw Error('Unbekannte Einheit.');
  const hulls=[...p.hulls?.[key]||[]].sort((a,b)=>a-b),disabled=p.disabledDefenses?.[key]||0;

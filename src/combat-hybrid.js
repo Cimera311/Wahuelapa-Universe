@@ -198,6 +198,7 @@ function result(groups){
 }
 function total(groups){return groups.reduce((n,g)=>n+g.count,0);}
 function groupSummary(groups,side){return groups.map(g=>({side,key:g.key,groupId:g.id,...(g.owner?{owner:g.owner}:{}),count:g.count}));}
+// REALM-CANDIDATE[combatRoundsDebris]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function resolveBattleHybrid(attacker,defender,seed,experimentalVersion=4,realmOverrides={}){
  if(![4,5,6,7].includes(experimentalVersion))throw Error('Unknown hybrid rules version');
  const combatSettings=experimentalVersion>=6?combatConfigForRealm(realmOverrides):null;

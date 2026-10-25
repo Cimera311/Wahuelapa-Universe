@@ -1,5 +1,6 @@
 import {RES,SHIPS,vector,shipFlightEngine,canFlyInterstellar} from './config.js';
 import {sharedDistance,sharedFlight} from './flight.js';
+// REALM-CANDIDATE[combatStats]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const COMBAT={
  spyProbe:{hp:30,shield:0,attack:0,shots:1},
  probe:{hp:30,shield:0,attack:0,shots:1},longProbe:{hp:60,shield:10,attack:0,shots:1},
@@ -15,6 +16,7 @@ export const COMBAT={
  rail:{hp:1600,shield:300,attack:300,shots:1,bonus:{donner:.25,titan:.25}},
  plasma:{hp:4500,shield:800,attack:800,shots:2,bonus:{titan:.25}}
 };
+// REALM-CANDIDATE[combatResearch]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function combatStats(key,tech={}){
  const c=COMBAT[key];if(!c)throw Error('Unbekannte Kampfeinheit.');
  return {...c,hp:c.hp*(1+.08*(tech.armor||0)),shield:c.shield*(1+.08*(tech.shields||0)),attack:c.attack*(1+.08*(tech.weapons||0))};
@@ -41,6 +43,7 @@ export function attackFlight(s,from,to,fleet){
  }
  return {distance:dist,ms,fuel,slowest};
 }
+// REALM-CANDIDATE[sensorWarning]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function warningFraction(sensorLevel){return Math.pow(.9,Math.max(0,sensorLevel)+1);}
 export function takeHulls(p,fleet){const out={};p.hulls??={};for(const [k,n] of Object.entries(fleet)){const damaged=p.hulls[k]||[];out[k]=damaged.splice(0,n);if(!damaged.length)delete p.hulls[k];}return out;}
 export function putHulls(p,hulls={}){p.hulls??={};for(const [k,hp] of Object.entries(hulls))if(hp.length)p.hulls[k]=[...(p.hulls[k]||[]),...hp];}
@@ -51,6 +54,7 @@ function units(fleet,tech,hulls,shieldFactor=1){
 function combatSide(side){if(!side.groups)return units(side.fleet,side.tech,side.hulls,side.shieldFactor);return side.groups.flatMap(g=>units(g.fleet,g.tech,g.hulls,g.shieldFactor).map(u=>({...u,groupId:g.id,owner:g.owner,commander:g.commander,maxShield:combatStats(u.key,g.tech).shield})));}
 function combatGroups(side,list){return side.groups?{defenderGroups:side.groups.map(g=>({id:g.id,owner:g.owner,...survivors(list.filter(u=>u.groupId===g.id)),...(g.id?.startsWith('repair:')?{repairUnits:list.filter(u=>u.groupId===g.id).map(u=>({hp:Math.max(0,u.hp),maxHp:u.maxHp}))}:{})}))}:{};}
 function survivors(list){const fleet={},hulls={};for(const u of list)if(u.hp>1e-8){fleet[u.key]=(fleet[u.key]||0)+1;if(u.hp<u.maxHp-1e-8)(hulls[u.key]??=[]).push(u.hp/u.maxHp);}return {fleet,hulls};}
+// REALM-CANDIDATE[legacyCombat]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 function resolveBattleLegacy(attacker,defender,seed){
  const a=combatSide(attacker),d=combatSide(defender),random=rng(seed),rounds=[];
  for(let i=1;i<=6;i++){

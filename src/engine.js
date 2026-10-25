@@ -8,18 +8,23 @@ import {sharedFlight,ENGINE_SPEED_BONUS,FLIGHT_BASE_SCALE} from './flight.js';
 function planet(id,name,meta={}){
  return {id,name,coord:meta.coord||'1:1:4',kind:meta.kind||'Heimatwelt',mult:meta.mult||[1,1,1],color:meta.color||'#53add3',ocean:meta.ocean??true,energy:meta.energy||1,distance:meta.distance||0,reserves:vector([0,0,0]),resources:vector([0,0,0]),depot:vector([0,0,0]),buildings:Object.fromEntries(Object.keys(BUILDINGS).map(k=>[k,0])),ships:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,0])),build:null,shipjob:null,orbitaljob:null,orbitalqueue:[]};
 }
+// REALM-CANDIDATE[newGame]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function newGame(name='Commander',now=Date.now()){
  const home=planet('home','Aurelia');
  home.resources=vector([3000,2200,1000]); Object.assign(home.buildings,{metal:1,crystal:1,fuel:1,solar:3});
  return {version:1,name:name.trim().slice(0,30)||'Commander',time:now,created:now,seq:0,active:'home',planets:[home],tech:Object.fromEntries(Object.keys(TECHS).map(k=>[k,0])),research:null,discovered:[],missions:[],reports:[]};
 }
 export function getPlanet(s,id){const p=s.planets.find(p=>p.id===id);if(!p)throw Error('Planet nicht gefunden.');return p;}
+// REALM-CANDIDATE[warehouse]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function capacity(p){return 4000*Math.pow(1.7,p.buildings.warehouse);}
+// REALM-CANDIDATE[yardTime]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function shipyardTimeFactor(level){return Math.pow(.92,Math.max(0,level-1));}
+// REALM-CANDIDATE[energyDemand]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function energyDemand(p){
  const consumers={metal:p.buildings.metal*15,crystal:p.buildings.crystal*18,fuel:p.buildings.fuel*20,shipyard:Math.ceil(10*Math.pow(p.buildings.shipyard,1.5)),orbital:Math.ceil(10*Math.pow((p.buildings.orbital||0),1.5)),repairDock:Math.ceil(10*Math.pow((p.buildings.repairDock||0),1.5))};
  return Object.fromEntries(Object.entries(consumers).map(([key,value])=>[key,value*p.energy]));
 }
+// REALM-CANDIDATE[production]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function stats(s,p){
  const supply=(45*Math.pow(p.buildings.solar||0,powerExponent(p.kind,'solar'))+180*Math.pow(p.buildings.tidal||0,powerExponent(p.kind,'tidal')))*(1+s.tech.energy*.1);
  const consumers=energyDemand(p),demand=Object.values(consumers).reduce((a,b)=>a+b,0);
@@ -43,6 +48,7 @@ function forecastShipJobs(s){for(const p of s.planets)for(const kind of ['ship',
  j.end=s.time+Math.max(1,Math.ceil(j.workRemaining/(ratio||1)));
  let work=j.workRemaining;for(const queued of p[kind==='ship'?'shipqueue':'orbitalqueue']||[]){work+=queued.workTotal;queued.paused=ratio===0;queued.end=s.time+Math.max(1,Math.ceil(work/(ratio||1)));}
 }}
+// REALM-CANDIDATE[queues]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const SHIP_QUEUE_LIMIT=20;
 // Saves from 2026-10-11.04 may contain 50 already-paid orders; keep every one.
 export const SHIP_QUEUE_LEGACY_LIMIT=50;
@@ -57,6 +63,7 @@ function nextOrbitalOrder(p){p.orbitaljob=(p.orbitalqueue||[]).shift()||null;}
 function produce(s,ms){for(const p of s.planets){settle(p);const z=stats(s,p);produceRepair(p,ms,z.ratio);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);for(const kind of ['ship','orbital'])if(p[kind+'job'])p[kind+'job'].workRemaining=Math.max(0,p[kind+'job'].workRemaining-ms*z.ratio);}}
 function report(s,title,body){s.reports.unshift({id:++s.seq,time:s.time,title,body});s.reports=s.reports.slice(0,60);}
 export function need(s,p,req){if(!req)return '';if(req.tech&&s.tech[req.tech]<req.level)return `Benötigt ${TECHS[req.tech].name} Stufe ${req.level}.`;if(req.building&&p.buildings[req.building]<req.level)return `Benötigt ${BUILDINGS[req.building].name} Stufe ${req.level}.`;return '';}
+// REALM-CANDIDATE[demolition]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const DEMOLITION_REFUND=.20;
 export const DEMOLITION_TIME=.25;
 // Level is zero-based: the original cost/time for completed level N uses index N-1.
@@ -64,10 +71,12 @@ export function buildingLevelCost(key,index){
  const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');
  return costAt(b,index);
 }
+// REALM-CANDIDATE[buildingTime]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function buildingLevelTime(s,p,key,index){
  const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');
  return Math.ceil(b.time*Math.pow(1.35,index)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000);
 }
+// REALM-CANDIDATE[buildingCaps]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key],cost=buildingLevelCost(key,l);return {cost,ms:buildingLevelTime(s,p,key,l),reason:(key==='repairDock'&&s.tech.engineering<1?'Benötigt Bautechnik Stufe 1.':'')||need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=(key==='bunker'?4:30)?'Maximale Gebäudestufe erreicht.':'')};}
 // Paid values are recorded when a new level finishes. Already-built legacy levels
 // fall back to the current level formula because their old prices were never saved.
@@ -89,6 +98,7 @@ export function demolishInfo(s,p,key){
  if(!reason&&key==='repairDock'&&target===0&&(p.repairQueue||[]).length)reason='Im Reparaturdock befinden sich noch Einheiten.';
  return {key,level,target,originalCost,originalMs,refund,ms,reason};
 }
+// REALM-CANDIDATE[researchTime]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function researchInfo(s,p,key){const t=TECHS[key];if(!t)throw Error('Unbekannte Forschung.');const l=s.tech[key];return {cost:costAt(t,l),ms:Math.ceil(t.time*Math.pow(1.5,l)*Math.pow(key==='military'?1.5:1,Math.max(0,l-4))/Math.max(1,1+(p.buildings.lab-1)*.15)*1000),reason:(key==='colonization'&&l>=3&&l<6?need(s,p,{tech:['ramjet','impulse','hyperspace'][l-3],level:1}):'')||(p.buildings.lab<t.lab?`Benötigt Forschungslabor Stufe ${t.lab} auf diesem Planeten.`:need(s,p,t.requires)||(l>=t.max?'Maximale Forschungsstufe erreicht.':''))};}
 function pay(p,c){settle(p);for(const k of RES)if(!Number.isFinite(c[k])||c[k]<0||p.resources[k]+1e-8<c[k])throw Error('Nicht genügend lokale Ressourcen.');for(const k of RES)p.resources[k]=Math.max(0,p.resources[k]-c[k]);settle(p);}
 export function defenseSlots(p){return Object.entries(SHIPS).reduce((a,[k,sh])=>a+(sh.slots||0)*(p.ships[k]||0),0)+repairOrders(p).reduce((n,j)=>n+(SHIPS[j.key]?.slots||0)*j.entries.length,0)+[...shipOrders(p),...orbitalOrders(p)].reduce((a,j)=>a+(SHIPS[j.key]?.slots||0)*j.count,0);}
@@ -98,6 +108,7 @@ export function shipRefund(job){
  const legacyDefense=SHIPS[job.key].category==='defense',legacyCosts={flak:[160,80,20],laser:[450,300,70],rail:[1400,1000,280],plasma:[4000,2800,900]},cost=legacyDefense?legacyCosts[job.key]:SHIPS[job.key].cost,gross=vector(cost.map(v=>v*job.count));
  return {resources:legacyDefense?vector([0,0,gross.fuel]):gross,salvage:legacyDefense?vector([gross.metal,gross.crystal,0]):vector([0,0,0]),legacyDefense};
 }
+// REALM-CANDIDATE[scrapping]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const SHIP_SCRAP_PERCENT=30;
 export function scrapShipInfo(p,key,count=1){
  const sh=SHIPS[key],available=p.ships?.[key]||0,valid=Number.isSafeInteger(count)&&count>=1,refund=vector([0,0,0]);
@@ -107,7 +118,9 @@ export function scrapShipInfo(p,key,count=1){
 }
 export function shipInfo(s,p,key,count=1){const sh=SHIPS[key];if(!sh)throw Error('Unbekanntes Schiff.');const defense=sh.category==='defense',yard=defense?(p.buildings.orbital||0):p.buildings.shipyard,gross=vector(sh.cost.map(v=>v*count));return {cost:gross,salvage:vector([0,0,0]),ms:Math.ceil(sh.time*count*1000*shipyardTimeFactor(yard)*(defense?Math.pow(.92,p.buildings.robotics||0):1)),ratio:stats(s,p).ratio,reason:yard<(sh.shipyard||1)?`Benötigt ${defense?'Orbitalwerft':'Schiffswerft'} Stufe ${sh.shipyard||1}.`:s.tech[sh.tech]<(sh.techLevel||1)?`Benötigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel||1}.`:(s.tech[sh.engine||'drive']||0)<(sh.engineLevel||0)?`Benötigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.`:''};}
 
+// REALM-CANDIDATE[cargoBonus]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function cargoCapacity(s,n=1,ship='transport'){return Math.floor((SHIPS[ship]?.cargo||0)*(1+s.tech.logistics*.15))*n;}
+// REALM-CANDIDATE[tutorialFlight]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function flightInfo(s,from,to,n=1,probe=false,ship='transport'){if(from.system||to.system){const f=sharedFlight(s,from,to,n,probe?'probe':ship);return {...f,fuel:f.fuel*2};}const def=SHIPS[probe?'probe':ship];if(!def)throw Error('Unbekanntes Schiff.');const remote=(from.system||'tutorial')!==(to.system||'tutorial');const engine=shipFlightEngine(s,probe?'probe':ship,remote);const anchor=s.galaxy||{x:500,y:960};const a=from.system?from:anchor,b=to.system?to:anchor;const dist=remote?Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)/40):Math.max(1,Math.abs((from.distance||0)-(to.distance||0)));return {ms:Math.ceil((10+dist*8)*FLIGHT_BASE_SCALE*1000/((1+(s.tech[engine]||0)*ENGINE_SPEED_BONUS+(probe?s.tech.scout*.1:0))*def.speed)),fuel:Math.ceil(def.fuel*2*dist*n/(1+(s.tech[engine]||0)*.12))};}
 // Fleet fuel is prepaid for a complete itinerary; cargo never includes engine fuel.
 export function legInfo(s,from,to,n=1,ship='transport'){const f=flightInfo(s,from,to,n,ship==='probe',ship);return {...f,fuel:Math.ceil(f.fuel/2)};}
@@ -121,6 +134,7 @@ export function fleetLegInfo(s,from,to,fleet){let ms=0,fuel=0,slowest='';for(con
 export function fleetCapacity(s,fleet){return Object.entries(fleet).reduce((a,[k,n])=>a+cargoCapacity(s,n,k),0);}
 export function mixedRouteLeg(s,from,to,fleet){let ms=0,fuel=0,slowest='';for(const [ship,count] of Object.entries(checkedFleet(fleet))){if((from.system||'tutorial')!==(to.system||'tutorial')&&!SHIPS[ship].engine)throw Error('Interstellare Routen benötigen bei allen Schiffen ein fortgeschrittenes Triebwerk.');const f=routeLegInfo(s,from,to,count,ship);if(f.ms>ms){ms=f.ms;slowest=ship;}fuel+=f.fuel;}return {ms,fuel,slowest};}
 export function routeInfo(s,stops,count,ship='transport'){const fleet=typeof count==='object'?checkedFleet(count):checkedFleet({[ship]:count});let fuel=0,ms=0,slowest='';for(let i=0;i<stops.length;i++){const f=mixedRouteLeg(s,getPlanet(s,stops[i].planet),getPlanet(s,stops[(i+1)%stops.length].planet),fleet);fuel+=f.fuel;ms+=f.ms;slowest=f.slowest;}return {fuel,ms,slowest,capacity:fleetCapacity(s,fleet)};}
+// REALM-CANDIDATE[routeStops]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 function checkedStops(s,stops,home){if(!Array.isArray(stops)||stops.length<2||stops.length>12||stops[0].planet!==home)throw Error('Eine Route benötigt 2–12 Stopps und beginnt am Startplaneten.');for(let i=0;i<stops.length;i++){getPlanet(s,stops[i].planet);if(stops[i].planet===stops[(i+1)%stops.length].planet||!validOrder(stops[i].load)||!validOrder(stops[i].unload))throw Error('Ungültiger Stopp oder Laderegel.');}return structuredClone(stops);}
 function setFleet(m,fleet){m.fleet={...fleet};[m.ship,m.count]=Object.entries(fleet)[0];}
 function validOrder(order){return order&&RES.every(k=>order[k]==='max'||Number.isSafeInteger(order[k])&&order[k]>=0&&order[k]<=1e12);}

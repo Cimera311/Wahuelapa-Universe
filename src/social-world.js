@@ -51,6 +51,7 @@ export function socialAction(w,uid,a,id){
   if(!socialGrant(w,target.owner_id,uid,'delivery')||!socialGrant(w,uid,target.owner_id,'delivery'))throw Error('Direkter Handel benötigt beidseitiges Lieferrecht.');
   const cargo=socialCargo(a.cargo),payment=socialCargo(a.payment);if(!socialSum(cargo)||!socialSum(payment))throw Error('Angebot und Gegenleistung dürfen nicht leer sein.');socialFlight(s,from,to,a.fleet,'delivery');const cap=fleetCapacity(s,a.fleet);if(socialSum(cargo)>cap||socialSum(payment)>cap)throw Error('Zu wenig Laderaum.');
   if(w.trades.filter(t=>t.owner===uid&&t.status==='offered').length>=10)throw Error('Maximal 10 offene Tauschangebote.');
+// REALM-CANDIDATE[tradeExpiry]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
   w.trades.push({id,owner:uid,buyer:target.owner_id,from:a.from,to:a.to,fleet:{...a.fleet},cargo,payment,status:'offered',expires:w.now+3600000});socialLog(socialState(w,target.owner_id),w.now,'Tauschangebot erhalten',s.name+' bietet einen direkten Rohstofftausch an.');return;
  }
  if(op==='trade-accept'||op==='trade-cancel'){
