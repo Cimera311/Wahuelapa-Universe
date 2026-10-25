@@ -1,5 +1,6 @@
 import {sharedDistance,sharedFlight} from './flight.js';
 // Public navigation only. Ownership is public; planet properties are supplied by the server after surveying.
+// REALM-CANDIDATE[galaxyLayout]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const GALAXY_SYSTEMS=[
  {id:'helion',name:'Helion',x:520,y:400},{id:'orion',name:'Orion',x:380,y:250},
  {id:'cetus',name:'Cetus',x:220,y:450},{id:'aster',name:'Aster',x:600,y:180},

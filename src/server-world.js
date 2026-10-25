@@ -10,6 +10,7 @@ import {attackFleet,attackFlight,warningFraction,resolveBattle,COMBAT_RULE_VERSI
 import {resolveBattleHybrid} from './combat-hybrid.js';
 import {REALM_COMBAT_OVERRIDES} from './realm-config.js';
 export const DAY=86400000;
+// REALM-CANDIDATE[colonyProtection]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const COLONY_PROTECTION=3600000;
 const ms=v=>typeof v==='number'?v:Date.parse(v);
 const zero=()=>vector([0,0,0]);
@@ -39,6 +40,7 @@ export function prepareWorld(snapshot){
  return w;
 }
 function stateOf(w,id){const row=w.saves.find(x=>x.user_id===id);if(!row)throw Error('Spielstand fehlt.');return row.state;}
+// REALM-CANDIDATE[colonyStart]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 function makeColony(meta,time){
  return {...meta,colonizedAt:time,resources:vector([350,250,100]),depot:zero(),reserves:zero(),buildings:{...Object.fromEntries(Object.keys(BUILDINGS).map(k=>[k,0])),solar:2},ships:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,0])),build:null,shipjob:null};
 }
@@ -55,6 +57,7 @@ function finishGalaxy(w,m,time){
  m.completed=true;
 }
 function survey(w,m){if(!w.surveys.some(q=>q.user_id===m.user_id&&q.planet_id===m.planet_id))w.surveys.push({user_id:m.user_id,planet_id:m.planet_id});}
+// REALM-CANDIDATE[shieldRecovery]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 function shieldFactor(until,time){return until?Math.max(0,Math.min(1,1-(until-time)/300000)):1;}
 function resolveAttack(w,m,time){
  const a=stateOf(w,m.attacker_id),target=w.planets.find(p=>p.id===m.to),row=w.saves.find(x=>x.user_id===m.defender_id);
@@ -91,6 +94,7 @@ function resolveAttack(w,m,time){
  for(const key of Object.keys(SHIPS))p.ships[key]=homeResult.fleet[key]||0;
  p.hulls=homeResult.hulls;p.shieldUntil=time+300000;
  p.defenseSalvage??=zero();for(const k of RES)p.defenseSalvage[k]+=result.defenseRepair[k];
+// REALM-CANDIDATE[bunker]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
  const bunker=Math.min(2000,capacity(p)*.025*(p.buildings.bunker||0));
  const cap=fleetCapacity({tech:m.combat.tech},result.attacker.fleet);
  const field=vector(RES.map(k=>(target.debris?.[k]||0)+result.debris[k]));
@@ -148,6 +152,7 @@ export function advanceWorld(w){
  settleSocialCargo(w,w.now);settleRaidCargo(w,w.now);settlePirates(w,w.now);refreshPirates(w,w.now);
  return w;
 }
+// REALM-CANDIDATE[galaxyMissionLimits]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 function launchGalaxy(w,uid,action,id){
  const s=stateOf(w,uid),p=getPlanet(s,action.from),target=w.planets.find(p=>p.id===action.to),kind=action.kind;
  if(!['scan','colony'].includes(kind)||!target)throw Error('Unbekannte Galaxiemission.');

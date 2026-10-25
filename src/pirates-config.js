@@ -7,6 +7,7 @@ export const PIRATE_STATION_META=Object.freeze([
  {id:'fortress',name:'Freibeuterfestung',tier:4,type:'Schwere Festung',description:'Bewaffnete Dockringe sichern die erbeuteten Vorräte.'},
  {id:'headquarters',name:'Piratenhauptquartier',tier:5,type:'Zentrum der Piratenflotte',description:'Von hier aus werden die großen Raubzüge koordiniert.'}
 ]);
+// REALM-CANDIDATE[pirates]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const PIRATE_REALM_DEFAULTS=Object.freeze({enabled:true,strengthFactor:1,resourceFactor:1,flightTimeFactor:1,fuelFactor:1,cooldownMinutes:60,debrisRate:.3,debrisLifetimeHours:24,maxMissions:20,
  stations:{
   smugglers:{enabled:true,cooldownMinutes:60,sensor:1,fleet:{falke:3},resources:{metal:2400,crystal:1600,fuel:400},tech:{weapons:0,armor:0,shields:0}},
@@ -15,6 +16,7 @@ export const PIRATE_REALM_DEFAULTS=Object.freeze({enabled:true,strengthFactor:1,
   fortress:{enabled:true,cooldownMinutes:360,sensor:7,fleet:{falke:60,waechter:25,donner:10,titan:2,rail:6},resources:{metal:85000,crystal:65000,fuel:16000},tech:{weapons:3,armor:3,shields:3}},
   headquarters:{enabled:true,cooldownMinutes:360,sensor:10,fleet:{falke:120,waechter:60,donner:30,titan:12,plasma:10},resources:{metal:240000,crystal:180000,fuel:45000},tech:{weapons:5,armor:5,shields:5}}
  }});
+// REALM-CANDIDATE[pirateValidation]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function pirateConfig(input={}){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Ungültige Piratenkonfiguration.');
  const c=structuredClone(PIRATE_REALM_DEFAULTS),keys=Object.keys(c);

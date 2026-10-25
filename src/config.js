@@ -1,6 +1,7 @@
 export const RES = ['metal','crystal','fuel'];
 export const LABEL = {metal:'Metall',crystal:'Kristall',fuel:'Treibstoff'};
 export const ICON = {metal:'◈',crystal:'◆',fuel:'▰'};
+// REALM-CANDIDATE[buildings]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const BUILDINGS = {
  metal:{name:'Metallmine',icon:'⛏',cost:[80,35,0],time:8,description:'Fördert Metall für Gebäude und Schiffe.'},
  crystal:{name:'Kristallmine',icon:'◆',cost:[65,60,0],time:9,description:'Kristalle für Forschung und Elektronik.'},
@@ -15,6 +16,7 @@ export const BUILDINGS = {
  bunker:{asset:'./assets/pvp-resource-v1/buildings/bunker.webp',name:'Ressourcenbunker',icon:'▣',cost:[450,300,80],time:45,description:'Je Stufe schützt er 2,5 % der Lagerkapazität, insgesamt maximal 2000 je Rohstoff.',requires:{tech:'military',level:1}},
  tidal:{name:'Gezeitenkraftwerk',icon:'≈',cost:[700,450,80],time:30,description:'Liefert 180 × Stufe^Realm-Faktor Energie auf Ozeanwelten.',requires:{tech:'energy',level:3},ocean:true}
 };
+// REALM-CANDIDATE[research]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const TECHS = {
  scout:{name:'Sensortechnik',description:'Stufe 1: Sonden. Weitere Stufen: kürzere Sondenflüge und frühere PvP-Warnungen. Je Stufe sinkt die Zeit bis zur Erkennung um weitere 10 % (abnehmender absoluter Effekt).',cost:[100,100,30],time:10,lab:1,max:100},
  logistics:{name:'Transporttechnik',description:'Frachter freischalten; je Stufe +15 % Laderaum.',cost:[150,120,40],time:12,lab:1,max:5,requires:{tech:'scout',level:1}},
@@ -31,6 +33,7 @@ export const TECHS = {
  assaultDrive:{asset:'./assets/pvp-resource-v1/research/assaultDrive.webp',name:'Falke-Galaxieantrieb',description:'Rüstet Falken für interstellare Angriffe und Stationierungen mit Staustrahlantrieb aus.',cost:[600,400,200],time:60,lab:3,max:1,requires:{tech:'ramjet',level:1}},
  energy:{name:'Energietechnik',description:'Je Stufe +10 % Energie; Stufe 3: Gezeitenkraftwerk.',cost:[200,180,50],time:15,lab:2,max:5}
 };
+// REALM-CANDIDATE[ships]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const SHIPS = {
  spyProbe:{name:'Spionagesonde',icon:'⌁',category:'civil',image:'probe',role:'Klärt persönliche Piratenstationen auf. Benötigt die passende Sensortechnik für die Zielstufe.',cost:[150,120,40],time:8,tech:'scout',techLevel:1,shipyard:1,cargo:0,speed:2,fuel:2},
  probe:{name:'Erkundungssonde',icon:'⌁',category:'civil',role:'Erkundet unbekannte Welten.',cost:[90,60,20],time:5,tech:'scout',cargo:0,speed:1,fuel:1.5},
@@ -52,13 +55,16 @@ export const SHIPS = {
  titan:{name:'Titan',icon:'✧',category:'military',tier:4,role:'Schlachtschiff als Kern einer schweren Flotte.',cost:[9500,6500,2500],time:1200,tech:'military',techLevel:4,shipyard:6,engine:'hyperspace',engineLevel:1,cargo:0,speed:.6,fuel:100}
 };
 export function isFreighter(key){return SHIPS[key]?.category==='freighter';}
+// REALM-CANDIDATE[tutorialPlanets]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const TARGETS = [
  {id:'ferrum',name:'Ferrum',coord:'1:2:7',kind:'Gesteinsplanet',specialty:'Metall',distance:2,mult:[1.8,0.75,0.65],color:'#ba7047',ocean:false,energy:1},
  {id:'nereus',name:'Nereus',coord:'1:3:7',kind:'Eisplanet',specialty:'Treibstoff',distance:3,mult:[0.7,1,1.9],color:'#80cbe3',ocean:false,energy:1.2},
  {id:'thalassa',name:'Thalassa',coord:'1:4:5',kind:'Ozeanplanet',specialty:'Kristall',distance:4,mult:[0.85,1.6,1.1],color:'#3c92c9',ocean:true,energy:1}
 ];
 export function vector(values){return Object.fromEntries(RES.map((k,i)=>[k,values[i]]));}
+// REALM-CANDIDATE[costGrowth]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function costAt(item,level){if(item===TECHS.colonization&&level>=6&&level<8)return vector([level===6?1000000:1500000,level===6?1000000:1500000,level===6?1000000:1500000]);return vector(item.cost.map(v=>Math.ceil(v*Math.pow(1.6,level)*Math.pow(item===TECHS.military?1.5:1,Math.max(0,level-4)))));}
+// REALM-CANDIDATE[routeEconomy]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const ROUTE_ECONOMY={time:1,fuel:.75};
 
 // Cosmetic selection only: preserve tutorial art and keep shared planet variants stable across accounts.
@@ -76,4 +82,5 @@ export function planetImagePath(p){
 export function shipFlightEngine(s,key,remote=false){return remote&&key==='spyProbe'?'ramjet':remote&&key==='falke'&&(s.tech.assaultDrive||0)>=1?'ramjet':SHIPS[key]?.engine||'drive';}
 export function canFlyInterstellar(s,key){const engine=shipFlightEngine(s,key,true);return (key==='falke'?(s.tech.assaultDrive||0)>=1:!!SHIPS[key]?.engine)&&(s.tech[engine]||0)>=1;}
 
+// REALM-CANDIDATE[attackSlots]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function attackSlots(level){return level>=10?4:level>=5?2:level>=1?1:0;}
