@@ -57,7 +57,9 @@ Die zusaetzliche Compact-Funktion kann ungenutzt bestehen bleiben. Nicht sofort 
 
 supabase/rollback/2026-10-27-v45/game-command.ts und game-command.txt sind die am 27.10. gelesenen deployten Bytes. deployment.json enthaelt Projekt, Deploymentnummer, Gateway-Flag, Source-SHA256 und Deploymentbundle-Hash. Es enthaelt KEINE Sicherung von Secretwerten und KEIN DB-Backup. Unveraenderte Secretwerte werden bei neuen Deployments beibehalten.
 
-Der neue Live-Build und sein TS/TXT-Archiv bekommen eine eigene Version/Pruefsumme; das beschleunigte Test-Bundle wird nicht verwendet. Metrikdateien koennen lokal mit node scripts/summarize-command-metrics.mjs <metrics.jsonl> ausgewertet werden.
+Live-Build und TS/TXT-Archiv: Version 2026-10-27.01, SHA256 c4c43d9c3ef7f2b4f19650fba77e8a021f930f41ffd69a55ce20ca27503b1673. Alle fuenf Ausgabedateien sind bytegleich; Live-Flugfaktor bleibt 3. Quellstand: 19fd3dfb973b3a7083cea1995a5ba36ae5f8e578. Das beschleunigte Test-Bundle wird nicht verwendet.
+
+Pruefstand: Website-Build erfolgreich; 536 von 537 Tests bestanden im isolierten Lauf. Der dort wegen fehlendem Get-FileHash gescheiterte Windows-Rollbacktest wurde anschliessend in regulaerer Windows-Umgebung erfolgreich nachgeprueft (beide Rollbacktests gruen). Live-Smoke-Test nach Aktivierung steht noch aus. Kein DB-Backup angelegt und kein Live-Deployment vorgenommen. Metrikdateien koennen lokal mit node scripts/summarize-command-metrics.mjs <metrics.jsonl> ausgewertet werden.
 
 ## News-Entwurf (nicht veroeffentlicht)
 
