@@ -41,9 +41,9 @@ export function cargoPresent(cargo){return RES.some(k=>cargo[k]>0);}
 export function nextCargoSpaceEvent(s,p){return Math.min(p.build?.key==='warehouse'?p.build.end:Infinity,...s.missions.filter(m=>!m.paused&&!m.awaitingUnload).map(m=>m.due));}
 function waitingCargo(s){for(const m of [...s.missions])if(m.paused&&m.type==='route'){const out=unloadCargo(getPlanet(s,m.home),m.cargo);if(cargoPresent(out))routeActivity(s,m,m.home,out,vector([0,0,0]),'unload');}else if(m.awaitingUnload){const p=getPlanet(s,m.awaitingUnload),out=unloadCargo(p,m.cargo);if(m.type==='route'&&cargoPresent(out))routeActivity(s,m,p.id,out,vector([0,0,0]),'unload');m.due=s.time;if(!cargoPresent(m.cargo))parkFleet(s,m,p.id,m.finishTitle||'Flotte entladen');}}
 // Work is measured in milliseconds at full power; forecasts never replace earned progress.
-function forecastShipJobs(s){for(const p of s.planets)for(const kind of ['ship','orbital']){const j=p[kind+'job'];if(!j)continue;
+function forecastShipJobs(s,readStats=p=>stats(s,p)){for(const p of s.planets)for(const kind of ['ship','orbital']){const j=p[kind+'job'];if(!j)continue;
  if(j.workRemaining===undefined){j.orderEnd=j.end;j.workTotal=j.end-j.start;j.workRemaining=Math.max(0,j.end-s.time);}
- const ratio=stats(s,p).ratio;j.paused=ratio===0&&j.workRemaining>0;
+ const ratio=readStats(p).ratio;j.paused=ratio===0&&j.workRemaining>0;
  // Keep paused saves finite. Their end is a placeholder, excluded from scheduling.
  j.end=s.time+Math.max(1,Math.ceil(j.workRemaining/(ratio||1)));
  let work=j.workRemaining;for(const queued of p[kind==='ship'?'shipqueue':'orbitalqueue']||[]){work+=queued.workTotal;queued.paused=ratio===0;queued.end=s.time+Math.max(1,Math.ceil(work/(ratio||1)));}
@@ -60,7 +60,7 @@ export function orbitalQueueCapacity(p){return Math.min(SHIP_QUEUE_LIMIT,Math.ma
 export function orbitalQueueFullReason(p){const cap=orbitalQueueCapacity(p);return orbitalOrders(p).length>=cap?`Alle ${cap} Auftragsplätze der Orbitalwerft belegt.`:'';}
 function nextShipOrder(p){p.shipjob=(p.shipqueue||[]).shift()||null;}
 function nextOrbitalOrder(p){p.orbitaljob=(p.orbitalqueue||[]).shift()||null;}
-function produce(s,ms){for(const p of s.planets){settle(p);const z=stats(s,p);produceRepair(p,ms,z.ratio);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);for(const kind of ['ship','orbital'])if(p[kind+'job'])p[kind+'job'].workRemaining=Math.max(0,p[kind+'job'].workRemaining-ms*z.ratio);}}
+function produce(s,ms,readStats=p=>stats(s,p)){for(const p of s.planets){settle(p);const z=readStats(p);produceRepair(p,ms,z.ratio);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);for(const kind of ['ship','orbital'])if(p[kind+'job'])p[kind+'job'].workRemaining=Math.max(0,p[kind+'job'].workRemaining-ms*z.ratio);}}
 function report(s,title,body){s.reports.unshift({id:++s.seq,time:s.time,title,body});s.reports=s.reports.slice(0,60);}
 export function need(s,p,req){if(!req)return '';if(req.tech&&s.tech[req.tech]<req.level)return `Benötigt ${TECHS[req.tech].name} Stufe ${req.level}.`;if(req.building&&p.buildings[req.building]<req.level)return `Benötigt ${BUILDINGS[req.building].name} Stufe ${req.level}.`;return '';}
 // REALM-CANDIDATE[demolition]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
@@ -194,16 +194,19 @@ export function advance(s,now,collectDebris){
  if(!collectDebris)now=Math.min(now,...s.missions.filter(m=>m.type==='salvage'&&m.phase==='outbound').map(m=>m.due-1));
  now=Math.max(now,s.time);
  for(const m of s.missions)if(m.type==='route')routeStats(s,m);
+ // Rates depend on buildings, planet modifiers and technology, not cargo.
+ // Keep this cache inside one advance call; invalidate at structural events.
+ const production=new Map(),readStats=p=>{if(!production.has(p))production.set(p,stats(s,p));return production.get(p);};
  waitingCargo(s);let guard=0;
  while(true){
-  forecastShipJobs(s);
-  const times=[];for(const p of s.planets){times.push(forecastRepair(p,s.time,stats(s,p).ratio));if(p.build)times.push(p.build.end);for(const kind of ['ship','orbital'])if(p[kind+'job']&&!p[kind+'job'].paused)times.push(p[kind+'job'].workRemaining===0?s.time:p[kind+'job'].end);}if(s.research)times.push(s.research.end);for(const m of s.missions)if(!m.paused&&!m.awaitingUnload)times.push(m.due);
+  forecastShipJobs(s,readStats);
+  const times=[];for(const p of s.planets){times.push(forecastRepair(p,s.time,readStats(p).ratio));if(p.build)times.push(p.build.end);for(const kind of ['ship','orbital'])if(p[kind+'job']&&!p[kind+'job'].paused)times.push(p[kind+'job'].workRemaining===0?s.time:p[kind+'job'].end);}if(s.research)times.push(s.research.end);for(const m of s.missions)if(!m.paused&&!m.awaitingUnload)times.push(m.due);
   const next=Math.min(...times);if(next>now||!Number.isFinite(next))break;if(++guard>100000){for(const m of s.missions)if(m.type==='route'&&!m.stopping){m.stopping=true;report(s,'Handelsroute endet nach langer Abwesenheit',`${m.name}: Die aktuelle Runde wird noch abgeschlossen.`);}guard=0;}
-  produce(s,Math.max(0,next-s.time));s.time=Math.max(s.time,next);
+  produce(s,Math.max(0,next-s.time),readStats);s.time=Math.max(s.time,next);
   // Fixed order: research, buildings, shipbuilding, then missions by id.
-  if(s.research&&s.research.end<=s.time){const j=s.research;s.tech[j.key]=j.level;s.research=null;report(s,'Forschung abgeschlossen',`${TECHS[j.key].name} erreicht Stufe ${j.level}.`);}
+  if(s.research&&s.research.end<=s.time){const j=s.research;s.tech[j.key]=j.level;s.research=null;production.clear();report(s,'Forschung abgeschlossen',`${TECHS[j.key].name} erreicht Stufe ${j.level}.`);}
   for(const p of s.planets){s.seq+=finishRepair(p,(title,body)=>report(s,title,body));if(p.build&&p.build.end<=s.time){
-   const j=p.build;p.buildings[j.key]=j.level;p.build=null;
+   const j=p.build;p.buildings[j.key]=j.level;p.build=null;production.delete(p);
    if(j.kind==='demolish'){
     // A smaller warehouse must not delete goods: overflow is parked in the depot.
     const cap=capacity(p);for(const k of RES){const excess=Math.max(0,p.resources[k]-cap);p.resources[k]-=excess;p.depot[k]+=excess;}
@@ -218,7 +221,7 @@ export function advance(s,now,collectDebris){
   for(const m of [...s.missions].sort((a,b)=>a.id-b.id))if(!m.paused&&!m.awaitingUnload&&m.due<=s.time){
    if(m.type==='route'){routeArrival(s,m);}
    else if(m.type==='station'){parkFleet(s,m,m.to,'Flotte stationiert');}
-   else if(m.type==='salvage'&&m.phase==='outbound'){if(!collectDebris)throw Error('Trümmerbergung benötigt den Spielserver.');collectDebris(s,m);m.phase='return';m.due=s.time+m.duration;report(s,'Trümmer geborgen',`${getPlanet(s,m.to).name}: ${Math.floor(m.cargo.metal)} Metall und ${Math.floor(m.cargo.crystal)} Kristall auf dem Rückweg.`);}
+   else if(m.type==='salvage'&&m.phase==='outbound'){if(!collectDebris)throw Error('Trümmerbergung benötigt den Spielserver.');collectDebris(s,m);production.clear();m.phase='return';m.due=s.time+m.duration;report(s,'Trümmer geborgen',`${getPlanet(s,m.to).name}: ${Math.floor(m.cargo.metal)} Metall und ${Math.floor(m.cargo.crystal)} Kristall auf dem Rückweg.`);}
    else if(m.type==='collect'&&m.phase==='outbound'){loadCargo(s,getPlanet(s,m.to),m.cargo,m.order,m.count,m.ship,m.fleet);m.phase='return';m.due=s.time+m.duration;report(s,'Material abgeholt',`${getPlanet(s,m.to).name}: Ladung auf dem Rückweg.`);}
    else if(m.phase==='return'){parkFleet(s,m,m.from,'Flotte zurückgekehrt');}
    else if(m.type==='probe'){if(!s.discovered.includes(m.to))s.discovered.push(m.to);const t=TARGETS.find(t=>t.id===m.to);report(s,'Sondenbericht',`${t.name} [${t.coord}] · ${t.kind}. Metall ×${t.mult[0]}, Kristall ×${t.mult[1]}, Treibstoff ×${t.mult[2]}. Energiebedarf ×${t.energy}.`);m.phase='return';m.due=s.time+m.duration;}
@@ -227,7 +230,7 @@ export function advance(s,now,collectDebris){
   }
   waitingCargo(s);
  }
- produce(s,now-s.time);s.time=now;waitingCargo(s);for(const m of s.missions)if(m.paused||m.awaitingUnload)m.due=now;forecastShipJobs(s);for(const p of s.planets)forecastRepair(p,s.time,stats(s,p).ratio);return s;
+ produce(s,now-s.time,readStats);s.time=now;waitingCargo(s);for(const m of s.missions)if(m.paused||m.awaitingUnload)m.due=now;forecastShipJobs(s,readStats);for(const p of s.planets)forecastRepair(p,s.time,readStats(p).ratio);return s;
 }
 export function act(s,action,now=Date.now()){
  // Work on a copy; a rejected command cannot partially mutate the caller.
