@@ -3,6 +3,7 @@ import {RES,SHIPS,attackSlots,vector,isFreighter} from './config.js';
 import {getPlanet,fleetCapacity,unloadCargo,cargoPresent,nextCargoSpaceEvent,settle} from './engine.js';
 import {attackFleet,takeHulls,putHulls,resolveBattle,COMBAT_RULE_VERSION} from './combat.js';
 import {resolveBattleHybrid} from './combat-hybrid.js';
+import {measure} from './server-metrics.js';
 import {REALM_COMBAT_OVERRIDES} from './realm-config.js';
 const pirateZero=()=>vector([0,0,0]);
 const pirateState=(w,uid)=>w.saves.find(r=>r.user_id===uid)?.state;
@@ -72,7 +73,7 @@ export function pirateEvents(w){
 }
 function takePirateCargo(stock,room){const cargo=pirateZero();for(const k of RES){const n=Math.min(Math.floor(stock[k]),room);stock[k]-=n;cargo[k]=n;room-=n;}return cargo;}
 function pirateReport(row,r){row.reports.unshift(r);row.reports=row.reports.slice(0,30);}
-export function arrivePirate(w,uid,m,time){
+export function arrivePirate(w,uid,m,time,metrics){
  const row=pirateOwner(w,uid),s=pirateState(w,uid),meta=PIRATE_STATION_META.find(x=>x.id===m.station);
  if(m.status==='returning'){returnPirate(w,row,m,time);return;}
  refreshPirates(w,time);
@@ -83,7 +84,8 @@ export function arrivePirate(w,uid,m,time){
  }else if(m.kind==='attack'){
   const resolver=[4,5,6,7].includes(m.ruleVersion)?resolveBattleHybrid:resolveBattle;
   const before={...station.fleet};
-  const result=resolver({fleet:m.fleet,tech:m.tech,hulls:m.hulls,shieldFactor:m.shieldUntil?Math.max(0,Math.min(1,1-(m.shieldUntil-time)/300000)):1},{fleet:station.fleet,tech:station.tech,hulls:station.hulls},m.seed||m.id,m.ruleVersion,m.combatConfig);
+  metrics?.count('pveBattles');
+  const result=measure(metrics,'pve',()=>resolver({fleet:m.fleet,tech:m.tech,hulls:m.hulls,shieldFactor:m.shieldUntil?Math.max(0,Math.min(1,1-(m.shieldUntil-time)/300000)):1},{fleet:station.fleet,tech:station.tech,hulls:station.hulls},m.seed||m.id,m.ruleVersion,m.combatConfig));
   const debris=pirateZero();
   for(const [side,after] of [[m.fleet,result.attacker.fleet],[before,result.defender.fleet]])for(const [k,n] of Object.entries(side)){const lost=n-(after[k]||0);debris.metal+=lost*SHIPS[k].cost[0]*station.debrisRate;debris.crystal+=lost*SHIPS[k].cost[1]*station.debrisRate;}
   for(const k of RES){debris[k]=Math.floor(debris[k]);station.debris[k]+=debris[k];}

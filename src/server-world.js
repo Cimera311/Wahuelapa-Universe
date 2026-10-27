@@ -9,6 +9,7 @@ import {GALAXY_FLIGHT_RULE_VERSION} from './flight.js';
 import {attackFleet,attackFlight,warningFraction,resolveBattle,COMBAT_RULE_VERSION,loadPlunder,takeHulls,putHulls} from './combat.js';
 import {resolveBattleHybrid} from './combat-hybrid.js';
 import {REALM_COMBAT_OVERRIDES} from './realm-config.js';
+import {measure} from './server-metrics.js';
 export const DAY=86400000;
 // REALM-CANDIDATE[colonyProtection]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const COLONY_PROTECTION=3600000;
@@ -59,7 +60,7 @@ function finishGalaxy(w,m,time){
 function survey(w,m){if(!w.surveys.some(q=>q.user_id===m.user_id&&q.planet_id===m.planet_id))w.surveys.push({user_id:m.user_id,planet_id:m.planet_id});}
 // REALM-CANDIDATE[shieldRecovery]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 function shieldFactor(until,time){return until?Math.max(0,Math.min(1,1-(until-time)/300000)):1;}
-function resolveAttack(w,m,time){
+function resolveAttack(w,m,time,metrics){
  const a=stateOf(w,m.attacker_id),target=w.planets.find(p=>p.id===m.to),row=w.saves.find(x=>x.user_id===m.defender_id);
  if(!target||target.owner_id!==m.defender_id||target.reserved||!row||(!target.protection_ended&&time<(target.colonized_at||time)+COLONY_PROTECTION)){
   m.status='returning';m.survivors={...m.fleet};m.return_hulls=m.hulls;m.cargo=zero();m.resolved_at=w.now;
@@ -77,9 +78,10 @@ function resolveAttack(w,m,time){
  // and admin controls are migrated. Existing missions retain their original engine.
  const version=m.ruleVersion||1;
  const resolver=[4,5,6,7].includes(version)?resolveBattleHybrid:resolveBattle;
- const result=[4,5,6,7].includes(version)
+ metrics?.count('pvpBattles');
+ const result=measure(metrics,'pvp',()=>[4,5,6,7].includes(version)
   ?resolver({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,version,version>=6?(m.combatConfig||REALM_COMBAT_OVERRIDES.test4):{})
-  :resolver({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,version);
+  :resolver({...m.combat,shieldFactor:shieldFactor(m.shieldUntil,time)},defense,m.seed||m.id,version));
  if(pveParked.length)reconcilePirateDefense(w,m.defender_id,pveParked,result,time);
  const repairBefore=Object.fromEntries(Object.keys(SHIPS).map(k=>[k,repairs.reduce((n,g)=>n+(g.fleet[k]||0),0)]));
  if(repairs.length)reconcileRepairBattle(p,result);
@@ -125,7 +127,7 @@ function collectWorldDebris(w,uid,s,m){
  target.debris??=zero();let room=fleetCapacity(s,m.fleet||{[m.ship]:m.count});
  for(const k of RES){const amount=Math.min(room,Math.floor(target.debris[k]||0));m.cargo[k]=amount;target.debris[k]-=amount;room-=amount;}
 }
-export function advanceWorld(w){
+export function advanceWorld(w,metrics){
  let guard=0;
  while(true){
   const events=[...socialEvents(w),...pirateEvents(w)];
@@ -138,12 +140,13 @@ export function advanceWorld(w){
   events.sort((a,b)=>a.time-b.time||a.order-b.order||a.id.localeCompare(b.id));
   const e=events[0];if(!e||e.time>w.now)break;
   if(++guard>10000)throw Error('Zu viele fällige Ereignisse.');
+  metrics?.count('events');
   for(const row of w.saves)advance(row.state,e.time,(s,m)=>collectWorldDebris(w,row.user_id,s,m));
   refreshPirates(w,e.time);
-  if(e.kind==='pirate')arrivePirate(w,e.owner,e.mission,e.time);
+  if(e.kind==='pirate')arrivePirate(w,e.owner,e.mission,e.time,metrics);
   if(e.kind==='survey')survey(w,e.mission);
   if(e.kind==='galaxy')finishGalaxy(w,e.mission,e.time);
-  if(e.kind==='battle')resolveAttack(w,e.mission,e.time);
+  if(e.kind==='battle')resolveAttack(w,e.mission,e.time,metrics);
   if(e.kind==='social')arriveSocial(w,e.mission,e.time);
   if(e.kind==='return')returnAttack(w,e.mission,e.time);
   settleSocialCargo(w,e.time);settleRaidCargo(w,e.time);settlePirates(w,e.time);
@@ -190,8 +193,8 @@ function launchAttack(w,uid,action,id){
  w.attacks.push({id,attacker_id:uid,defender_id:target.owner_id,from:from.id,to:target.id,fleet,hulls,ruleVersion:[3,4,5,6,7].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION,combat:{fleet,tech:{...s.tech},hulls},...(w.settings.combat_engine>=6?{combatConfig:structuredClone(REALM_COMBAT_OVERRIDES.test4)}:{}),shieldUntil:from.shieldUntil||0,started_at:w.now,warning_at:w.now+Math.ceil(f.ms*fraction),arrival_at:w.now+f.ms,return_at:w.now+2*f.ms,status:'outbound',fuel:f.fuel,slowest:f.slowest});
 }
 
-export function processWorld(snapshot,uid,request){
- const w=advanceWorld(prepareWorld(snapshot)),type=request.type,action=request.action||{};
+export function processWorld(snapshot,uid,request,metrics){
+ const w=advanceWorld(prepareWorld(snapshot),metrics),type=request.type,action=request.action||{};
  if(!w.saves.some(r=>r.user_id===uid)){
   if(type!=='new')return w;
   const name=String(request.name||'Commander').trim().slice(0,30)||'Commander';
@@ -221,5 +224,5 @@ export function projectPvP(w,uid){
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,awaitingUnload:!!m.awaitingUnload,cargo:{...m.cargo||zero()},arrival:m.arrival_at,returnAt:m.return_at})),
  incoming:w.attacks.filter(m=>m.defender_id===uid&&m.status==='outbound'&&m.warning_at<=w.now).map(m=>({id:m.id,to:m.to,commander:w.saves.find(r=>r.user_id===m.attacker_id)?.state.name||'Commander',arrival:m.arrival_at})),
- reports:w.attacks.filter(m=>(m.attacker_id===uid||m.defender_id===uid||m.report?.supporting?.some(g=>g.owner===uid))&&m.report).sort((a,b)=>b.arrival_at-a.arrival_at).slice(0,30).map(m=>{const support=m.report.supporting?.filter(g=>g.owner===uid),isAttacker=m.attacker_id===uid;return {id:m.id,from:m.from,to:m.to,returnAt:m.return_at,...Object.fromEntries(Object.entries(m.report).filter(([key])=>key!=='trace')),ownSide:isAttacker?'attacker':'defender',isSupport:!!support?.length,attackerName:stateOf(w,m.attacker_id).name,defenderName:stateOf(w,m.defender_id).name,ownBefore:support?.length?Object.fromEntries(Object.keys(SHIPS).map(k=>[k,support.reduce((n,g)=>n+(g.before[k]||0),0)])):isAttacker?m.report.attackerBefore:m.report.hostBefore||m.report.defenderBefore,ownAfter:support?.length?Object.fromEntries(Object.keys(SHIPS).map(k=>[k,support.reduce((n,g)=>n+(g.after[k]||0),0)])):isAttacker?m.report.attackerAfter:m.report.hostAfter||m.report.defenderAfter};})};
+ reports:[...w.attacks,...(w.attackReports||[])].filter(m=>(m.attacker_id===uid||m.defender_id===uid||m.report?.supporting?.some(g=>g.owner===uid))&&m.report).sort((a,b)=>b.arrival_at-a.arrival_at||a.id.localeCompare(b.id)).slice(0,4).map(m=>{const support=m.report.supporting?.filter(g=>g.owner===uid),isAttacker=m.attacker_id===uid;return {id:m.id,from:m.from,to:m.to,returnAt:m.return_at,...Object.fromEntries(Object.entries(m.report).filter(([key])=>key!=='trace')),ownSide:isAttacker?'attacker':'defender',isSupport:!!support?.length,attackerName:stateOf(w,m.attacker_id).name,defenderName:stateOf(w,m.defender_id).name,ownBefore:support?.length?Object.fromEntries(Object.keys(SHIPS).map(k=>[k,support.reduce((n,g)=>n+(g.before[k]||0),0)])):isAttacker?m.report.attackerBefore:m.report.hostBefore||m.report.defenderBefore,ownAfter:support?.length?Object.fromEntries(Object.keys(SHIPS).map(k=>[k,support.reduce((n,g)=>n+(g.after[k]||0),0)])):isAttacker?m.report.attackerAfter:m.report.hostAfter||m.report.defenderAfter};})};
 }
