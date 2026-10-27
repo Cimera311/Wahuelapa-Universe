@@ -1,5 +1,15 @@
 export const GAME_NEWS=[
  {
+  "date": "27.10.2026",
+  "title": "🚀 Performance-Update: Der Anfang ist gemacht!",
+  "status": "⚙️ Performance · Erste Optimierungen live",
+  "items": [
+    "Die ersten Optimierungen zur Serverentlastung sind live! Datenabgleiche wurden schlanker gestaltet und Handelsrouten werden effizienter nachberechnet.",
+    "Ältere Kampfberichte laden jetzt erst beim Öffnen des Berichtsarchivs; die letzten vier bleiben direkt sichtbar.",
+    "Der große Umbau steht noch bevor, aber der erste Schritt für flüssigeres Spielen ist geschafft. Weitere Optimierungen folgen. Flugzeiten und Kampfregeln bleiben unverändert. 🙂"
+  ]
+},
+ {
   "date": "20.10.2026",
   "title": "♻️🚀 Alte Schiffe bekommen einen neuen Zweck!",
   "status": "🛠️ Werft · Schiffe verschrotten",
