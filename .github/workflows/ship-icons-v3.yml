@@ -5,7 +5,7 @@ on:
     paths:
       - 'scripts/generate_ship_icons.py'
       - 'src/ui-assets.js'
-      - 'assets/ship-concept-v3/**'
+      - 'assets/ship-concept-v3/orbital**'
       - '.github/workflows/ship-icons-v3.yml'
   workflow_dispatch:
 permissions:
