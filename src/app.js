@@ -212,17 +212,17 @@ const COMPACT_BOLT='<svg viewBox="0 0 24 24" width="21" height="21" fill="#f8ce4
 const COMPACT_CLOCK='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>';
 const compactNumber=n=>Number(n).toLocaleString('de-DE',{maximumFractionDigits:1});
 function compactProduction(p,key){
- const now=stats(state,p),future=structuredClone(p);future.buildings[key]++;const after=stats(state,future);
+ const now=stats(state,p),future=structuredClone(p);future.buildings[key]=(future.buildings[key]||0)+1;const after=stats(state,future);
  let current,next,unit='';
  if(RES.includes(key)){current=now.rates[key];next=after.rates[key];unit='/h';}
- else if(key==='solar'||key==='tidal'){current=now.supply;next=after.supply;unit='⚡';}
+ else if(['solar','tidal','fuelPower'].includes(key)){current=now.supply;next=after.supply;unit='⚡';}
  else if(key==='warehouse'){current=now.cap;next=after.cap;unit='Lager';}
  else return '';
  const caption=RES.includes(key)?'Förderung':key==='warehouse'?'Lagerkapazität':'Energieproduktion';
  return `<div class="compact-production" aria-label="${caption}: ${compactNumber(current)} auf ${compactNumber(next)}"><span>${compactNumber(current)}</span><span class="compact-chev" aria-hidden="true">➜</span><strong>${compactNumber(next)}</strong><small>${unit}</small></div>`;
 }
 function buildingEnergy(p,key){
- const next=structuredClone(p);next.buildings[key]++;
+ const next=structuredClone(p);next.buildings[key]=(next.buildings[key]||0)+1;
  const now=stats(state,p),after=stats(state,next),extra=after.demand-now.demand,gain=after.supply-now.supply,balance=after.supply-after.demand;
  const generating=gain>0,delta=generating?gain:extra;
  const full=`${generating?'Erzeugung steigt um':extra>0?'Energiebedarf steigt um':'Keine Änderung der Energie'} ${compactNumber(delta)}. Danach ${balance<0?'fehlen '+compactNumber(-balance):'sind '+compactNumber(balance)+' frei'} Energie.`;
@@ -235,13 +235,13 @@ function buildings(p){
  return `<div class="page-heading compact-build-heading"><span class="eyebrow">${esc(p.name)}</span><h1>Bauen</h1><p>Ein Bau- oder Rückbauauftrag pro Planet. Forschungen laufen parallel.</p></div>
  ${p.build?progress(p.build,`${BUILDINGS[p.build.key].name} → Stufe ${p.build.level}${p.build.kind==='demolish'?' · Rückbau':''}`):''}
  <div class="list compact-build-list">${Object.entries(BUILDINGS).map(([key,b])=>{
-  const inf=buildInfo(state,p,key),l=p.buildings[key];
+  const inf=buildInfo(state,p,key),l=p.buildings[key]||0;
   const reason=(key==='repairDock'&&cloud?.authoritative&&!cloud.pvp?.features?.repairDock?'Reparaturdock benötigt die neue Serverversion.':'')||inf.reason||(p.build?'Bauplatz belegt.':'')||(!affordable(p,inf.cost)?'Lokale Ressourcen fehlen.':'');
   const dem=l?demolishInfo(state,p,key):null,demReason=dem&&((cloud?.authoritative&&!cloud.pvp?.features?.buildingDemolition?'Rückbau benötigt die neue Serverversion.':'')||dem.reason);
-  const picture=b.asset||'./assets/buildings-research-v1/buildings/'+key+'.webp';
+  const picture=key==='fuelPower'?'':b.asset||'./assets/buildings-research-v1/buildings/'+key+'.webp';
   return `<article class="panel build-row compact-building ${inf.reason?'locked':''}" data-building-key="${key}">
    <div class="compact-upper">
-    <div class="item-icon asset-item compact-building-icon"><img src="${picture}" alt="" width="96" height="96" loading="lazy" decoding="async"></div>
+    <div class="item-icon asset-item compact-building-icon">${picture?`<img src="${picture}" alt="" width="96" height="96" loading="lazy" decoding="async">`:`<span aria-hidden="true">${b.icon}</span>`}</div>
     <div class="item-copy compact-building-main">
      <div class="compact-name-line"><h2>${b.name}</h2>${button('ⓘ','building-info',`data-key="${key}" data-planet="${esc(p.id)}" class="compact-info" aria-label="Details zu ${esc(b.name)}" title="Gebäudedetails"`)}</div>
      <span class="compact-level">STUFE ${l} <span>→ ${l+1}</span></span>
@@ -262,7 +262,7 @@ function buildings(p){
 function openBuildingDetails(key,planet){
  if(!state||!Object.hasOwn(BUILDINGS,key))return;
  const p=getPlanet(state,planet),b=BUILDINGS[key],inf=buildInfo(state,p,key),l=p.buildings[key];
- const next=structuredClone(p);next.buildings[key]++;const before=stats(state,p),after=stats(state,next),balance=after.supply-after.demand;
+ const next=structuredClone(p);next.buildings[key]=(next.buildings[key]||0)+1;const before=stats(state,p),after=stats(state,next),balance=after.supply-after.demand;
  document.querySelector('dialog')?.remove();
  const d=document.createElement('dialog');d.className='compact-building-dialog';
  d.innerHTML=`<div class="compact-dialog-head"><span class="eyebrow">GEBÄUDEDETAILS</span><button type="button" class="plain" data-compact-close aria-label="Schließen">×</button></div><h2>${esc(b.name)} · Stufe ${l}</h2><p>${esc(b.description)}</p><div class="compact-dialog-facts"><span>⚡ Energiebilanz nach Ausbau</span><strong class="${balance<0?'amber':'cyan'}">${balance<0?'-':'+'}${compactNumber(Math.abs(balance))}</strong><span>◷ Bauzeit</span><strong>${duration(inf.ms)}</strong><span>Baukosten</span><strong>${compactCost(inf.cost)||'Keine'}</strong></div>${inf.reason?`<p class="requirement">${esc(inf.reason)}</p>`:''}<button type="button" data-compact-close class="compact-dialog-done">Schließen</button>`;
