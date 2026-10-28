@@ -10,16 +10,20 @@
 - Ein gesperrtes Kraftwerk darf nicht gebaut werden; ältere vorhandene Stufen verlieren nicht automatisch ihre Produktion.
 - Die Save-Validierung ergänzt `fuelPower: 0` beim Einlesen älterer Spielstände.
 
-## SQL
-**Für dieses Update ist keine SQL-Migration erforderlich.** `public.game_saves.state` wird bereits als JSONB gespeichert (`supabase/setup.sql`); die Gebäude stecken im Spielstandsobjekt, nicht in separaten Datenbankspalten. Ein neues DB-Feld oder Constraint wird nicht benötigt.
+## SQL – Bestands-Spielstände
+Vor dem Deployment der neuen Game-Command die idempotente Migration `supabase/updates/2026-10-28-fuel-power-save-backfill.sql` im Supabase SQL Editor ausführen.
+Sie ergänzt `fuelPower: 0` für jeden Planeten, bei dem dieser Gebäudewert fehlt. Bestehende Werte bleiben erhalten. Die Reihenfolge der Planeten und andere Spielstandsfelder werden nicht geändert.
 
-**Keine SQL-Datei ausführen.** Es ist insbesondere keine Massenänderung vorhandener JSONB-Spielstände erforderlich.
+**Vorbereitung:** Backup von `public.game_saves` erstellen und für die kurze Migration laufende Spielaktionen vermeiden. Für geänderte Spielstände erhöht das Skript die `revision` und setzt `updated_at`, damit alte Clients keine unbemerkten Änderungen überschreiben. Anschließend die SELECT-Prüfung ausführen (Erwartung: 0 fehlende Werte).
+
+Die serverseitige Normalisierung beim Laden bleibt zusätzliche Abwärtskompatibilität und ist kein Ersatz für die Migration.
 
 ## Ausrollen
-1. PR mergen, nachdem die Checks grün sind.
-2. `supabase/dashboard/game-command.ts` als **vollständige** neue Game-Command in der entsprechenden Supabase Edge Function deployen (nicht bloß den Browser-Client aktualisieren). Die Datei ist das bereitgestellte Deployment-Bundle.
-3. Prüfen, dass auf Test und Live jeweils derselbe Stand der Realm-Kraftwerksmatrix verwendet wird.
-4. Erst danach die neue Clientversion produktiv nutzen.
+1. PR mergen, nachdem die Checks grün sind, und vorher ein Datenbankbackup anlegen.
+2. SQL-Backfill in der Wartungsphase ausführen und Prüfung kontrollieren.
+3. `supabase/dashboard/game-command.ts` als **vollständige** neue Game-Command in der entsprechenden Supabase Edge Function deployen (nicht bloß den Browser-Client aktualisieren). Die Datei ist das bereitgestellte Deployment-Bundle.
+4. Prüfen, dass auf Test und Live jeweils derselbe Stand der Realm-Kraftwerksmatrix verwendet wird.
+5. Erst danach die neue Clientversion produktiv nutzen.
 
 ## Smoke Tests
 - Bestehenden Spielstand ohne `fuelPower` laden: ohne Validierungsfehler; intern Stufe 0.
@@ -31,4 +35,4 @@
 - Bereits laufende Bauaufträge sowie andere Gebäude und Flotten unverändert.
 - Serverantwort und UI-Energieanzeige auf denselben Wert prüfen.
 
-Hinweis: Die SQL-Migration entfällt; jedoch sind Deployment und Test gegen die echte Game-Command weiterhin erforderlich.
+Hinweis: SQL-Migration und Edge-Function-Deployment sind getrennte Schritte. Nicht direkt auf Live ausführen, bevor Tests auf dem Testsystem erfolgt sind.
