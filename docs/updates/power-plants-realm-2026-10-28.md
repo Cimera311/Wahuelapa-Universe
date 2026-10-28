@@ -3,7 +3,7 @@
 ## Inhalt
 - Gemeinsame `powerPlants`-Matrix im Client und in `supabase/dashboard/game-command.ts`.
 - Pro Planet und Kraftwerk: `enabled`, `exponent`, `efficiency`.
-- Solar auf Heimat/Gestein/Eis/Ozean: 100 %/150 %/110 %/90 %.
+- Solar auf Heimat/Gestein/Eis/Ozean: 100 %/110 %/110 %/90 %.
 - Gezeiten auf Eis 35 % und Ozean 125 %; auf Heimat und Gestein gesperrt.
 - Treibstoffkraftwerk (`fuelPower`) als Gebäude und Energieberechnung vorbereitet, überall **gesperrt**. Die derzeitigen Baukosten, Bauzeit und Basisleistung sind Platzhalter und nicht zur Freigabe bestimmt.
 - Technik-Voraussetzung Gezeiten bleibt Energietechnik 3.
@@ -41,6 +41,12 @@ Hinweis: SQL-Migration und Edge-Function-Deployment sind getrennte Schritte. Nic
 - Read-only-Abfrage der 14 vorhandenen Saves mit insgesamt 79 Planeten.
 - Ergebnis mit Solar 90 % auf Ozean und Gezeiten 35 % auf Eis: **kein einziger Planet verliert aktuell Rohstoffproduktion durch Energieknappheit** (alle 79 bei 100 % Versorgungsquote vorher und nachher).
 - Ozeanplaneten insgesamt: 24.240 → 25.851 Energie (+6,6 %); einzelne Planeten können trotz allem weniger Energiereserve haben, ohne aktuell Produktion zu verlieren.
-- Gesteinsplaneten insgesamt: 37.711 → 56.559 Energie (+50 %).
+- Gesteinsplaneten insgesamt: 37.711 → 41.477 Energie (+10 %).
 - Eisplaneten insgesamt: 39.784 → 43.759 Energie (+10 %); derzeit kein ausgebautes Gezeitenkraftwerk auf Eis.
 - **Keine Produktionsgarantie für spätere Ausbaustufen:** Jede weitere Mine, Werft und Energienutzung kann das Verhältnis ändern. Bei der Freigabe muss außerdem die Kompatibilität bereits gebauter Gezeitenkraftwerke auf Heimatwelten erhalten bleiben.
+
+### Zweite Balancekorrektur (28.10.2026)
+- Gesteinsplanet Solar-Effizienz von 150 % auf 110 % abgesenkt (Client und Game-Command synchronisiert).
+- Read-only-Neuberechnung aller 14 Saves / 79 Planeten: **0 Planeten mit Produktionsverlust**; alle Versorgungsquoten bleiben bei 100 %.
+- Gesteinsplaneten erzeugen insgesamt 41.477 statt 37.711 Energie (+10 % gegenüber bisher), anstatt +50 % im vorherigen PR-Stand.
+- Heimatwelt, Eis, Ozean und Kontinental unverändert zur ersten Korrektur.
