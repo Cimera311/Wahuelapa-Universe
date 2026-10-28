@@ -238,7 +238,7 @@ function buildings(p){
   const inf=buildInfo(state,p,key),l=p.buildings[key]||0;
   const reason=(key==='repairDock'&&cloud?.authoritative&&!cloud.pvp?.features?.repairDock?'Reparaturdock benötigt die neue Serverversion.':'')||inf.reason||(p.build?'Bauplatz belegt.':'')||(!affordable(p,inf.cost)?'Lokale Ressourcen fehlen.':'');
   const dem=l?demolishInfo(state,p,key):null,demReason=dem&&((cloud?.authoritative&&!cloud.pvp?.features?.buildingDemolition?'Rückbau benötigt die neue Serverversion.':'')||dem.reason);
-  const picture=key==='fuelPower'?'':b.asset||'./assets/buildings-research-v1/buildings/'+key+'.webp';
+  const picture=b.asset||'./assets/buildings-research-v1/buildings/'+key+'.webp';
   return `<article class="panel build-row compact-building ${inf.reason?'locked':''}" data-building-key="${key}">
    <div class="compact-upper">
     <div class="item-icon asset-item compact-building-icon">${picture?`<img src="${picture}" alt="" width="96" height="96" loading="lazy" decoding="async">`:`<span aria-hidden="true">${b.icon}</span>`}</div>
