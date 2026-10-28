@@ -3,8 +3,8 @@
 ## Inhalt
 - Gemeinsame `powerPlants`-Matrix im Client und in `supabase/dashboard/game-command.ts`.
 - Pro Planet und Kraftwerk: `enabled`, `exponent`, `efficiency`.
-- Solar auf Heimat/Gestein/Eis/Ozean: 100 %/150 %/110 %/50 %.
-- Gezeiten auf Eis 25 % und Ozean 125 %; auf Heimat und Gestein gesperrt.
+- Solar auf Heimat/Gestein/Eis/Ozean: 100 %/150 %/110 %/90 %.
+- Gezeiten auf Eis 35 % und Ozean 125 %; auf Heimat und Gestein gesperrt.
 - Treibstoffkraftwerk (`fuelPower`) als Gebäude und Energieberechnung vorbereitet, überall **gesperrt**. Die derzeitigen Baukosten, Bauzeit und Basisleistung sind Platzhalter und nicht zur Freigabe bestimmt.
 - Technik-Voraussetzung Gezeiten bleibt Energietechnik 3.
 - Ein gesperrtes Kraftwerk darf nicht gebaut werden; ältere vorhandene Stufen verlieren nicht automatisch ihre Produktion.
@@ -27,7 +27,7 @@ Die serverseitige Normalisierung beim Laden bleibt zusätzliche Abwärtskompatib
 
 ## Smoke Tests
 - Bestehenden Spielstand ohne `fuelPower` laden: ohne Validierungsfehler; intern Stufe 0.
-- Eisplanet, Energietechnik 3: Gezeiten baubar, Produktion 25 % der normalen Basisformel.
+- Eisplanet, Energietechnik 3: Gezeiten baubar, Produktion 35 % der normalen Basisformel.
 - Ozeanplanet: Gezeiten baubar, Produktion 125 %.
 - Heimatwelt und Gesteinsplanet: Gezeiten-Bau serverseitig abgelehnt.
 - Alle vier Planetentypen: Treibstoffkraftwerk-Bau serverseitig abgelehnt.
@@ -36,3 +36,11 @@ Die serverseitige Normalisierung beim Laden bleibt zusätzliche Abwärtskompatib
 - Serverantwort und UI-Energieanzeige auf denselben Wert prüfen.
 
 Hinweis: SQL-Migration und Edge-Function-Deployment sind getrennte Schritte. Nicht direkt auf Live ausführen, bevor Tests auf dem Testsystem erfolgt sind.
+
+## Simulation vorhandener Spielstände (28.10.2026)
+- Read-only-Abfrage der 14 vorhandenen Saves mit insgesamt 79 Planeten.
+- Ergebnis mit Solar 90 % auf Ozean und Gezeiten 35 % auf Eis: **kein einziger Planet verliert aktuell Rohstoffproduktion durch Energieknappheit** (alle 79 bei 100 % Versorgungsquote vorher und nachher).
+- Ozeanplaneten insgesamt: 24.240 → 25.851 Energie (+6,6 %); einzelne Planeten können trotz allem weniger Energiereserve haben, ohne aktuell Produktion zu verlieren.
+- Gesteinsplaneten insgesamt: 37.711 → 56.559 Energie (+50 %).
+- Eisplaneten insgesamt: 39.784 → 43.759 Energie (+10 %); derzeit kein ausgebautes Gezeitenkraftwerk auf Eis.
+- **Keine Produktionsgarantie für spätere Ausbaustufen:** Jede weitere Mine, Werft und Energienutzung kann das Verhältnis ändern. Bei der Freigabe muss außerdem die Kompatibilität bereits gebauter Gezeitenkraftwerke auf Heimatwelten erhalten bleiben.
