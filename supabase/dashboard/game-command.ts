@@ -17,7 +17,8 @@ var BUILDINGS = {
   repairDock: { asset: "./assets/pvp-resource-v1/actions/repair.webp", name: "Reparaturdock", icon: "\u2692", cost: [1200, 800, 300], time: 60, description: "Repariert besch\xE4digte Einheiten im Orbit. Eigene Warteschlange; jede weitere Stufe verk\xFCrzt neue Reparaturen um 8 %. Verbraucht Energie.", requires: { building: "shipyard", level: 2 } },
   orbital: { asset: "./assets/pvp-resource-v1/buildings/orbital.webp", name: "Orbitalwerft", icon: "\u25CE", cost: [200, 100, 0], time: 60, description: "Produziert Orbitalgesch\xFCtze. Ausbaukosten wie bei der Schiffswerft: Metall und Kristall, kein Treibstoff. Verbraucht dauerhaft Energie. Jede Ausbaustufe verk\xFCrzt die Bauzeit und erm\xF6glicht einen zus\xE4tzlichen Auftragsplatz (maximal 20).", requires: { tech: "military", level: 1 } },
   bunker: { asset: "./assets/pvp-resource-v1/buildings/bunker.webp", name: "Ressourcenbunker", icon: "\u25A3", cost: [450, 300, 80], time: 45, description: "Je Stufe sch\xFCtzt er 2,5 % der Lagerkapazit\xE4t, insgesamt maximal 2000 je Rohstoff.", requires: { tech: "military", level: 1 } },
-  tidal: { name: "Gezeitenkraftwerk", icon: "\u2248", cost: [700, 450, 80], time: 30, description: "Liefert 180 \xD7 Stufe^Realm-Faktor Energie auf Ozeanwelten.", requires: { tech: "energy", level: 3 }, ocean: true }
+  tidal: { name: "Gezeitenkraftwerk", icon: "≈", cost: [700, 450, 80], time: 30, description: "Erzeugt Energie je nach Planetentyp.", requires: { tech: "energy", level: 3 } },
+  fuelPower: { name: "Treibstoffkraftwerk", icon: "♨", cost: [1400, 950, 400], time: 45, description: "Derzeit gesperrt." }
 };
 var TECHS = {
   scout: { name: "Sensortechnik", description: "Stufe 1: Sonden. Weitere Stufen: k\xFCrzere Sondenfl\xFCge und fr\xFChere PvP-Warnungen. Je Stufe sinkt die Zeit bis zur Erkennung um weitere 10 % (abnehmender absoluter Effekt).", cost: [100, 100, 30], time: 10, lab: 1, max: 100 },
@@ -99,17 +100,18 @@ var REALM_CONFIG = Object.freeze({
       })
     })
   }),
-  powerExponents: Object.freeze({
-    default: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Heimatwelt: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Gesteinsplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Eisplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Ozeanplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 })
+  powerPlants: Object.freeze({
+    default: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1}), tidal: Object.freeze({enabled:false, exponent:1.25, efficiency:1}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:0.7})}),
+    Heimatwelt: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1}), tidal: Object.freeze({enabled:false, exponent:1.25, efficiency:1}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:0.7})}),
+    Gesteinsplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1.5}), tidal: Object.freeze({enabled:false, exponent:1.25, efficiency:0.25}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:0.7})}),
+    Eisplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1.1}), tidal: Object.freeze({enabled:true, exponent:1.25, efficiency:0.25}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:1.5})}),
+    Ozeanplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:0.5}), tidal: Object.freeze({enabled:true, exponent:1.25, efficiency:1.25}), fuelPower: Object.freeze({enabled:false, exponent:0, efficiency:0})})
   })
 });
-function powerExponent(kind, plant) {
-  return (REALM_CONFIG.powerExponents[kind] || REALM_CONFIG.powerExponents.default)[plant] ?? REALM_CONFIG.powerExponents.default[plant];
+function powerPlantConfig(kind, plant) {
+  return REALM_CONFIG.powerPlants[kind]?.[plant] ?? REALM_CONFIG.powerPlants.default[plant];
 }
+function powerExponent(kind, plant) { return powerPlantConfig(kind, plant).exponent; }
 function combatConfigForRealm(overrides = {}) {
   const base = REALM_CONFIG.combat.rapidFire, patch = overrides.combat?.rapidFire || {};
   const chances = patch.replaceChances ? {} : Object.fromEntries(Object.entries(base.chances).map(([ship, pairs]) => [ship, { ...pairs }]));
@@ -630,7 +632,10 @@ function energyDemand(p) {
   return Object.fromEntries(Object.entries(consumers).map(([key, value2]) => [key, value2 * p.energy]));
 }
 function stats(s, p) {
-  const supply = (45 * Math.pow(p.buildings.solar || 0, powerExponent(p.kind, "solar")) + 180 * Math.pow(p.buildings.tidal || 0, powerExponent(p.kind, "tidal"))) * (1 + s.tech.energy * 0.1);
+  const supply = [["solar",45],["tidal",180],["fuelPower",180]].reduce((total,[key,base]) => {
+    const cfg=powerPlantConfig(p.kind,key), level=p.buildings[key]||0;
+    return total+(level>0?base*Math.pow(level,cfg.exponent)*cfg.efficiency:0);
+  },0)*(1+s.tech.energy*0.1);
   const consumers = energyDemand(p), demand = Object.values(consumers).reduce((a, b) => a + b, 0);
   const ratio = demand ? Math.min(1, supply / demand) : 1;
   const rates = vector(RES.map((k, i) => p.buildings[k] ? [300, 220, 140][i] * p.buildings[k] * Math.pow(1.12, p.buildings[k] - 1) * p.mult[i] * ratio : 0));
@@ -757,8 +762,8 @@ function buildingLevelTime(s, p, key, index) {
 function buildInfo(s, p, key) {
   const b = BUILDINGS[key];
   if (!b) throw Error("Unbekanntes Geb\xE4ude.");
-  const l = p.buildings[key], cost = buildingLevelCost(key, l);
-  return { cost, ms: buildingLevelTime(s, p, key, l), reason: (key === "repairDock" && s.tech.engineering < 1 ? "Ben\xF6tigt Bautechnik Stufe 1." : "") || need(s, p, b.requires) || (b.ocean && !p.ocean ? "Ben\xF6tigt einen Ozeanplaneten." : "") || (l >= (key === "bunker" ? 4 : 30) ? "Maximale Geb\xE4udestufe erreicht." : "") };
+  const l = p.buildings[key] || 0, cost = buildingLevelCost(key, l);
+  return { cost, ms: buildingLevelTime(s, p, key, l), reason: (["solar","tidal","fuelPower"].includes(key) && !powerPlantConfig(p.kind,key).enabled ? "Dieses Kraftwerk ist hier nicht verfügbar." : "") || (key === "repairDock" && s.tech.engineering < 1 ? "Ben\xF6tigt Bautechnik Stufe 1." : "") || need(s, p, b.requires) || (b.ocean && !p.ocean ? "Ben\xF6tigt einen Ozeanplaneten." : "") || (l >= (key === "bunker" ? 4 : 30) ? "Maximale Geb\xE4udestufe erreicht." : "") };
 }
 function demolishInfo(s, p, key) {
   if (!Object.hasOwn(BUILDINGS, key)) throw Error("Unbekanntes Geb\xE4ude.");
@@ -2239,7 +2244,7 @@ function validateSave(input) {
     check("SV010", Array.isArray(p.mult) && p.mult.length === 3 && p.mult.every((x) => isNum(x, 10)));
     p.reserves ??= { metal: 0, crystal: 0, fuel: 0 };
     check("SV011", cargo(p.reserves) && cargo(p.resources) && cargo(p.depot));
-    for (const k of ["orbital", "bunker", "repairDock"]) if (p.buildings && !Object.hasOwn(p.buildings, k)) p.buildings[k] = 0;
+    for (const k of ["orbital", "bunker", "repairDock", "fuelPower"]) if (p.buildings && !Object.hasOwn(p.buildings, k)) p.buildings[k] = 0;
     check("SV012", p.buildings && Object.keys(BUILDINGS).every((k) => integer(p.buildings[k], 30)));
     if (p.ships) {
       for (const k of Object.keys(SHIPS)) if (!["probe", "transport", "colony"].includes(k) && !Object.hasOwn(p.ships, k)) p.ships[k] = 0;
