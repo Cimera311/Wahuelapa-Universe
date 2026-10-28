@@ -26,12 +26,22 @@ ASSETS = {
     "starColony": "Interstellares_Kolonieschiff_Asset_Concept_v3.png",
 }
 
+def collect_orbital_assets():
+    """Discover transparent orbital sources, excluding background scene artwork."""
+    return {
+        path.stem: path.name
+        for path in sorted(SOURCE.glob("orbital*.png"))
+        if not path.stem.endswith("-mit-hintergrund")
+    }
+
 def main():
-    missing = [name for name in ASSETS.values() if not (SOURCE / name).is_file()]
+    all_assets = dict(ASSETS)
+    all_assets.update(collect_orbital_assets())
+    missing = [name for name in all_assets.values() if not (SOURCE / name).is_file()]
     if missing:
         raise SystemExit("Missing Concept-v3 sources: " + ", ".join(missing))
     DEST.mkdir(parents=True, exist_ok=True)
-    for key, name in ASSETS.items():
+    for key, name in all_assets.items():
         with Image.open(SOURCE / name) as img:
             img = img.convert("RGBA")
             bbox = img.getchannel("A").getbbox()
