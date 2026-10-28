@@ -15,7 +15,7 @@ export const BUILDINGS = {
  orbital:{asset:'./assets/pvp-resource-v1/buildings/orbital.webp',name:'Orbitalwerft',icon:'◎',cost:[200,100,0],time:60,description:'Produziert Orbitalgeschütze. Ausbaukosten wie bei der Schiffswerft: Metall und Kristall, kein Treibstoff. Verbraucht dauerhaft Energie. Jede Ausbaustufe verkürzt die Bauzeit und ermöglicht einen zusätzlichen Auftragsplatz (maximal 20).',requires:{tech:'military',level:1}},
  bunker:{asset:'./assets/pvp-resource-v1/buildings/bunker.webp',name:'Ressourcenbunker',icon:'▣',cost:[450,300,80],time:45,description:'Je Stufe schützt er 2,5 % der Lagerkapazität, insgesamt maximal 2000 je Rohstoff.',requires:{tech:'military',level:1}},
  tidal:{name:'Gezeitenkraftwerk',icon:'≈',cost:[700,450,80],time:30,description:'Erzeugt Energie abhängig vom Planetentyp.',requires:{tech:'energy',level:3}},
- fuelPower:{name:'Treibstoffkraftwerk',icon:'♨',cost:[1400,950,400],time:45,description:'Noch gesperrtes Kraftwerk. Freischaltung über Realm-Konfiguration.'}
+ fuelPower:{name:'Treibstoffkraftwerk',icon:'♨',asset:'./assets/buildings-research-v1/buildings/solar.webp',cost:[1400,950,400],time:45,description:'Noch gesperrtes Kraftwerk. Freischaltung über Realm-Konfiguration.'}
 };
 // REALM-CANDIDATE[research]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export const TECHS = {
