@@ -12,7 +12,7 @@ export const REALM_CONFIG = Object.freeze({
       // Chance per additional salvo, 0..1. All other attacker->target pairs: 0.
       chances: Object.freeze({
         waechter: Object.freeze({falke: 0.20}),
-        donner: Object.freeze({flak: 0.15,laser: 0.15}),
+        donner: Object.freeze({flak: 0.30,laser: 0.30,rail: 0.30,plasma: 0.30}),
         titan: Object.freeze({falke: 0.10})
       })
     })
