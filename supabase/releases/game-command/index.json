@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-28.01",
+  "latest": "2026-10-28.02",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -253,6 +253,13 @@
       "sourceCommit": "bf2951862b9ac25955881a0037c38abe5acdb45b",
       "description": "Realm-Kraftwerksmatrix, Eisplanet-Gezeiten 25 Prozent, gesperrtes fuelPower und Save-Kompatibilitaet",
       "sha256": "29870ed29fb99f626bc12a9cfdfbd5734896bc9b6827b3db82fa3436e9a0db1b"
+    },
+    {
+      "version": "2026-10-28.02",
+      "createdAt": "2026-10-28T13:13:32.574Z",
+      "sourceCommit": "49508150f161aedc5f1f2c657bbe81a53db1f45a",
+      "description": "Realm-Kraftwerksbalance final: Gestein Solar 110%, Eis Gezeiten 35%, Ozean Solar 90%, Save-Kompatibilitaet",
+      "sha256": "942db50c91d7e6b6ba5572e55c7027a97d38ee84c43c0b3c677ca3f7851af640"
     }
   ]
 }
