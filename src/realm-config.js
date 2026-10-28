@@ -1,5 +1,5 @@
 // Haupt-Realm: zentral anpassbare Balance-Werte.
-// Energieexponenten sind pro Planetentyp und Kraftwerk getrennt konfigurierbar.
+// Kraftwerksverfügbarkeit, Skalierung und Effizienz sind pro Planetentyp konfigurierbar.
 // fuelPower ist fuer ein kuenftiges Treibstoffkraftwerk reserviert (noch ohne Effekt).
 export const REALM_CONFIG = Object.freeze({
   galaxyFlightTimeFactor: 3,
@@ -17,17 +17,19 @@ export const REALM_CONFIG = Object.freeze({
       })
     })
   }),
-  powerExponents: Object.freeze({
-    default: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Heimatwelt: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Gesteinsplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Eisplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 }),
-    Ozeanplanet: Object.freeze({ solar: 1.25, tidal: 1.25, fuelPower: 1.25 })
+  powerPlants: Object.freeze({
+    default: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1}), tidal: Object.freeze({enabled:false, exponent:1.25, efficiency:1}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:0.7})}),
+    Heimatwelt: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1}), tidal: Object.freeze({enabled:false, exponent:1.25, efficiency:1}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:0.7})}),
+    Gesteinsplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1.5}), tidal: Object.freeze({enabled:false, exponent:1.25, efficiency:0.25}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:0.7})}),
+    Eisplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1.1}), tidal: Object.freeze({enabled:true, exponent:1.25, efficiency:0.25}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:1.5})}),
+    Ozeanplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:0.5}), tidal: Object.freeze({enabled:true, exponent:1.25, efficiency:1.25}), fuelPower: Object.freeze({enabled:false, exponent:0, efficiency:0})})
   })
 });
+export function powerPlantConfig(kind, plant) {
+  return REALM_CONFIG.powerPlants[kind]?.[plant] ?? REALM_CONFIG.powerPlants.default[plant];
+}
 export function powerExponent(kind, plant) {
-  return (REALM_CONFIG.powerExponents[kind] || REALM_CONFIG.powerExponents.default)[plant]
-    ?? REALM_CONFIG.powerExponents.default[plant];
+  return powerPlantConfig(kind, plant).exponent;
 }
 
 // Realm-specific overrides can be provided by each realm's server configuration.
