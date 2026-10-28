@@ -1,6 +1,6 @@
 import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,ROUTE_ECONOMY,vector,costAt,isFreighter,shipFlightEngine,canFlyInterstellar} from './config.js';
 import {repairOrders,repairQuote,repairRefund,reserveRepair,releaseRepair,forecastRepair,produceRepair,finishRepair,repairMaterials,payRepairMaterials} from './repair.js';
-import {powerExponent} from './realm-config.js';
+import {powerPlantConfig} from './realm-config.js';
 
 import {takeHulls,putHulls} from './combat.js';
 import {sharedFlight,ENGINE_SPEED_BONUS,FLIGHT_BASE_SCALE} from './flight.js';
@@ -26,7 +26,7 @@ export function energyDemand(p){
 }
 // REALM-CANDIDATE[production]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
 export function stats(s,p){
- const supply=(45*Math.pow(p.buildings.solar||0,powerExponent(p.kind,'solar'))+180*Math.pow(p.buildings.tidal||0,powerExponent(p.kind,'tidal')))*(1+s.tech.energy*.1);
+ const supply=([['solar',45],['tidal',180],['fuelPower',180]].reduce((total,[key,base])=>{const cfg=powerPlantConfig(p.kind,key),level=p.buildings[key]||0;return total+(level>0?base*Math.pow(level,cfg.exponent)*cfg.efficiency:0);},0))*(1+s.tech.energy*.1);
  const consumers=energyDemand(p),demand=Object.values(consumers).reduce((a,b)=>a+b,0);
  const ratio=demand?Math.min(1,supply/demand):1;
  const rates=vector(RES.map((k,i)=>p.buildings[k]?([300,220,140][i]*p.buildings[k]*Math.pow(1.12,p.buildings[k]-1)*p.mult[i]*ratio):0));
@@ -77,7 +77,7 @@ export function buildingLevelTime(s,p,key,index){
  return Math.ceil(b.time*Math.pow(1.35,index)*Math.pow(.95,s.tech.engineering)*Math.pow(.92,p.buildings.robotics)*1000);
 }
 // REALM-CANDIDATE[buildingCaps]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
-export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key],cost=buildingLevelCost(key,l);return {cost,ms:buildingLevelTime(s,p,key,l),reason:(key==='repairDock'&&s.tech.engineering<1?'Benötigt Bautechnik Stufe 1.':'')||need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=(key==='bunker'?4:30)?'Maximale Gebäudestufe erreicht.':'')};}
+export function buildInfo(s,p,key){const b=BUILDINGS[key];if(!b)throw Error('Unbekanntes Gebäude.');const l=p.buildings[key]||0,cost=buildingLevelCost(key,l);return {cost,ms:buildingLevelTime(s,p,key,l),reason:(['solar','tidal','fuelPower'].includes(key)&&!powerPlantConfig(p.kind,key).enabled?'Dieses Kraftwerk ist auf diesem Planetentyp nicht verfügbar.':'')||(key==='repairDock'&&s.tech.engineering<1?'Benötigt Bautechnik Stufe 1.':'')||need(s,p,b.requires)||(b.ocean&&!p.ocean?'Benötigt einen Ozeanplaneten.':'')||(l>=(key==='bunker'?4:30)?'Maximale Gebäudestufe erreicht.':'')};}
 // Paid values are recorded when a new level finishes. Already-built legacy levels
 // fall back to the current level formula because their old prices were never saved.
 export function demolishInfo(s,p,key){
