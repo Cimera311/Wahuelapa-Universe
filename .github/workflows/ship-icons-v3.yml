@@ -1,11 +1,11 @@
 name: Build lightweight ship icons
 on:
   push:
-    branches: [feature/ship-v3-lightweight-icons]
+    branches: [main]
     paths:
       - 'scripts/generate_ship_icons.py'
       - 'src/ui-assets.js'
-      - 'assets/ship-concept-v3/orbital**'
+      - 'assets/ship-concept-v3/**'
       - '.github/workflows/ship-icons-v3.yml'
   workflow_dispatch:
 permissions:
