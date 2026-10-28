@@ -104,8 +104,8 @@ var REALM_CONFIG = Object.freeze({
     default: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1}), tidal: Object.freeze({enabled:false, exponent:1.25, efficiency:1}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:0.7})}),
     Heimatwelt: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1}), tidal: Object.freeze({enabled:false, exponent:1.25, efficiency:1}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:0.7})}),
     Gesteinsplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1.5}), tidal: Object.freeze({enabled:false, exponent:1.25, efficiency:0.25}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:0.7})}),
-    Eisplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1.1}), tidal: Object.freeze({enabled:true, exponent:1.25, efficiency:0.25}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:1.5})}),
-    Ozeanplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:0.5}), tidal: Object.freeze({enabled:true, exponent:1.25, efficiency:1.25}), fuelPower: Object.freeze({enabled:false, exponent:0, efficiency:0})})
+    Eisplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:1.1}), tidal: Object.freeze({enabled:true, exponent:1.25, efficiency:0.35}), fuelPower: Object.freeze({enabled:false, exponent:1.25, efficiency:1.5})}),
+    Ozeanplanet: Object.freeze({solar: Object.freeze({enabled:true, exponent:1.25, efficiency:0.9}), tidal: Object.freeze({enabled:true, exponent:1.25, efficiency:1.25}), fuelPower: Object.freeze({enabled:false, exponent:0, efficiency:0})})
   })
 });
 function powerPlantConfig(kind, plant) {
