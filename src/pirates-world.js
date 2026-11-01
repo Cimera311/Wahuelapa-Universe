@@ -96,7 +96,7 @@ export function arrivePirate(w,uid,m,time,metrics){
   if(result.outcome==='attacker')m.cargo=takePirateCargo(station.resources,fleetCapacity({tech:m.tech},m.fleet));
   pirateReport(row,{id:m.id,station:m.station,at:time,outcome:result.outcome,ruleVersion:m.ruleVersion,rounds:result.rounds,attackerBefore:{...m.initialFleet},attackerAfter:{...m.fleet},defenderBefore:before,defenderAfter:{...station.fleet},cargo:{...m.cargo},debris});
   pirateLog(s,time,'PvE-Kampfbericht',meta.name+' · '+(result.outcome==='attacker'?'Sieg':result.outcome==='defender'?'Niederlage':'Unentschieden')+' · '+result.rounds.length+' Runden. Details unter Galaxie → Piraten.');
-  station.scan=null;
+  // Keep reconnaissance until this station respawns.
  }else if(m.kind==='salvage')m.cargo=takePirateCargo(station.debris,fleetCapacity({tech:m.tech},m.fleet));
  else if(station.defeated)m.cargo=takePirateCargo(station.resources,fleetCapacity({tech:m.tech},m.fleet));
  else pirateLog(s,time,'Piraten-Abholung abgebrochen','Die Station wurde erneuert. Dein Frachter kehrt ohne Beute zurück.');
