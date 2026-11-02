@@ -101,7 +101,7 @@ export function arrivePirate(w,uid,m,time,metrics){
   m.fleet=result.attacker.fleet;m.hulls=result.attacker.hulls;m.shieldUntil=time+300000;
   if(result.outcome==='attacker')m.cargo=takePirateCargo(station.resources,fleetCapacity({tech:m.tech},m.fleet));
   pirateReport(row,{id:m.id,station:m.station,at:time,outcome:result.outcome,ruleVersion:m.ruleVersion,rounds:result.rounds,attackerBefore:{...m.initialFleet},attackerAfter:{...m.fleet},defenderBefore:before,defenderAfter:{...station.fleet},cargo:{...m.cargo},debris});
-  if(result.outcome==='attacker')row.dailyQuest=completeDailyQuest(row.dailyQuest,time,result.outcome);
+  if(result.outcome==='attacker'&&m.startedAt>=Number(row.dailyQuest?.acceptedAt??Infinity))row.dailyQuest=completeDailyQuest(row.dailyQuest,time,result.outcome);
   pirateLog(s,time,'PvE-Kampfbericht',meta.name+' · '+(result.outcome==='attacker'?'Sieg':result.outcome==='defender'?'Niederlage':'Unentschieden')+' · '+result.rounds.length+' Runden. Details unter Galaxie → Piraten.');
   // Keep reconnaissance until this station respawns.
  }else if(m.kind==='salvage')m.cargo=takePirateCargo(station.debris,fleetCapacity({tech:m.tech},m.fleet));
