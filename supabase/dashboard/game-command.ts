@@ -631,6 +631,7 @@ function energyDemand(p) {
   const consumers = { metal: p.buildings.metal * 15, crystal: p.buildings.crystal * 18, fuel: p.buildings.fuel * 20, shipyard: Math.ceil(10 * Math.pow(p.buildings.shipyard, 1.5)), orbital: Math.ceil(10 * Math.pow(p.buildings.orbital || 0, 1.5)), repairDock: Math.ceil(10 * Math.pow(p.buildings.repairDock || 0, 1.5)) };
   return Object.fromEntries(Object.entries(consumers).map(([key, value2]) => [key, value2 * p.energy]));
 }
+function dailyQuestMultiplier(bonus,planetId,resource,time){return bonus&&bonus.planetId===planetId&&time>=bonus.startedAt&&time<bonus.expiresAt&&(bonus.reward==='all'||bonus.reward===resource)?(bonus.reward==='all'?1.05:1.09):1;}
 function stats(s, p) {
   const supply = [["solar",45],["tidal",180],["fuelPower",180]].reduce((total,[key,base]) => {
     const cfg=powerPlantConfig(p.kind,key), level=p.buildings[key]||0;
@@ -638,7 +639,7 @@ function stats(s, p) {
   },0)*(1+s.tech.energy*0.1);
   const consumers = energyDemand(p), demand = Object.values(consumers).reduce((a, b) => a + b, 0);
   const ratio = demand ? Math.min(1, supply / demand) : 1;
-  const rates = vector(RES.map((k, i) => p.buildings[k] ? [300, 220, 140][i] * p.buildings[k] * Math.pow(1.12, p.buildings[k] - 1) * p.mult[i] * ratio : 0));
+  const rates = vector(RES.map((k, i) => p.buildings[k] ? [300, 220, 140][i] * p.buildings[k] * Math.pow(1.12, p.buildings[k] - 1) * p.mult[i] * ratio * dailyQuestMultiplier(s.dailyPirateBonus,p.id,k,s.time) : 0));
   return { supply, demand, consumers, ratio, rates, cap: capacity(p) };
 }
 function settle(p) {
@@ -1057,6 +1058,8 @@ function advance(s, now, collectDebris) {
   while (true) {
     forecastShipJobs(s, readStats);
     const times = [];
+    const bonusExpiry=s.dailyPirateBonus?.expiresAt;
+    if(bonusExpiry>s.time&&bonusExpiry<=now)times.push(bonusExpiry);
     for (const p of s.planets) {
       times.push(forecastRepair(p, s.time, readStats(p).ratio));
       if (p.build) times.push(p.build.end);
@@ -1075,6 +1078,7 @@ function advance(s, now, collectDebris) {
     }
     produce(s, Math.max(0, next - s.time), readStats);
     s.time = Math.max(s.time, next);
+    if(s.time===bonusExpiry)production.clear();
     if (s.research && s.research.end <= s.time) {
       const j = s.research;
       s.tech[j.key] = j.level;
@@ -1825,6 +1829,13 @@ function ensurePirateOwner(w, uid) {
   refreshPirates(w, w.now);
   return row;
 }
+const DAILY_QUEST_DURATION_MS=12*60*60*1000;
+const DAILY_QUEST_REWARDS={all:0.05,metal:0.09,crystal:0.09,fuel:0.09};
+const dailyQuestDay=time=>new Date(time).toISOString().slice(0,10);
+function dailyQuestStatus(quest,time){if(!quest||quest.day!==dailyQuestDay(time))return 'available';return quest.claimedAt?'claimed':quest.completedAt?'ready':'active';}
+function acceptDailyQuest(quest,time){if(dailyQuestStatus(quest,time)!=='available')throw Error('Die tägliche Quest wurde bereits angenommen.');return {day:dailyQuestDay(time),acceptedAt:time,completedAt:null,claimedAt:null};}
+function completeDailyQuest(quest,time,outcome){if(dailyQuestStatus(quest,time)!=='active'||outcome!=='attacker'||time<quest.acceptedAt)return quest;return {...quest,completedAt:time};}
+function claimDailyQuest(quest,reward,planetId,ownedPlanetIds,time,currentBonus){if(dailyQuestStatus(quest,time)!=='ready')throw Error('Die Piratenjagd ist noch nicht abgeschlossen.');if(!Object.hasOwn(DAILY_QUEST_REWARDS,reward))throw Error('Ungültige Belohnung.');if(!ownedPlanetIds.includes(planetId))throw Error('Dieser Planet gehört dir nicht.');if(currentBonus&&currentBonus.expiresAt>time)throw Error('Es ist bereits ein Questbonus aktiv.');return {quest:{...quest,claimedAt:time},bonus:{planetId,reward,startedAt:time,expiresAt:time+DAILY_QUEST_DURATION_MS}};}
 function pirateAction(w, uid, action, id, seed) {
   pirateReady(w, uid);
   const s = pirateState(w, uid);
@@ -1836,6 +1847,8 @@ function pirateAction(w, uid, action, id, seed) {
   }
   const row = ensurePirateOwner(w, uid);
   if (action.op === "open") return;
+  if(action.op==="daily-accept"){row.dailyQuest=acceptDailyQuest(row.dailyQuest,w.now);return;}
+  if(action.op==="daily-claim"){const x=claimDailyQuest(row.dailyQuest,action.reward,action.planetId,s.planets.map(p=>p.id),w.now,s.dailyPirateBonus);row.dailyQuest=x.quest;s.dailyPirateBonus=x.bonus;return;}
   const meta = PIRATE_STATION_META.find((x) => x.id === action.station), q = row.stations[action.station];
   if (!meta || !q) throw Error("Unbekannte Piratenstation.");
   if (!w.pirateConfig.enabled || !w.pirateConfig.stations[meta.id].enabled) throw Error("Diese Piratenstation ist pausiert.");
@@ -1927,6 +1940,7 @@ function arrivePirate(w, uid, m, time, metrics) {
     m.shieldUntil = time + 3e5;
     if (result2.outcome === "attacker") m.cargo = takePirateCargo(station.resources, fleetCapacity({ tech: m.tech }, m.fleet));
     pirateReport(row, { id: m.id, station: m.station, at: time, outcome: result2.outcome, ruleVersion: m.ruleVersion, rounds: result2.rounds, attackerBefore: { ...m.initialFleet }, attackerAfter: { ...m.fleet }, defenderBefore: before, defenderAfter: { ...station.fleet }, cargo: { ...m.cargo }, debris });
+    if(result2.outcome==="attacker"&&m.startedAt>=Number(row.dailyQuest?.acceptedAt??Infinity))row.dailyQuest=completeDailyQuest(row.dailyQuest,time,result2.outcome);
     pirateLog(s, time, "PvE-Kampfbericht", meta.name + " \xB7 " + (result2.outcome === "attacker" ? "Sieg" : result2.outcome === "defender" ? "Niederlage" : "Unentschieden") + " \xB7 " + result2.rounds.length + " Runden. Details unter Galaxie \u2192 Piraten.");
     station.scan = null;
   } else if (m.kind === "salvage") m.cargo = takePirateCargo(station.debris, fleetCapacity({ tech: m.tech }, m.fleet));
@@ -1963,7 +1977,7 @@ function pirateFleetShadows(w) {
 function projectPirates(w, uid) {
   if (w.pirateVersion !== 1 || !pirateState(w, uid)) return null;
   const row = pirateOwner(w, uid);
-  return { config: w.admins.includes(uid) ? structuredClone(w.pirateConfig) : { flightTimeFactor: w.pirateConfig.flightTimeFactor, fuelFactor: w.pirateConfig.fuelFactor }, stations: PIRATE_STATION_META.map((meta) => {
+  return { dailyQuest:{status:dailyQuestStatus(row?.dailyQuest,w.now),...(row?.dailyQuest||{})},activeBonus:(()=>{const b=pirateState(w,uid)?.dailyPirateBonus;return b&&b.expiresAt>w.now?structuredClone(b):null;})(),config: w.admins.includes(uid) ? structuredClone(w.pirateConfig) : { flightTimeFactor: w.pirateConfig.flightTimeFactor, fuelFactor: w.pirateConfig.fuelFactor }, stations: PIRATE_STATION_META.map((meta) => {
     const q = row?.stations[meta.id];
     return { ...meta, cooldownMinutes: pirateCooldownMinutes(w.pirateConfig, meta.id), sensor: q?.sensor ?? w.pirateConfig.stations[meta.id].sensor, enabled: w.pirateConfig.enabled && w.pirateConfig.stations[meta.id].enabled, initialized: !!q, generation: q?.generation, refreshAt: q?.refreshAt || 0, nextAttackAt: q?.nextAttackAt || 0, defeated: !!q?.defeated, debris: { ...q?.debris || pirateZero() }, debrisExpiresAt: q?.debrisExpiresAt || 0, scan: q?.scan ? structuredClone(q.scan) : null };
   }), missions: structuredClone(row?.missions || []).map(({ seed, combatConfig, initialFleet, ...m }) => m), reports: structuredClone(row?.reports || []) };
