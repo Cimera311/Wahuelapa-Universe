@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-11-02.01",
+  "latest": "2026-11-02.02",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -274,6 +274,13 @@
       "sourceCommit": "e208515877397719e02646e567c53744ea6452a6",
       "description": "Daily Piratenjagd: Quest-Claim, sichere Produktionsboni, exakter Bonusablauf; Scan-Persistenz bleibt erhalten",
       "sha256": "706c57dc9a408091339ff2c589136402b18e8b59b11ebd307c463e7880b15067"
+    },
+    {
+      "version": "2026-11-02.02",
+      "createdAt": "2026-11-02T13:07:13.220Z",
+      "sourceCommit": "1d32ce76d66af35d648ba449c2bd807c0cde2230",
+      "description": "Arbeitsroboter beschleunigen neue Schiffbauauftraege lokal um 8 Prozent je Stufe; Werftanzeige bereinigt",
+      "sha256": "d4e9d7dcc5cec10079681b452236faff1a3695d17a32a31052003f536cbda71c"
     }
   ]
 }

@@ -824,7 +824,7 @@ function shipInfo(s, p, key, count = 1) {
   const sh = SHIPS[key];
   if (!sh) throw Error("Unbekanntes Schiff.");
   const defense = sh.category === "defense", yard = defense ? p.buildings.orbital || 0 : p.buildings.shipyard, gross = vector(sh.cost.map((v) => v * count));
-  return { cost: gross, salvage: vector([0, 0, 0]), ms: Math.ceil(sh.time * count * 1e3 * shipyardTimeFactor(yard) * (defense ? Math.pow(0.92, p.buildings.robotics || 0) : 1)), ratio: stats(s, p).ratio, reason: yard < (sh.shipyard || 1) ? `Ben\xF6tigt ${defense ? "Orbitalwerft" : "Schiffswerft"} Stufe ${sh.shipyard || 1}.` : s.tech[sh.tech] < (sh.techLevel || 1) ? `Ben\xF6tigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel || 1}.` : (s.tech[sh.engine || "drive"] || 0) < (sh.engineLevel || 0) ? `Ben\xF6tigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.` : "" };
+  return { cost: gross, salvage: vector([0, 0, 0]), ms: Math.ceil(sh.time * count * 1e3 * shipyardTimeFactor(yard) * Math.pow(0.92, p.buildings.robotics || 0)), ratio: stats(s, p).ratio, reason: yard < (sh.shipyard || 1) ? `Ben\xF6tigt ${defense ? "Orbitalwerft" : "Schiffswerft"} Stufe ${sh.shipyard || 1}.` : s.tech[sh.tech] < (sh.techLevel || 1) ? `Ben\xF6tigt ${TECHS[sh.tech].name} Stufe ${sh.techLevel || 1}.` : (s.tech[sh.engine || "drive"] || 0) < (sh.engineLevel || 0) ? `Ben\xF6tigt ${TECHS[sh.engine].name} Stufe ${sh.engineLevel}.` : "" };
 }
 function cargoCapacity(s, n = 1, ship = "transport") {
   return Math.floor((SHIPS[ship]?.cargo || 0) * (1 + s.tech.logistics * 0.15)) * n;
