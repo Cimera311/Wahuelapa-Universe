@@ -1,3 +1,4 @@
+import {acceptPvpDaily,completePvpDaily,claimPvpDaily,pvpDailyStatus} from './pvp-daily.js';
 import {preparePirates,refreshPirates,pirateAction,pirateEvents,arrivePirate,settlePirates,pirateFleetShadows,projectPirates,pirateDefense,reconcilePirateDefense} from './pirates-world.js';
 import {repairDefense,reconcileRepairBattle,recordDisabledDefenses} from './repair.js';
 import {socialAction,settleSocialCargo,socialEvents,arriveSocial,socialDefense,socialProjection} from './social-world.js';
@@ -40,6 +41,7 @@ export function prepareWorld(snapshot){
  preparePirates(w);
  // Pirate state is server-controlled; never trust a bonus supplied by a client save.
  for(const row of w.saves){const bonus=w.piratePlayers?.find(p=>p.user_id===row.user_id)?.dailyBonus;if(bonus)row.state.dailyPirateBonus=bonus;else delete row.state.dailyPirateBonus;}
+ for(const row of w.saves){const bonus=w.piratePlayers?.find(p=>p.user_id===row.user_id)?.pvpShipyardBonus;if(bonus)row.state.pvpShipyardBonus=bonus;else delete row.state.pvpShipyardBonus;}
  return w;
 }
 function stateOf(w,id){const row=w.saves.find(x=>x.user_id===id);if(!row)throw Error('Spielstand fehlt.');return row.state;}
@@ -108,6 +110,7 @@ function resolveAttack(w,m,time,metrics){
  m.status=Object.keys(result.attacker.fleet).length?'returning':'returned';m.resolved_at=w.now;m.survivors=result.attacker.fleet;m.return_hulls=result.attacker.hulls;m.cargo=cargo.cargo;m.shieldUntil=time+300000;
  if(result.trace)result.trace.participants={attacker:a.name,defender:d.name+(supporting.length?' mit '+supporting.map(g=>g.commander).join(', '):'')};
  m.report={at:time,outcome:result.outcome,ruleVersion:m.ruleVersion||1,traceAvailable:!!result.trace,...(result.trace?{trace:result.trace}:{}),rounds:result.rounds,attackerBefore:m.fleet,attackerAfter:m.survivors,defenderBefore:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,hostBefore[k]+supporting.reduce((n,g)=>n+(g.fleet[k]||0),0)])),defenderAfter:Object.fromEntries(Object.keys(SHIPS).map(k=>[k,result.defender.fleet[k]||0])),hostBefore,hostAfter,...(supporting.length?{supporting:supportReports}:{}),loot:cargo.loot,salvage:cargo.salvage,debrisLeft:{...target.debris},defenseRepair:result.defenseRepair};
+ if(result.outcome==='attacker'){const daily=w.piratePlayers?.find(r=>r.user_id===m.attacker_id);if(daily)daily.pvpDaily=completePvpDaily(daily.pvpDaily,m,time,result.outcome);}
  const outcome=result.outcome==='attacker'?'Angreifer gewinnt':result.outcome==='defender'?'Verteidiger gewinnt':'Unentschieden';
  const body=outcome+' · '+target.meta.name+' · '+result.rounds.length+' Runden. Angreifer übrig: '+fleetText(m.survivors)+'. Beute M/K/T: '+RES.map(k=>cargo.loot[k]).join('/')+'. Trümmer geborgen M/K: '+cargo.salvage.metal+'/'+cargo.salvage.crystal+'.';
  log(a,time,'PvP-Kampfbericht',body);log(d,time,'PvP-Kampfbericht',body);
@@ -209,6 +212,14 @@ export function processWorld(snapshot,uid,request,metrics){
   if(action.type==='salvage'){const target=w.planets.find(p=>p.id===action.to);if(!target||target.owner_id!==uid||target.reserved)throw Error('Wähle eine eigene besiedelte Galaxiekolonie mit Trümmern.');if(!RES.some(k=>(target.debris?.[k]||0)>0))throw Error('An diesem Planeten liegen keine Trümmer.');}
   const updated=act(s,action,w.now);w.saves.find(r=>r.user_id===uid).state=updated;
  }else if(type==='pirate')pirateAction(w,uid,action,request.eventId||request.requestId,request.combatSeed||request.requestId);
+ else if(type==='pvp-daily'){
+  if(w.pirateVersion!==1)throw Error('Die Daily benötigt das aktive Piratensystem.');
+  w.piratePlayers??=[];let row=w.piratePlayers.find(r=>r.user_id===uid);
+  if(!row){row={user_id:uid,stations:{},missions:[],reports:[]};w.piratePlayers.push(row);}
+  if(action.op==='accept')row.pvpDaily=acceptPvpDaily(row.pvpDaily,w.now);
+  else if(action.op==='claim'){const claim=claimPvpDaily(row.pvpDaily,action.planetId,s.planets.map(p=>p.id),w.now,row.pvpShipyardBonus);row.pvpDaily=claim.quest;row.pvpShipyardBonus=claim.bonus;s.pvpShipyardBonus=claim.bonus;}
+  else throw Error('Unbekannte PvP-Daily-Aktion.');
+ }
  else if(type==='social')socialAction(w,uid,action,request.eventId||request.requestId);
  else if(type==='galaxy')launchGalaxy(w,uid,action,request.eventId||request.requestId);
  else if(type==='attack'){launchAttack(w,uid,action,request.eventId||request.requestId);w.attacks[w.attacks.length-1].seed=request.combatSeed||request.requestId;}
@@ -221,7 +232,7 @@ export function processWorld(snapshot,uid,request,metrics){
  return w;
 }
 export function projectPvP(w,uid){
- return {enabled:w.settings.enabled,combatEngine:[3,4,5,6,7].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),pirates:projectPirates(w,uid),features:{shipScrapping:true,routeStatistics:true,pirates:w.pirateVersion===1,piratesPublic:w.pirateVersion===1,orbitalRestoration:true,buildingDemolition:true,repairDock:true,debrisSalvage:true,shipQueue:true,partnerOrigins:true,cargoRetention:true,attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,orbitalProduction:true,cancelShip:true,combatRules:[3,4,5,6,7].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
+ return {enabled:w.settings.enabled,combatEngine:[3,4,5,6,7].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION,isAdmin:w.admins.includes(uid),serverNow:w.now,social:socialProjection(w,uid),pirates:projectPirates(w,uid),pvpDaily:(()=>{const q=w.piratePlayers?.find(r=>r.user_id===uid);return {status:pvpDailyStatus(q?.pvpDaily,w.now),bonus:q?.pvpShipyardBonus?.expiresAt>w.now?structuredClone(q.pvpShipyardBonus):null};})(),features:{shipScrapping:true,routeStatistics:true,pirates:w.pirateVersion===1,piratesPublic:w.pirateVersion===1,orbitalRestoration:true,buildingDemolition:true,repairDock:true,debrisSalvage:true,shipQueue:true,partnerOrigins:true,cargoRetention:true,attackSlots:true,fleetPlanning:true,partnerships:w.socialVersion===1,flightRules:GALAXY_FLIGHT_RULE_VERSION,routePause:true,shipyardEnergy:true,orbitalProduction:true,cancelShip:true,combatRules:[3,4,5,6,7].includes(w.settings.combat_engine)?w.settings.combat_engine:COMBAT_RULE_VERSION,combatTrace:true},attackCapacity:attackSlots(w.saves.find(r=>r.user_id===uid)?.state.tech.military||0),homeAttacks:true,protectionMs:COLONY_PROTECTION,
  debris:w.planets.filter(p=>p.owner_id===uid&&!p.reserved).map(p=>({planet:p.id,...p.debris||zero()})),
  colonies:w.planets.filter(p=>p.owner_id&&!p.reserved).map(p=>({id:p.id,protectedUntil:p.protection_ended?0:(p.colonized_at||w.now)+COLONY_PROTECTION})),
  outgoing:w.attacks.filter(m=>m.attacker_id===uid&&m.status!=='returned').map(m=>({id:m.id,from:m.from,to:m.to,fleet:m.status==='outbound'?m.fleet:m.survivors,status:m.status,awaitingUnload:!!m.awaitingUnload,cargo:{...m.cargo||zero()},arrival:m.arrival_at,returnAt:m.return_at})),
