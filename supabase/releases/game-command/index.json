@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-11-02.02",
+  "latest": "2026-11-02.03",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -281,6 +281,13 @@
       "sourceCommit": "1d32ce76d66af35d648ba449c2bd807c0cde2230",
       "description": "Arbeitsroboter beschleunigen neue Schiffbauauftraege lokal um 8 Prozent je Stufe; Werftanzeige bereinigt",
       "sha256": "d4e9d7dcc5cec10079681b452236faff1a3695d17a32a31052003f536cbda71c"
+    },
+    {
+      "version": "2026-11-02.03",
+      "createdAt": "2026-11-02T13:25:07.378Z",
+      "sourceCommit": "d438540c908f9937d4b646dcbca0bd81dea47735",
+      "description": "PvP-Daily: Sieg pro Tag, 12 Stunden +10 Prozent Schiffswerfttempo auf gewaehltem Planeten; laufende Auftraege und Offline-Zeit",
+      "sha256": "de7b092e622543d4b84860ea87eeffe19c243cd4dd511d64b205815000691855"
     }
   ]
 }

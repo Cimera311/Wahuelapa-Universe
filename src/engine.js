@@ -42,9 +42,10 @@ export function cargoPresent(cargo){return RES.some(k=>cargo[k]>0);}
 export function nextCargoSpaceEvent(s,p){return Math.min(p.build?.key==='warehouse'?p.build.end:Infinity,...s.missions.filter(m=>!m.paused&&!m.awaitingUnload).map(m=>m.due));}
 function waitingCargo(s){for(const m of [...s.missions])if(m.paused&&m.type==='route'){const out=unloadCargo(getPlanet(s,m.home),m.cargo);if(cargoPresent(out))routeActivity(s,m,m.home,out,vector([0,0,0]),'unload');}else if(m.awaitingUnload){const p=getPlanet(s,m.awaitingUnload),out=unloadCargo(p,m.cargo);if(m.type==='route'&&cargoPresent(out))routeActivity(s,m,p.id,out,vector([0,0,0]),'unload');m.due=s.time;if(!cargoPresent(m.cargo))parkFleet(s,m,p.id,m.finishTitle||'Flotte entladen');}}
 // Work is measured in milliseconds at full power; forecasts never replace earned progress.
+function pvpShipyardSpeed(s,p){const b=s.pvpShipyardBonus;return b&&b.planetId===p.id&&s.time>=b.startedAt&&s.time<b.expiresAt?1.1:1;}
 function forecastShipJobs(s,readStats=p=>stats(s,p)){for(const p of s.planets)for(const kind of ['ship','orbital']){const j=p[kind+'job'];if(!j)continue;
  if(j.workRemaining===undefined){j.orderEnd=j.end;j.workTotal=j.end-j.start;j.workRemaining=Math.max(0,j.end-s.time);}
- const ratio=readStats(p).ratio;j.paused=ratio===0&&j.workRemaining>0;
+ const ratio=readStats(p).ratio*(kind==='ship'?pvpShipyardSpeed(s,p):1);j.paused=ratio===0&&j.workRemaining>0;
  // Keep paused saves finite. Their end is a placeholder, excluded from scheduling.
  j.end=s.time+Math.max(1,Math.ceil(j.workRemaining/(ratio||1)));
  let work=j.workRemaining;for(const queued of p[kind==='ship'?'shipqueue':'orbitalqueue']||[]){work+=queued.workTotal;queued.paused=ratio===0;queued.end=s.time+Math.max(1,Math.ceil(work/(ratio||1)));}
@@ -61,7 +62,7 @@ export function orbitalQueueCapacity(p){return Math.min(SHIP_QUEUE_LIMIT,Math.ma
 export function orbitalQueueFullReason(p){const cap=orbitalQueueCapacity(p);return orbitalOrders(p).length>=cap?`Alle ${cap} Auftragsplätze der Orbitalwerft belegt.`:'';}
 function nextShipOrder(p){p.shipjob=(p.shipqueue||[]).shift()||null;}
 function nextOrbitalOrder(p){p.orbitaljob=(p.orbitalqueue||[]).shift()||null;}
-function produce(s,ms,readStats=p=>stats(s,p)){for(const p of s.planets){settle(p);const z=readStats(p);produceRepair(p,ms,z.ratio);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);for(const kind of ['ship','orbital'])if(p[kind+'job'])p[kind+'job'].workRemaining=Math.max(0,p[kind+'job'].workRemaining-ms*z.ratio);}}
+function produce(s,ms,readStats=p=>stats(s,p)){for(const p of s.planets){settle(p);const z=readStats(p);produceRepair(p,ms,z.ratio);for(const k of RES)p.resources[k]=Math.min(z.cap,p.resources[k]+z.rates[k]*ms/3600000);for(const kind of ['ship','orbital'])if(p[kind+'job'])p[kind+'job'].workRemaining=Math.max(0,p[kind+'job'].workRemaining-ms*z.ratio*(kind==='ship'?pvpShipyardSpeed(s,p):1));}}
 function report(s,title,body){s.reports.unshift({id:++s.seq,time:s.time,title,body});s.reports=s.reports.slice(0,60);}
 export function need(s,p,req){if(!req)return '';if(req.tech&&s.tech[req.tech]<req.level)return `Benötigt ${TECHS[req.tech].name} Stufe ${req.level}.`;if(req.building&&p.buildings[req.building]<req.level)return `Benötigt ${BUILDINGS[req.building].name} Stufe ${req.level}.`;return '';}
 // REALM-CANDIDATE[demolition]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
@@ -201,7 +202,7 @@ export function advance(s,now,collectDebris){
  waitingCargo(s);let guard=0;
  while(true){
   forecastShipJobs(s,readStats);
-  const times=[];const bonusExpiry=s.dailyPirateBonus?.expiresAt;if(bonusExpiry>s.time&&bonusExpiry<=now)times.push(bonusExpiry);for(const p of s.planets){times.push(forecastRepair(p,s.time,readStats(p).ratio));if(p.build)times.push(p.build.end);for(const kind of ['ship','orbital'])if(p[kind+'job']&&!p[kind+'job'].paused)times.push(p[kind+'job'].workRemaining===0?s.time:p[kind+'job'].end);}if(s.research)times.push(s.research.end);for(const m of s.missions)if(!m.paused&&!m.awaitingUnload)times.push(m.due);
+  const times=[];const bonusExpiry=s.dailyPirateBonus?.expiresAt;if(bonusExpiry>s.time&&bonusExpiry<=now)times.push(bonusExpiry);const shipBoostExpiry=s.pvpShipyardBonus?.expiresAt;if(shipBoostExpiry>s.time&&shipBoostExpiry<=now)times.push(shipBoostExpiry);for(const p of s.planets){times.push(forecastRepair(p,s.time,readStats(p).ratio));if(p.build)times.push(p.build.end);for(const kind of ['ship','orbital'])if(p[kind+'job']&&!p[kind+'job'].paused)times.push(p[kind+'job'].workRemaining===0?s.time:p[kind+'job'].end);}if(s.research)times.push(s.research.end);for(const m of s.missions)if(!m.paused&&!m.awaitingUnload)times.push(m.due);
   const next=Math.min(...times);if(next>now||!Number.isFinite(next))break;if(++guard>100000){for(const m of s.missions)if(m.type==='route'&&!m.stopping){m.stopping=true;report(s,'Handelsroute endet nach langer Abwesenheit',`${m.name}: Die aktuelle Runde wird noch abgeschlossen.`);}guard=0;}
   produce(s,Math.max(0,next-s.time),readStats);s.time=Math.max(s.time,next);if(s.time===bonusExpiry)production.clear();
   // Fixed order: research, buildings, shipbuilding, then missions by id.

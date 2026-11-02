@@ -186,8 +186,12 @@ function shipJobPanel(p,showProgress=true){
 }
 function shipQueueReady(){return !cloud?.authoritative||!!cloud.pvp?.features?.shipQueue;}
 function shipQueueEstimate(p,orbital=false){
- const ratio=stats(state,p).ratio;let work=0;
- return (orbital?orbitalOrders(p):shipOrders(p)).map((j,i)=>{const start=ratio?Math.ceil(work/ratio):null;work+=i?j.workTotal:j.workRemaining;return {job:j,start,remaining:ratio?Math.ceil((i?j.workTotal:j.workRemaining)/ratio):null,end:ratio?Math.ceil(work/ratio):null};});
+ const ratio=stats(state,p).ratio,boost=state.pvpShipyardBonus;
+ const active=!orbital&&boost&&boost.planetId===p.id&&boost.startedAt<=state.time&&boost.expiresAt>state.time;
+ const window=active?boost.expiresAt-state.time:0;
+ const timeForWork=work=>{if(!ratio)return null;const earned=window*ratio*1.1;return Math.ceil(active&&work>earned?window+(work-earned)/ratio:work/(ratio*(active?1.1:1)));};
+ let work=0;
+ return (orbital?orbitalOrders(p):shipOrders(p)).map((j,i)=>{const start=timeForWork(work);const begin=work;work+=i?j.workTotal:j.workRemaining;return {job:j,start,remaining:start===null?null:timeForWork(work)-timeForWork(begin),end:timeForWork(work)};});
 }
 function shipQueueCancel(p,j,active){
  const refund=shipRefund(j),text='Beim Entfernen zurück: '+RES.map(k=>`${fmt(refund.resources[k])} ${LABEL[k]}`).join(', ')+(RES.some(k=>refund.salvage[k])?' · Reparaturmaterial: '+RES.map(k=>`${fmt(refund.salvage[k])} ${LABEL[k]}`).join(', '):'')+'. Überschüsse bleiben als Erstattung im Lieferdepot.';
@@ -376,13 +380,15 @@ function orbitalYardView(p){
 }
 function shipyardInsights(p,z){
  const level=p.buildings.shipyard||0,robots=p.buildings.robotics||0,shipFactor=Math.pow(.92,Math.max(0,level-1))*Math.pow(.92,robots);
+ const buff=state.pvpShipyardBonus,buffActive=buff&&buff.planetId===p.id&&buff.startedAt<=state.time&&buff.expiresAt>state.time;
  const selected=SHIPS[shipyardInspectShip]?shipyardInspectShip:'falke',ship=SHIPS[selected],base=COMBAT[selected],effective=base?combatStats(selected,state.tech):null;
  const asTime=ms=>ms<60000?Math.ceil(ms/1000)+' Sek.':duration(ms);
- const rows=[['Werftausbau',level?Math.round((1-Math.pow(.92,Math.max(0,level-1)))*1000)/10+' % kürzere Bauzeit':'Noch keine Schiffswerft'],['Arbeitsroboter','Stufe '+robots+' · '+Math.round((1-Math.pow(.92,robots))*1000)/10+' % kürzere Bauzeit'],['Stromversorgung',Math.round(z.ratio*100)+' % Produktionsgeschwindigkeit']];
+ const rows=[['Werftausbau',level?Math.round((1-Math.pow(.92,Math.max(0,level-1)))*1000)/10+' % kürzere Bauzeit':'Noch keine Schiffswerft'],['Arbeitsroboter','Stufe '+robots+' · '+Math.round((1-Math.pow(.92,robots))*1000)/10+' % kürzere Bauzeit'],['Werfttempo',Math.round(z.ratio*(buffActive?1.1:1)*100)+' %'+(buffActive?' · PvP-Bonus +10 %':'')]];
  const stat=(name,key,research)=>{const b=base[key],v=effective[key];return '<div class="shipyard-insight-stat"><small>'+name+'</small><strong>'+fmt(v)+'</strong><span>Basis '+fmt(b)+' · Forschung +'+(8*(state.tech[research]||0))+' %</span></div>';};
  const choices=Object.entries(SHIPS).filter(([key,v])=>v.category==='military'&&COMBAT[key]).map(([key,v])=>'<option value="'+key+'"'+(key===selected?' selected':'')+'>'+esc(v.name)+'</option>').join('');
  return '<section class="shipyard-insight" aria-label="Werftleistung und Kampfwerte">'+
  '<details class="shipyard-insight-details"><summary>⚙ Werftleistung & Boni <span>Stufe '+level+' · '+Math.round(shipFactor*1000)/10+' % Grundbauzeit</span></summary><div class="shipyard-insight-body">'+
+ (buffActive?'<p class="shipyard-pvp-buff">✦ PvP-Werftbonus +10 % · '+Math.ceil((buff.expiresAt-state.time)/60000)+' Min. verbleibend</p>':'')+
  '<div class="shipyard-insight-grid">'+rows.map(([k,v])=>'<div><small>'+k+'</small><strong>'+v+'</strong></div>').join('')+'</div>'+
  '<p>Beispiel Falke · 1 Schiff: Grundbauzeit '+asTime(SHIPS.falke.time*1000)+' → '+asTime(shipInfo(state,p,"falke",1).ms)+' bei voller Stromversorgung. Bei Strommangel verlängert sich die Restzeit.</p>'+
  '<p class="fine">Die Werft- und Roboterboni gelten für neue Bauaufträge. Die aktuelle Stromversorgung beeinflusst die Fertigstellung.</p></div></details>'+
@@ -626,6 +632,7 @@ document.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action]');if(!b||b.disabled)return;
  if(b.dataset.action==='partner-invites'){tab='fleet';fleetSection='partners';render();window.scrollTo({top:0,behavior:'smooth'});}
   if(['pvp-open','pvp-target','pvp-defense'].includes(b.dataset.action)){if(b.dataset.to)pvpDraft.to=b.dataset.to;tab='fleet';fleetSection=b.dataset.action==='pvp-defense'?'defense':'pvp';render();void refreshGalaxy(true);}
+ if(b.dataset.action==='pvp-daily-accept'){await serverAction({type:'pvp-daily',action:{op:'accept'}});}
  if(b.dataset.action==='pvp-toggle'){await serverAction({type:'set-pvp',enabled:!cloud.pvp.enabled});settings();}
  if(['combat-engine-3','combat-engine-4','combat-engine-5','combat-engine-6','combat-engine-7'].includes(b.dataset.action)){await serverAction({type:'set-combat',engine:Number(b.dataset.action.at(-1))});settings();}
  if(b.dataset.action==='pvp-repair'){selectFleetSection('repair');window.scrollTo({top:0,behavior:'smooth'});}
@@ -645,6 +652,7 @@ document.addEventListener('input',e=>{const form=e.target.closest('#pvp-attack-f
 document.addEventListener('change',e=>{if(!e.target.matches('[data-shipyard-inspect-ship]'))return;shipyardInspectShip=e.target.value;const section=e.target.closest('.shipyard-insight');if(!section)return;const p=getPlanet(state,state.active),z=stats(state,p);const opened=[...section.querySelectorAll('details')].map(x=>x.open);section.outerHTML=shipyardInsights(p,z);document.querySelectorAll('.shipyard-insight details').forEach((x,i)=>x.open=opened[i]);});
 document.addEventListener('change',e=>{const form=e.target.closest('#pvp-attack-form');if(form)updatePvPEstimate(form);});
 document.addEventListener('submit',async e=>{
+ if(e.target.id==='pvp-daily-claim'){e.preventDefault();if(readOnly||cloudBlocked||cloudSaving)return;const planetId=new FormData(e.target).get('planetId');await serverAction({type:'pvp-daily',action:{op:'claim',planetId}});return;}
  if(e.target.id!=='pvp-attack-form')return;e.preventDefault();
  const data=new FormData(e.target),fleet=readMixedFleet(e.target);
  const plan=pvpAttackPlan(state,cloud?.pvp,galaxyData,data.get('to'),fleet,gameNow(),readOnly||cloudBlocked||galaxyBusy||cloudSaving);

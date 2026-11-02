@@ -682,6 +682,7 @@ function waitingCargo(s) {
     if (!cargoPresent(m.cargo)) parkFleet(s, m, p.id, m.finishTitle || "Flotte entladen");
   }
 }
+function pvpShipyardSpeed(s,p){const b=s.pvpShipyardBonus;return b&&b.planetId===p.id&&s.time>=b.startedAt&&s.time<b.expiresAt?1.1:1;}
 function forecastShipJobs(s, readStats = (p) => stats(s, p)) {
   for (const p of s.planets) for (const kind of ["ship", "orbital"]) {
     const j = p[kind + "job"];
@@ -691,7 +692,7 @@ function forecastShipJobs(s, readStats = (p) => stats(s, p)) {
       j.workTotal = j.end - j.start;
       j.workRemaining = Math.max(0, j.end - s.time);
     }
-    const ratio = readStats(p).ratio;
+    const ratio = readStats(p).ratio * (kind === 'ship' ? pvpShipyardSpeed(s,p) : 1);
     j.paused = ratio === 0 && j.workRemaining > 0;
     j.end = s.time + Math.max(1, Math.ceil(j.workRemaining / (ratio || 1)));
     let work = j.workRemaining;
@@ -735,7 +736,7 @@ function produce(s, ms2, readStats = (p) => stats(s, p)) {
     const z = readStats(p);
     produceRepair(p, ms2, z.ratio);
     for (const k of RES) p.resources[k] = Math.min(z.cap, p.resources[k] + z.rates[k] * ms2 / 36e5);
-    for (const kind of ["ship", "orbital"]) if (p[kind + "job"]) p[kind + "job"].workRemaining = Math.max(0, p[kind + "job"].workRemaining - ms2 * z.ratio);
+    for (const kind of ["ship", "orbital"]) if (p[kind + "job"]) p[kind + "job"].workRemaining = Math.max(0, p[kind + "job"].workRemaining - ms2 * z.ratio * (kind === 'ship' ? pvpShipyardSpeed(s,p) : 1));
   }
 }
 function report(s, title, body) {
@@ -1060,6 +1061,7 @@ function advance(s, now, collectDebris) {
     const times = [];
     const bonusExpiry=s.dailyPirateBonus?.expiresAt;
     if(bonusExpiry>s.time&&bonusExpiry<=now)times.push(bonusExpiry);
+    const shipBoostExpiry=s.pvpShipyardBonus?.expiresAt;if(shipBoostExpiry>s.time&&shipBoostExpiry<=now)times.push(shipBoostExpiry);
     for (const p of s.planets) {
       times.push(forecastRepair(p, s.time, readStats(p).ratio));
       if (p.build) times.push(p.build.end);
@@ -2412,6 +2414,12 @@ function validateWorldSave(state, phase) {
     throw error;
   }
 }
+const PVP_DAILY_MS=12*3600000;
+const pvpDailyDay=at=>new Date(at).toISOString().slice(0,10);
+function pvpDailyStatus(q,at){if(!q||q.day!==pvpDailyDay(at))return 'available';return q.claimedAt?'claimed':q.wonAt?'ready':'active';}
+function acceptPvpDaily(q,at){if(pvpDailyStatus(q,at)!=='available')throw Error('PvP-Daily bereits angenommen.');return {day:pvpDailyDay(at),acceptedAt:at,wonAt:null,claimedAt:null};}
+function completePvpDaily(q,attack,time,outcome){if(pvpDailyStatus(q,time)!=='active'||outcome!=='attacker'||attack.started_at<q.acceptedAt)return q;return {...q,wonAt:time};}
+function claimPvpDaily(q,planetId,owned,at,existing){if(pvpDailyStatus(q,at)!=='ready')throw Error('PvP-Daily noch nicht abgeschlossen.');if(!owned.includes(planetId))throw Error('Wähle einen eigenen Planeten.');if(existing&&existing.expiresAt>at)throw Error('Ein Werftbonus ist bereits aktiv.');return {quest:{...q,claimedAt:at},bonus:{planetId,startedAt:at,expiresAt:at+PVP_DAILY_MS,speed:1.1}};}
 function prepareWorld(snapshot) {
   const w = structuredClone(snapshot);
   w.now = ms(w.now);
@@ -2429,6 +2437,7 @@ function prepareWorld(snapshot) {
   for (const m of w.missions) for (const key of ["started_at", "arrival_at", "finish_at"]) m[key] = ms(m[key]);
   preparePirates(w);
   for(const row of w.saves){const bonus=w.piratePlayers?.find(p=>p.user_id===row.user_id)?.dailyBonus;if(bonus)row.state.dailyPirateBonus=bonus;else delete row.state.dailyPirateBonus;}
+  for(const row of w.saves){const bonus=w.piratePlayers?.find(p=>p.user_id===row.user_id)?.pvpShipyardBonus;if(bonus)row.state.pvpShipyardBonus=bonus;else delete row.state.pvpShipyardBonus;}
   return w;
 }
 function stateOf(w, id) {
@@ -2565,6 +2574,7 @@ function resolveAttack(w, m, time, metrics) {
   m.shieldUntil = time + 3e5;
   if (result2.trace) result2.trace.participants = { attacker: a.name, defender: d.name + (supporting.length ? " mit " + supporting.map((g) => g.commander).join(", ") : "") };
   m.report = { at: time, outcome: result2.outcome, ruleVersion: m.ruleVersion || 1, traceAvailable: !!result2.trace, ...result2.trace ? { trace: result2.trace } : {}, rounds: result2.rounds, attackerBefore: m.fleet, attackerAfter: m.survivors, defenderBefore: Object.fromEntries(Object.keys(SHIPS).map((k) => [k, hostBefore[k] + supporting.reduce((n, g) => n + (g.fleet[k] || 0), 0)])), defenderAfter: Object.fromEntries(Object.keys(SHIPS).map((k) => [k, result2.defender.fleet[k] || 0])), hostBefore, hostAfter, ...supporting.length ? { supporting: supportReports } : {}, loot: cargo.loot, salvage: cargo.salvage, debrisLeft: { ...target.debris }, defenseRepair: result2.defenseRepair };
+  if(result2.outcome==='attacker'){const daily=w.piratePlayers?.find(r=>r.user_id===m.attacker_id);if(daily)daily.pvpDaily=completePvpDaily(daily.pvpDaily,m,time,result2.outcome);}
   const outcome = result2.outcome === "attacker" ? "Angreifer gewinnt" : result2.outcome === "defender" ? "Verteidiger gewinnt" : "Unentschieden";
   const body = outcome + " \xB7 " + target.meta.name + " \xB7 " + result2.rounds.length + " Runden. Angreifer \xFCbrig: " + fleetText(m.survivors) + ". Beute M/K/T: " + RES.map((k) => cargo.loot[k]).join("/") + ". Tr\xFCmmer geborgen M/K: " + cargo.salvage.metal + "/" + cargo.salvage.crystal + ".";
   log(a, time, "PvP-Kampfbericht", body);
@@ -2709,6 +2719,13 @@ function processWorld(snapshot, uid, request, metrics) {
   else if (type === "attack") {
     launchAttack(w, uid, action, request.eventId || request.requestId);
     w.attacks[w.attacks.length - 1].seed = request.combatSeed || request.requestId;
+  } else if(type==='pvp-daily'){
+    if(w.pirateVersion!==1)throw Error('Die Daily benötigt das aktive Piratensystem.');
+    w.piratePlayers??=[];let row=w.piratePlayers.find(r=>r.user_id===uid);
+    if(!row){row={user_id:uid,stations:{},missions:[],reports:[]};w.piratePlayers.push(row);}
+    if(action.op==='accept')row.pvpDaily=acceptPvpDaily(row.pvpDaily,w.now);
+    else if(action.op==='claim'){const claim=claimPvpDaily(row.pvpDaily,action.planetId,s.planets.map(p=>p.id),w.now,row.pvpShipyardBonus);row.pvpDaily=claim.quest;row.pvpShipyardBonus=claim.bonus;s.pvpShipyardBonus=claim.bonus;}
+    else throw Error('Unbekannte PvP-Daily-Aktion.');
   } else if (type === "set-pvp") {
     if (!w.admins.includes(uid)) throw Error("Nur Administratoren d\xFCrfen PvP umschalten.");
     if (typeof request.enabled !== "boolean") throw Error("Ung\xFCltiger PvP-Status.");
@@ -2734,6 +2751,7 @@ function projectPvP(w, uid) {
     serverNow: w.now,
     social: socialProjection(w, uid),
     pirates: projectPirates(w, uid),
+    pvpDaily:(()=>{const q=w.piratePlayers?.find(r=>r.user_id===uid);return {status:pvpDailyStatus(q?.pvpDaily,w.now),bonus:q?.pvpShipyardBonus?.expiresAt>w.now?structuredClone(q.pvpShipyardBonus):null};})(),
     features: { shipScrapping: true, routeStatistics: true, pirates: w.pirateVersion === 1, piratesPublic: w.pirateVersion === 1, orbitalRestoration: true, buildingDemolition: true, repairDock: true, debrisSalvage: true, shipQueue: true, partnerOrigins: true, cargoRetention: true, attackSlots: true, fleetPlanning: true, partnerships: w.socialVersion === 1, flightRules: GALAXY_FLIGHT_RULE_VERSION, routePause: true, shipyardEnergy: true, orbitalProduction: true, cancelShip: true, combatRules: [3, 4, 5, 6, 7].includes(w.settings.combat_engine) ? w.settings.combat_engine : COMBAT_RULE_VERSION, combatTrace: true },
     attackCapacity: attackSlots(w.saves.find((r) => r.user_id === uid)?.state.tech.military || 0),
     homeAttacks: true,
