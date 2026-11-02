@@ -626,6 +626,7 @@ document.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action]');if(!b||b.disabled)return;
  if(b.dataset.action==='partner-invites'){tab='fleet';fleetSection='partners';render();window.scrollTo({top:0,behavior:'smooth'});}
   if(['pvp-open','pvp-target','pvp-defense'].includes(b.dataset.action)){if(b.dataset.to)pvpDraft.to=b.dataset.to;tab='fleet';fleetSection=b.dataset.action==='pvp-defense'?'defense':'pvp';render();void refreshGalaxy(true);}
+ if(b.dataset.action==='pvp-daily-accept'){await serverAction({type:'pvp-daily',action:{op:'accept'}});}
  if(b.dataset.action==='pvp-toggle'){await serverAction({type:'set-pvp',enabled:!cloud.pvp.enabled});settings();}
  if(['combat-engine-3','combat-engine-4','combat-engine-5','combat-engine-6','combat-engine-7'].includes(b.dataset.action)){await serverAction({type:'set-combat',engine:Number(b.dataset.action.at(-1))});settings();}
  if(b.dataset.action==='pvp-repair'){selectFleetSection('repair');window.scrollTo({top:0,behavior:'smooth'});}
@@ -645,6 +646,7 @@ document.addEventListener('input',e=>{const form=e.target.closest('#pvp-attack-f
 document.addEventListener('change',e=>{if(!e.target.matches('[data-shipyard-inspect-ship]'))return;shipyardInspectShip=e.target.value;const section=e.target.closest('.shipyard-insight');if(!section)return;const p=getPlanet(state,state.active),z=stats(state,p);const opened=[...section.querySelectorAll('details')].map(x=>x.open);section.outerHTML=shipyardInsights(p,z);document.querySelectorAll('.shipyard-insight details').forEach((x,i)=>x.open=opened[i]);});
 document.addEventListener('change',e=>{const form=e.target.closest('#pvp-attack-form');if(form)updatePvPEstimate(form);});
 document.addEventListener('submit',async e=>{
+ if(e.target.id==='pvp-daily-claim'){e.preventDefault();if(readOnly||cloudBlocked||cloudSaving)return;const planetId=new FormData(e.target).get('planetId');await serverAction({type:'pvp-daily',action:{op:'claim',planetId}});return;}
  if(e.target.id!=='pvp-attack-form')return;e.preventDefault();
  const data=new FormData(e.target),fleet=readMixedFleet(e.target);
  const plan=pvpAttackPlan(state,cloud?.pvp,galaxyData,data.get('to'),fleet,gameNow(),readOnly||cloudBlocked||galaxyBusy||cloudSaving);
