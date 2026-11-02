@@ -1,6 +1,19 @@
 export const GAME_NEWS=[
  {
   date:'02.11.2026',
+  title:'⚔️ Neu: PvP-Daily – Siegreicher Commander!',
+  status:'⚡ Tägliche Mission · Werftbonus',
+  items:[
+   '⚔️ Unter Flotten → PvP gibt es jetzt eine tägliche Herausforderung: Nehmt die Mission an und gewinnt danach einen PvP-Angriff gegen einen anderen Commander.',
+   '🏆 Ein Sieg genügt. Nach dem gewonnenen Gefecht könnt ihr eure Belohnung manuell beanspruchen und einen eurer Planeten auswählen.',
+   '⚡ Eure Belohnung: +10 % Schiffswerftgeschwindigkeit für 12 Stunden auf dem gewählten Planeten. Der Bonus beschleunigt auch bereits laufende Schiffbauaufträge.',
+   '🏭 Den aktiven Bonus und seine verbleibende Laufzeit seht ihr in der Werft unter Werftleistung & Boni. Die Orbitalwerft bleibt davon unberührt.',
+   '🔁 Eine PvP-Daily pro Tag. Der Angriff muss nach Annahme der Mission gestartet worden sein; der Bonus beginnt erst beim Abholen.',
+   '💬 Viel Erfolg bei euren Gefechten! Rückmeldungen und Ideen sind wie immer willkommen. 🚀'
+  ]
+ },
+ {
+  date:'02.11.2026',
   title:'🏴‍☠️ Neu: Tägliche Piratenjagd mit Produktionsbonus!',
   status:'🎁 Daily Quest · Jetzt verfügbar',
   items:[
