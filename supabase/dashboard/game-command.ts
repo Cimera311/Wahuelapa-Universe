@@ -1942,7 +1942,7 @@ function arrivePirate(w, uid, m, time, metrics) {
     pirateReport(row, { id: m.id, station: m.station, at: time, outcome: result2.outcome, ruleVersion: m.ruleVersion, rounds: result2.rounds, attackerBefore: { ...m.initialFleet }, attackerAfter: { ...m.fleet }, defenderBefore: before, defenderAfter: { ...station.fleet }, cargo: { ...m.cargo }, debris });
     if(result2.outcome==="attacker"&&m.startedAt>=Number(row.dailyQuest?.acceptedAt??Infinity))row.dailyQuest=completeDailyQuest(row.dailyQuest,time,result2.outcome);
     pirateLog(s, time, "PvE-Kampfbericht", meta.name + " \xB7 " + (result2.outcome === "attacker" ? "Sieg" : result2.outcome === "defender" ? "Niederlage" : "Unentschieden") + " \xB7 " + result2.rounds.length + " Runden. Details unter Galaxie \u2192 Piraten.");
-    station.scan = null;
+    // Reconnaissance remains valid until this pirate station respawns.
   } else if (m.kind === "salvage") m.cargo = takePirateCargo(station.debris, fleetCapacity({ tech: m.tech }, m.fleet));
   else if (station.defeated) m.cargo = takePirateCargo(station.resources, fleetCapacity({ tech: m.tech }, m.fleet));
   else pirateLog(s, time, "Piraten-Abholung abgebrochen", "Die Station wurde erneuert. Dein Frachter kehrt ohne Beute zur\xFCck.");
