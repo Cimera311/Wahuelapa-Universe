@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "latest": "2026-10-28.03",
+  "latest": "2026-11-02.01",
   "releases": [
     {
       "version": "2026-10-09.01",
@@ -267,6 +267,13 @@
       "sourceCommit": "956c1afbef54607ca4adfb13c894bef2cc792aed",
       "description": "Gezeitenkraftwerk auf Heimatwelt und Standardplaneten wieder freigeschaltet; Kraftwerksbalance unveraendert",
       "sha256": "f71b3eabfbcf4d5347b5be1439ec01aa1072336d83c5647381e02f86ad052ded"
+    },
+    {
+      "version": "2026-11-02.01",
+      "createdAt": "2026-11-02T07:45:55.328Z",
+      "sourceCommit": "e208515877397719e02646e567c53744ea6452a6",
+      "description": "Daily Piratenjagd: Quest-Claim, sichere Produktionsboni, exakter Bonusablauf; Scan-Persistenz bleibt erhalten",
+      "sha256": "706c57dc9a408091339ff2c589136402b18e8b59b11ebd307c463e7880b15067"
     }
   ]
 }
