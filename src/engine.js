@@ -30,7 +30,7 @@ export function stats(s,p){
  const supply=([['solar',45],['tidal',180],['fuelPower',180]].reduce((total,[key,base])=>{const cfg=powerPlantConfig(p.kind,key),level=p.buildings[key]||0;return total+(level>0?base*Math.pow(level,cfg.exponent)*cfg.efficiency:0);},0))*(1+s.tech.energy*.1);
  const consumers=energyDemand(p),demand=Object.values(consumers).reduce((a,b)=>a+b,0);
  const ratio=demand?Math.min(1,supply/demand):1;
- const rates=vector(RES.map((k,i)=>p.buildings[k]?([300,220,140][i]*p.buildings[k]*Math.pow(1.12,p.buildings[k]-1)*p.mult[i]*ratio*dailyQuestMultiplier(s.dailyPirateBonus,p.id,k,s.time):0));
+ const rates=vector(RES.map((k,i)=>p.buildings[k]?([300,220,140][i]*p.buildings[k]*Math.pow(1.12,p.buildings[k]-1)*p.mult[i]*ratio*dailyQuestMultiplier(s.dailyPirateBonus,p.id,k,s.time)):0));
  return {supply,demand,consumers,ratio,rates,cap:capacity(p)};
 }
 export function settle(p){const cap=capacity(p);for(const k of RES){const n=Math.min(Math.max(0,cap-p.resources[k]),p.depot[k]);p.resources[k]+=n;p.depot[k]-=n;}}
