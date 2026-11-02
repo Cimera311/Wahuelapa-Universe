@@ -39,7 +39,7 @@ export function prepareWorld(snapshot){
  for(const m of w.missions)for(const key of ['started_at','arrival_at','finish_at'])m[key]=ms(m[key]);
  preparePirates(w);
  // Pirate state is server-controlled; never trust a bonus supplied by a client save.
- for(const row of w.saves)row.state.dailyPirateBonus=w.piratePlayers?.find(p=>p.user_id===row.user_id)?.dailyBonus||null;
+ for(const row of w.saves){const bonus=w.piratePlayers?.find(p=>p.user_id===row.user_id)?.dailyBonus;if(bonus)row.state.dailyPirateBonus=bonus;else delete row.state.dailyPirateBonus;}
  return w;
 }
 function stateOf(w,id){const row=w.saves.find(x=>x.user_id===id);if(!row)throw Error('Spielstand fehlt.');return row.state;}
