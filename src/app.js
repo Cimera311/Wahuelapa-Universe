@@ -166,7 +166,7 @@ function productionPanel(p){
  const global=productionScope==='global';
  const rates=global?state.planets.reduce((sum,q)=>{const z=stats(state,q);for(const k of RES)sum[k]+=z.rates[k];return sum;},vector([0,0,0])):stats(state,p).rates;
  const stock=global?state.planets.reduce((sum,q)=>{for(const k of RES)sum[k]+=Number(q.resources?.[k])||0;return sum;},vector([0,0,0])):p.resources;
- return `<section class="panel overview-production"><div class="production-heading"><h2>Produktion pro Stunde</h2><div class="production-switch" role="group" aria-label="Produktionsbereich">${[['global','Global'],['local',p.name]].map(([key,label])=>`<button type="button" data-production-scope="${key}" aria-pressed="${productionScope===key}">${esc(label)}</button>`).join('')}</div></div><p class="fine production-caption">${global?'Gesamtes Imperium · '+state.planets.length+' Welten':esc(p.name)+' · Lokale Produktion'}</p><div class="production-metrics">${RES.map(k=>`<div>${resourceIcon(k)}<div><strong data-production-resource="${k}">${fmt(rates[k])}</strong><small>${LABEL[k]} / Std</small></div></div>`).join('')}</div><div class="production-storage"><h3>${global?'Globale Lagerbestände':'Lokale Lagerbestände'}</h3><div class="production-metrics">${RES.map(k=>`<div>${resourceIcon(k)}<div><strong data-production-stock="${k}">${fmt(stock[k]||0)}</strong><small>${LABEL[k]} gesamt</small></div></div>`).join('')}</div></div><p class="fine">${global?'Summe der aktuellen Förderleistung und Lagerbestände aller Welten.':'Aktuelle Förderleistung und Lagerbestände dieser Welt.'} Strommangel ist berücksichtigt; volle Lager stoppen die Einlagerung.</p></section>`;
+ return `<section class="panel overview-production"><div class="production-heading"><h2>Produktion pro Stunde</h2><div class="production-switch" role="group" aria-label="Produktionsbereich">${[['global','Global'],['local',p.name]].map(([key,label])=>`<button type="button" data-production-scope="${key}" aria-pressed="${productionScope===key}">${esc(label)}</button>`).join('')}</div></div><p class="fine production-caption">${global?'Gesamtes Imperium · '+state.planets.length+' Welten':esc(p.name)+' · Lokale Produktion'}</p><div class="production-metrics">${RES.map(k=>`<div>${resourceIcon(k)}<div><strong data-production-resource="${k}">${fmt(rates[k])}</strong><small>${LABEL[k]} / Std</small></div></div>`).join('')}</div>${(()=>{const b=state.dailyPirateBonus;if(!b||b.expiresAt<=state.time)return '';const target=state.planets.find(q=>q.id===b.planetId);if(!target||!global&&target.id!==p.id)return '';return `<p class="fine">✦ Piratenbonus · ${esc(target.name)} · ${b.reward==='all'?'+5 % alles':'+9 % '+(LABEL[b.reward]||b.reward)} · ${Math.max(0,Math.ceil((b.expiresAt-state.time)/60000))} Min.</p>`;})()}<div class="production-storage"><h3>${global?'Globale Lagerbestände':'Lokale Lagerbestände'}</h3><div class="production-metrics">${RES.map(k=>`<div>${resourceIcon(k)}<div><strong data-production-stock="${k}">${fmt(stock[k]||0)}</strong><small>${LABEL[k]} gesamt</small></div></div>`).join('')}</div></div><p class="fine">${global?'Summe der aktuellen Förderleistung und Lagerbestände aller Welten.':'Aktuelle Förderleistung und Lagerbestände dieser Welt.'} Strommangel ist berücksichtigt; volle Lager stoppen die Einlagerung.</p></section>`;
 }
 function worldOverviewCard(q,p){
  const z=stats(state,q);
@@ -823,6 +823,7 @@ document.addEventListener('change',e=>{const form=e.target.closest('#pirate-flee
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-action]');if(!b||b.disabled||!piratePreviewAllowed(cloud)||readOnly||cloudBlocked)return;
  const op=b.dataset.action;
+ if(op==='daily-pirate-accept'){void serverAction({type:'pirate',action:{op:'daily-accept'}});return;}
  if(op==='pirate-refresh'){void flushCloud();return;}
  if(!['pirate-scan','pirate-build-probe'].includes(op))return;
  const form=document.getElementById('pirate-fleet-form');if(!form)return;const from=new FormData(form).get('from');
@@ -830,6 +831,7 @@ document.addEventListener('click',e=>{
  else void serverAction({type:'pirate',action:{op:'scan',from,station:form.dataset.station}});
 });
 document.addEventListener('submit',async e=>{
+ if(e.target.id==='daily-pirate-claim'){e.preventDefault();if(readOnly||cloudBlocked)return;const fd=new FormData(e.target);await serverAction({type:'pirate',action:{op:'daily-claim',reward:fd.get('reward'),planetId:fd.get('planetId')}});return;}
  if(!['pirate-fleet-form','pirate-config-form'].includes(e.target.id))return;e.preventDefault();
  if(!piratePreviewAllowed(cloud)||readOnly||cloudBlocked)return;
  const form=e.target,d=new FormData(form);
