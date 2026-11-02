@@ -1180,7 +1180,8 @@ function stats(s,p){
  const supply=(45*Math.pow(p.buildings.solar||0,powerExponent(p.kind,'solar'))+180*Math.pow(p.buildings.tidal||0,powerExponent(p.kind,'tidal')))*(1+s.tech.energy*.1);
  const consumers=energyDemand(p),demand=Object.values(consumers).reduce((a,b)=>a+b,0);
  const ratio=demand?Math.min(1,supply/demand):1;
- const rates=vector(RES.map((k,i)=>p.buildings[k]?([300,220,140][i]*p.buildings[k]*Math.pow(1.12,p.buildings[k]-1)*p.mult[i]*ratio):0));
+ const bonus=s.dailyPirateBonus,bonusActive=bonus&&bonus.planetId===p.id&&s.time>=bonus.startedAt&&s.time<bonus.expiresAt;
+ const rates=vector(RES.map((k,i)=>p.buildings[k]?([300,220,140][i]*p.buildings[k]*Math.pow(1.12,p.buildings[k]-1)*p.mult[i]*ratio*(bonusActive&&(bonus.reward==='all'||bonus.reward===k)?(bonus.reward==='all'?1.05:1.09):1)):0));
  return {supply,demand,consumers,ratio,rates,cap:capacity(p)};
 }
 function settle(p){const cap=capacity(p);for(const k of RES){const n=Math.min(Math.max(0,cap-p.resources[k]),p.depot[k]);p.resources[k]+=n;p.depot[k]-=n;}}
