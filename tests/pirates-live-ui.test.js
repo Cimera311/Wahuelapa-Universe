@@ -86,3 +86,17 @@ for(const fail of [false,true])test('A view rendered during an in-flight cloud s
  assert.equal(doc.querySelector('[data-hangar-range="falke"]').disabled,false);
  input(w,doc.querySelector('[data-hangar-range="falke"]'),22);assert.equal(doc.querySelector('[data-fleet-ship="falke"]').value,'22');
 });
+
+test('Daily quest is shown above pirate stations and acceptance calls the authoritative server',async t=>{
+ const {doc,w,calls}=mounted(t,false);
+ const card=doc.querySelector('.daily-pirate-card');
+ assert.ok(card);
+ assert.match(card.textContent,/Daily Piratenjagd/);
+ const button=card.querySelector('[data-action="daily-pirate-accept"]');
+ assert.ok(button);
+ button.click();await tick();
+ assert.equal(calls[0].type,'pirate');
+ assert.equal(calls[0].action.op,'daily-accept');
+ assert.match(doc.querySelector('.daily-pirate-card').textContent,/Quest aktiv|Besiege/);
+ assert.equal(doc.querySelector('#daily-pirate-claim'),null);
+});
