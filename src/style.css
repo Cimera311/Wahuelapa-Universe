@@ -917,3 +917,6 @@ button .action-art{width:26px;height:26px;margin-right:7px;vertical-align:middle
 
 /* Daily pirate quest */
 .daily-pirate-card{margin:12px 0 16px;padding:15px;border:1px solid #31788b;border-radius:14px;background:linear-gradient(120deg,#0b2738,#112136)}.daily-pirate-card>strong{color:#9be4e8}.daily-pirate-card form{display:flex;align-items:end;flex-wrap:wrap;gap:10px}.daily-pirate-card form label{flex:1;min-width:155px;display:grid;gap:5px}.daily-pirate-card form select{min-height:40px;width:100%}.daily-bonus-badge{color:#83d6aa;font-size:.75em;font-weight:650;margin-inline-start:6px}.overview-production>.fine{margin-block:8px}
+
+/* Production boost: white base rate, green gain and effective total. Buff assets can replace ✦ later. */
+.daily-bonus-breakdown{display:block;color:#83d6aa;font-size:clamp(10px,1.05vw,12px);font-weight:600;line-height:1.35;white-space:normal;font-variant-numeric:tabular-nums}.daily-bonus-total{color:#83d6aa;font-weight:700}.daily-buff-icon{display:inline-grid;place-items:center;width:1.1em;height:1.1em;color:#b1f4d4;text-shadow:0 0 7px rgba(104,238,164,.65);margin-right:2px}.overview-production .production-metrics>div{min-width:0}.overview-production .production-metrics>div>div{min-width:0}
