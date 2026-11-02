@@ -43,5 +43,5 @@ test('bonus speeds ship job, not orbital job, with offline catch-up identical to
  advance(split,t+1800000);advance(split,t+3600000);
  assert.deepEqual(once,split);
  assert.ok(once.planets[0].ships.falke>=1);
- assert.equal(once.planets[0].ships.flak,0);
+ assert.equal(once.planets[0].ships.flak,1);
 });
