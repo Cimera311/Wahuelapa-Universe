@@ -5,6 +5,7 @@ import {attackFleet,takeHulls,putHulls,resolveBattle,COMBAT_RULE_VERSION} from '
 import {resolveBattleHybrid} from './combat-hybrid.js';
 import {measure} from './server-metrics.js';
 import {REALM_COMBAT_OVERRIDES} from './realm-config.js';
+import {acceptDailyQuest,completeDailyQuest,claimDailyQuest,dailyQuestStatus} from './daily-pirate-quest.js';
 const pirateZero=()=>vector([0,0,0]);
 const pirateState=(w,uid)=>w.saves.find(r=>r.user_id===uid)?.state;
 const pirateOwner=(w,uid)=>w.piratePlayers?.find(r=>r.user_id===uid);
@@ -37,6 +38,11 @@ export function pirateAction(w,uid,action,id,seed){
  if(action.op==='configure'){if(!w.admins.includes(uid))throw Error('Nur Administratoren dürfen die Piraten-Realm-Einstellungen ändern.');w.pirateConfig=pirateConfig(action.config);return;}
  const row=ensurePirateOwner(w,uid);
  if(action.op==='open')return;
+ if(action.op==='daily-accept'){row.dailyQuest=acceptDailyQuest(row.dailyQuest,w.now);return;}
+ if(action.op==='daily-claim'){
+  const claimed=claimDailyQuest(row.dailyQuest,action.reward,action.planetId,s.planets.map(p=>p.id),w.now,s.dailyPirateBonus);
+  row.dailyQuest=claimed.quest;s.dailyPirateBonus=claimed.bonus;return;
+ }
  const meta=PIRATE_STATION_META.find(x=>x.id===action.station),q=row.stations[action.station];
  if(!meta||!q)throw Error('Unbekannte Piratenstation.');
  if(!w.pirateConfig.enabled||!w.pirateConfig.stations[meta.id].enabled)throw Error('Diese Piratenstation ist pausiert.');
@@ -95,6 +101,7 @@ export function arrivePirate(w,uid,m,time,metrics){
   m.fleet=result.attacker.fleet;m.hulls=result.attacker.hulls;m.shieldUntil=time+300000;
   if(result.outcome==='attacker')m.cargo=takePirateCargo(station.resources,fleetCapacity({tech:m.tech},m.fleet));
   pirateReport(row,{id:m.id,station:m.station,at:time,outcome:result.outcome,ruleVersion:m.ruleVersion,rounds:result.rounds,attackerBefore:{...m.initialFleet},attackerAfter:{...m.fleet},defenderBefore:before,defenderAfter:{...station.fleet},cargo:{...m.cargo},debris});
+  if(result.outcome==='attacker')row.dailyQuest=completeDailyQuest(row.dailyQuest,time,result.outcome);
   pirateLog(s,time,'PvE-Kampfbericht',meta.name+' · '+(result.outcome==='attacker'?'Sieg':result.outcome==='defender'?'Niederlage':'Unentschieden')+' · '+result.rounds.length+' Runden. Details unter Galaxie → Piraten.');
   // Keep reconnaissance until this station respawns.
  }else if(m.kind==='salvage')m.cargo=takePirateCargo(station.debris,fleetCapacity({tech:m.tech},m.fleet));
@@ -116,7 +123,7 @@ export function pirateFleetShadows(w){if(w.pirateVersion!==1)return;for(const ro
 export function projectPirates(w,uid){
  if(w.pirateVersion!==1||!pirateState(w,uid))return null;
  const row=pirateOwner(w,uid);
- return {config:w.admins.includes(uid)?structuredClone(w.pirateConfig):{flightTimeFactor:w.pirateConfig.flightTimeFactor,fuelFactor:w.pirateConfig.fuelFactor},stations:PIRATE_STATION_META.map(meta=>{const q=row?.stations[meta.id];return {...meta,cooldownMinutes:pirateCooldownMinutes(w.pirateConfig,meta.id),sensor:q?.sensor??w.pirateConfig.stations[meta.id].sensor,enabled:w.pirateConfig.enabled&&w.pirateConfig.stations[meta.id].enabled,initialized:!!q,generation:q?.generation,refreshAt:q?.refreshAt||0,nextAttackAt:q?.nextAttackAt||0,defeated:!!q?.defeated,debris:{...q?.debris||pirateZero()},debrisExpiresAt:q?.debrisExpiresAt||0,scan:q?.scan?structuredClone(q.scan):null};}),missions:structuredClone(row?.missions||[]).map(({seed,combatConfig,initialFleet,...m})=>m),reports:structuredClone(row?.reports||[])};
+ return {dailyQuest:{status:dailyQuestStatus(row?.dailyQuest,w.now),...(row?.dailyQuest||{})},activeBonus:(()=>{const b=pirateState(w,uid)?.dailyPirateBonus;return b&&b.expiresAt>w.now?structuredClone(b):null;})(),config:w.admins.includes(uid)?structuredClone(w.pirateConfig):{flightTimeFactor:w.pirateConfig.flightTimeFactor,fuelFactor:w.pirateConfig.fuelFactor},stations:PIRATE_STATION_META.map(meta=>{const q=row?.stations[meta.id];return {...meta,cooldownMinutes:pirateCooldownMinutes(w.pirateConfig,meta.id),sensor:q?.sensor??w.pirateConfig.stations[meta.id].sensor,enabled:w.pirateConfig.enabled&&w.pirateConfig.stations[meta.id].enabled,initialized:!!q,generation:q?.generation,refreshAt:q?.refreshAt||0,nextAttackAt:q?.nextAttackAt||0,defeated:!!q?.defeated,debris:{...q?.debris||pirateZero()},debrisExpiresAt:q?.debrisExpiresAt||0,scan:q?.scan?structuredClone(q.scan):null};}),missions:structuredClone(row?.missions||[]).map(({seed,combatConfig,initialFleet,...m})=>m),reports:structuredClone(row?.reports||[])};
 }
 // Returning PvE fleets waiting for warehouse space remain vulnerable in the origin orbit.
 export function pirateDefense(w,uid,planet){return (pirateOwner(w,uid)?.missions||[]).filter(m=>m.awaitingUnload&&m.from===planet).map(m=>({id:'pirate:'+m.id,owner:uid,commander:'PvE-Rückkehrer',fleet:{...m.fleet},hulls:m.hulls,tech:m.tech}));}
