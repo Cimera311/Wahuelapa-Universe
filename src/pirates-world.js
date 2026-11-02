@@ -40,8 +40,8 @@ export function pirateAction(w,uid,action,id,seed){
  if(action.op==='open')return;
  if(action.op==='daily-accept'){row.dailyQuest=acceptDailyQuest(row.dailyQuest,w.now);return;}
  if(action.op==='daily-claim'){
-  const claimed=claimDailyQuest(row.dailyQuest,action.reward,action.planetId,s.planets.map(p=>p.id),w.now,s.dailyPirateBonus);
-  row.dailyQuest=claimed.quest;s.dailyPirateBonus=claimed.bonus;return;
+  const claimed=claimDailyQuest(row.dailyQuest,action.reward,action.planetId,s.planets.map(p=>p.id),w.now,row.dailyBonus);
+  row.dailyQuest=claimed.quest;row.dailyBonus=claimed.bonus;s.dailyPirateBonus=claimed.bonus;return;
  }
  const meta=PIRATE_STATION_META.find(x=>x.id===action.station),q=row.stations[action.station];
  if(!meta||!q)throw Error('Unbekannte Piratenstation.');
