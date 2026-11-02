@@ -1848,7 +1848,7 @@ function pirateAction(w, uid, action, id, seed) {
   const row = ensurePirateOwner(w, uid);
   if (action.op === "open") return;
   if(action.op==="daily-accept"){row.dailyQuest=acceptDailyQuest(row.dailyQuest,w.now);return;}
-  if(action.op==="daily-claim"){const x=claimDailyQuest(row.dailyQuest,action.reward,action.planetId,s.planets.map(p=>p.id),w.now,s.dailyPirateBonus);row.dailyQuest=x.quest;s.dailyPirateBonus=x.bonus;return;}
+  if(action.op==="daily-claim"){const x=claimDailyQuest(row.dailyQuest,action.reward,action.planetId,s.planets.map(p=>p.id),w.now,row.dailyBonus);row.dailyQuest=x.quest;row.dailyBonus=x.bonus;s.dailyPirateBonus=x.bonus;return;}
   const meta = PIRATE_STATION_META.find((x) => x.id === action.station), q = row.stations[action.station];
   if (!meta || !q) throw Error("Unbekannte Piratenstation.");
   if (!w.pirateConfig.enabled || !w.pirateConfig.stations[meta.id].enabled) throw Error("Diese Piratenstation ist pausiert.");
@@ -2428,6 +2428,7 @@ function prepareWorld(snapshot) {
   for (const p of w.planets) if (p.colonized_at) p.colonized_at = ms(p.colonized_at);
   for (const m of w.missions) for (const key of ["started_at", "arrival_at", "finish_at"]) m[key] = ms(m[key]);
   preparePirates(w);
+  for(const row of w.saves)row.state.dailyPirateBonus=w.piratePlayers.find(p=>p.user_id===row.user_id)?.dailyBonus||null;
   return w;
 }
 function stateOf(w, id) {
