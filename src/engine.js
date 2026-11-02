@@ -1,3 +1,4 @@
+import {dailyQuestMultiplier} from './daily-pirate-quest.js';
 import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,ROUTE_ECONOMY,vector,costAt,isFreighter,shipFlightEngine,canFlyInterstellar} from './config.js';
 import {repairOrders,repairQuote,repairRefund,reserveRepair,releaseRepair,forecastRepair,produceRepair,finishRepair,repairMaterials,payRepairMaterials} from './repair.js';
 import {powerPlantConfig} from './realm-config.js';
@@ -29,7 +30,7 @@ export function stats(s,p){
  const supply=([['solar',45],['tidal',180],['fuelPower',180]].reduce((total,[key,base])=>{const cfg=powerPlantConfig(p.kind,key),level=p.buildings[key]||0;return total+(level>0?base*Math.pow(level,cfg.exponent)*cfg.efficiency:0);},0))*(1+s.tech.energy*.1);
  const consumers=energyDemand(p),demand=Object.values(consumers).reduce((a,b)=>a+b,0);
  const ratio=demand?Math.min(1,supply/demand):1;
- const rates=vector(RES.map((k,i)=>p.buildings[k]?([300,220,140][i]*p.buildings[k]*Math.pow(1.12,p.buildings[k]-1)*p.mult[i]*ratio):0));
+ const rates=vector(RES.map((k,i)=>p.buildings[k]?([300,220,140][i]*p.buildings[k]*Math.pow(1.12,p.buildings[k]-1)*p.mult[i]*ratio*dailyQuestMultiplier(s.dailyPirateBonus,p.id,k,s.time):0));
  return {supply,demand,consumers,ratio,rates,cap:capacity(p)};
 }
 export function settle(p){const cap=capacity(p);for(const k of RES){const n=Math.min(Math.max(0,cap-p.resources[k]),p.depot[k]);p.resources[k]+=n;p.depot[k]-=n;}}
@@ -200,9 +201,9 @@ export function advance(s,now,collectDebris){
  waitingCargo(s);let guard=0;
  while(true){
   forecastShipJobs(s,readStats);
-  const times=[];for(const p of s.planets){times.push(forecastRepair(p,s.time,readStats(p).ratio));if(p.build)times.push(p.build.end);for(const kind of ['ship','orbital'])if(p[kind+'job']&&!p[kind+'job'].paused)times.push(p[kind+'job'].workRemaining===0?s.time:p[kind+'job'].end);}if(s.research)times.push(s.research.end);for(const m of s.missions)if(!m.paused&&!m.awaitingUnload)times.push(m.due);
+  const times=[];const bonusExpiry=s.dailyPirateBonus?.expiresAt;if(bonusExpiry>s.time&&bonusExpiry<=now)times.push(bonusExpiry);for(const p of s.planets){times.push(forecastRepair(p,s.time,readStats(p).ratio));if(p.build)times.push(p.build.end);for(const kind of ['ship','orbital'])if(p[kind+'job']&&!p[kind+'job'].paused)times.push(p[kind+'job'].workRemaining===0?s.time:p[kind+'job'].end);}if(s.research)times.push(s.research.end);for(const m of s.missions)if(!m.paused&&!m.awaitingUnload)times.push(m.due);
   const next=Math.min(...times);if(next>now||!Number.isFinite(next))break;if(++guard>100000){for(const m of s.missions)if(m.type==='route'&&!m.stopping){m.stopping=true;report(s,'Handelsroute endet nach langer Abwesenheit',`${m.name}: Die aktuelle Runde wird noch abgeschlossen.`);}guard=0;}
-  produce(s,Math.max(0,next-s.time),readStats);s.time=Math.max(s.time,next);
+  produce(s,Math.max(0,next-s.time),readStats);s.time=Math.max(s.time,next);if(s.time===bonusExpiry)production.clear();
   // Fixed order: research, buildings, shipbuilding, then missions by id.
   if(s.research&&s.research.end<=s.time){const j=s.research;s.tech[j.key]=j.level;s.research=null;production.clear();report(s,'Forschung abgeschlossen',`${TECHS[j.key].name} erreicht Stufe ${j.level}.`);}
   for(const p of s.planets){s.seq+=finishRepair(p,(title,body)=>report(s,title,body));if(p.build&&p.build.end<=s.time){
