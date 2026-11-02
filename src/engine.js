@@ -1,4 +1,3 @@
-import {dailyQuestMultiplier} from './daily-pirate-quest.js';
 import {RES,BUILDINGS,TECHS,SHIPS,TARGETS,ROUTE_ECONOMY,vector,costAt,isFreighter,shipFlightEngine,canFlyInterstellar} from './config.js';
 import {repairOrders,repairQuote,repairRefund,reserveRepair,releaseRepair,forecastRepair,produceRepair,finishRepair,repairMaterials,payRepairMaterials} from './repair.js';
 import {powerPlantConfig} from './realm-config.js';
@@ -26,6 +25,7 @@ export function energyDemand(p){
  return Object.fromEntries(Object.entries(consumers).map(([key,value])=>[key,value*p.energy]));
 }
 // REALM-CANDIDATE[production]: siehe auskommentierten Katalog in src/realm-config.js; noch nicht verdrahtet.
+function dailyQuestMultiplier(bonus,planetId,resource,time){return bonus&&bonus.planetId===planetId&&time>=bonus.startedAt&&time<bonus.expiresAt&&(bonus.reward==='all'||bonus.reward===resource)?(bonus.reward==='all'?1.05:1.09):1;}
 export function stats(s,p){
  const supply=([['solar',45],['tidal',180],['fuelPower',180]].reduce((total,[key,base])=>{const cfg=powerPlantConfig(p.kind,key),level=p.buildings[key]||0;return total+(level>0?base*Math.pow(level,cfg.exponent)*cfg.efficiency:0);},0))*(1+s.tech.energy*.1);
  const consumers=energyDemand(p),demand=Object.values(consumers).reduce((a,b)=>a+b,0);
