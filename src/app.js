@@ -378,7 +378,7 @@ function shipyardInsights(p,z){
  const level=p.buildings.shipyard||0,robots=p.buildings.robotics||0,shipFactor=Math.pow(.92,Math.max(0,level-1))*Math.pow(.92,robots);
  const selected=SHIPS[shipyardInspectShip]?shipyardInspectShip:'falke',ship=SHIPS[selected],base=COMBAT[selected],effective=base?combatStats(selected,state.tech):null;
  const asTime=ms=>ms<60000?Math.ceil(ms/1000)+' Sek.':duration(ms);
- const rows=[['Werftausbau',level?Math.round((1-shipFactor)*1000)/10+' % kürzere Bauzeit':'Noch keine Schiffswerft'],['Arbeitsroboter','Stufe '+robots+' · '+Math.round((1-Math.pow(.92,robots))*1000)/10+' % kürzere Bauzeit'],['Stromversorgung',Math.round(z.ratio*100)+' % Produktionsgeschwindigkeit']];
+ const rows=[['Werftausbau',level?Math.round((1-Math.pow(.92,Math.max(0,level-1)))*1000)/10+' % kürzere Bauzeit':'Noch keine Schiffswerft'],['Arbeitsroboter','Stufe '+robots+' · '+Math.round((1-Math.pow(.92,robots))*1000)/10+' % kürzere Bauzeit'],['Stromversorgung',Math.round(z.ratio*100)+' % Produktionsgeschwindigkeit']];
  const stat=(name,key,research)=>{const b=base[key],v=effective[key];return '<div class="shipyard-insight-stat"><small>'+name+'</small><strong>'+fmt(v)+'</strong><span>Basis '+fmt(b)+' · Forschung +'+(8*(state.tech[research]||0))+' %</span></div>';};
  const choices=Object.entries(SHIPS).filter(([key,v])=>v.category==='military'&&COMBAT[key]).map(([key,v])=>'<option value="'+key+'"'+(key===selected?' selected':'')+'>'+esc(v.name)+'</option>').join('');
  return '<section class="shipyard-insight" aria-label="Werftleistung und Kampfwerte">'+
