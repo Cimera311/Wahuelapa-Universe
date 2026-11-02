@@ -1,6 +1,19 @@
 export const GAME_NEWS=[
  {
   date:'02.11.2026',
+  title:'🏴‍☠️ Mehr Beute bei Piraten & Arbeitsroboter in der Werft!',
+  status:'💎 PvE-Belohnungen · ⚙️ Werft-Update',
+  items:[
+   '🏴‍☠️ Melis Piratenbande hat ihre Depots ordentlich gefüllt! Bei erfolgreichen PvE-Angriffen gibt es jetzt deutlich mehr Ressourcen zu erbeuten.',
+   '💰 Die neuen Depotbestände (Metall + Kristall + Treibstoff) pro Station: Schmugglernest 35.200, Piratenposten 134.400, Raubritterhafen 448.000, Freibeuterfestung 1.328.000 und Piratenhauptquartier 3.720.000.',
+   '⚔️ Die Schwierigkeit bleibt gleich: Gegnerflotten, Kampfstärke, Flugzeiten und Abklingzeiten wurden nicht verändert. Bestehende Stationen erhalten die höheren Bestände bei ihrer nächsten Erneuerung.',
+   '🚛 Denkt an genügend Frachtraum! Wie viel Beute ihr tatsächlich mitnehmen könnt, hängt weiterhin von euren Frachtern und dem freien Depotbestand ab.',
+   '⚙️ Arbeitsroboter unterstützen jetzt auch die Schiffswerft: Jede Ausbaustufe verkürzt die Bauzeit neuer Schiffsaufträge um 8 % gegenüber der vorherigen Stufe. Die bestehenden Regeln für Energieversorgung und Werftleistung gelten weiter.',
+   '🚀 Viel Spaß beim Plündern und Bauen! Rückmeldungen gerne im Chat oder in der Wünschebox. ❤️'
+  ]
+ },
+ {
+  date:'02.11.2026',
   title:'⚔️ Neu: PvP-Daily – Siegreicher Commander!',
   status:'⚡ Tägliche Mission · Werftbonus',
   items:[
