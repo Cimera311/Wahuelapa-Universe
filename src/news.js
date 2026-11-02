@@ -1,5 +1,18 @@
 export const GAME_NEWS=[
  {
+  date:'02.11.2026',
+  title:'🏴‍☠️ Neu: Tägliche Piratenjagd mit Produktionsbonus!',
+  status:'🎁 Daily Quest · Jetzt verfügbar',
+  items:[
+   '🎯 Unter Galaxie → Piraten wartet jetzt eine tägliche Mission auf euch. Nehmt die Quest zuerst an und besiegt danach eine Piratenflotte – die Stufe spielt keine Rolle.',
+   '🎁 Nach eurem Sieg könnt ihr die Belohnung selbst abholen: Entscheidet euch für +5 % Produktion auf Metall, Kristall und Treibstoff oder +9 % auf genau einen dieser Rohstoffe.',
+   '🪐 Wählt beim Abholen einen eurer Planeten aus. Der Bonus gilt dort für 12 Stunden und startet erst mit der Aktivierung – ihr entscheidet also selbst, wann und wo ihr ihn einsetzt.',
+   '📊 In der Übersicht seht ihr den aktiven Bonus und den begünstigten Planeten. Die globale Stundenproduktion berücksichtigt den Bonus, ohne fälschlich einen Zuschlag für alle Welten auszuweisen.',
+   '🔁 Eine Daily Quest pro Tag und Spieler, ohne stapelbare Boni. Die normalen Produktionsregeln für Energie und Lager gelten weiterhin.',
+   '💬 Probiert die neue Piratenjagd aus! Wenn euch etwas auffällt, schreibt uns im Chat oder in die Wünschebox. ❤️'
+  ]
+ },
+ {
   "date": "27.10.2026",
   "title": "🚀 Performance-Update: Der Anfang ist gemacht!",
   "status": "⚙️ Performance · Erste Optimierungen live",
